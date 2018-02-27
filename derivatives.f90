@@ -970,7 +970,7 @@ MODULE derivatives
        end do
 
 
-      ! ---- 2nd term: nabla^2 |B|^2 ---- !       
+      ! ---- 2nd term: |B|^2 ---- !       
 
       BRmem = BRk
       BImem = BIk
