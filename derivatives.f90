@@ -713,8 +713,8 @@ MODULE derivatives
              do iy=1,n2d
                 if(ix<=n1) then
 
-                   utermr(ix,iy,izh0) = ur(ix,iy,izh2)*BRr(ix,iy,izh1)
-                   vtermr(ix,iy,izh0) = vr(ix,iy,izh2)*BRr(ix,iy,izh1)
+                   utermr(ix,iy,izh0) = ur(ix,iy,izh2)*BRr(ix,iy,izh0)
+                   vtermr(ix,iy,izh0) = vr(ix,iy,izh2)*BRr(ix,iy,izh0)
 
                 end if
              end do
@@ -760,8 +760,8 @@ MODULE derivatives
              do iy=1,n2d
                 if(ix<=n1) then
 
-                   utermr(ix,iy,izh0) = ur(ix,iy,izh2)*BIr(ix,iy,izh1)
-                   vtermr(ix,iy,izh0) = vr(ix,iy,izh2)*BIr(ix,iy,izh1)
+                   utermr(ix,iy,izh0) = ur(ix,iy,izh2)*BIr(ix,iy,izh0)
+                   vtermr(ix,iy,izh0) = vr(ix,iy,izh2)*BIr(ix,iy,izh0)
 
                 end if
              end do
@@ -801,6 +801,108 @@ MODULE derivatives
 
 
     END SUBROUTINE convol_waqg
+
+
+
+
+
+
+    SUBROUTINE  refraction_waqg(rBRk,rBIk,rBRr,rBIr,BRk,BIk,psik,BRr,BIr,psir)
+      ! this subroutine computes the refractive term: ~B*zeta
+      ! Notice that this routine outputs the r-space velocity fields.
+
+      double complex, dimension(iktx,ikty,n3h1) :: psik   
+      double complex, dimension(iktx,ikty,n3h0) :: zetak 
+      double complex, dimension(iktx,ikty,n3h0) :: BRk, BIk
+      double complex, dimension(iktx,ikty,n3h0) :: rBRk, rBIk
+
+
+      double precision, dimension(n1d,n2d,n3h1) :: psir
+      double precision, dimension(n1d,n2d,n3h0) :: zetar
+      double precision, dimension(n1d,n2d,n3h0) :: BRr, BIr
+      double precision, dimension(n1d,n2d,n3h0) :: rBRr, rBIr
+
+      double complex, dimension(iktx,ikty,n3h0) :: BRmem   
+      double complex, dimension(iktx,ikty,n3h0) :: BImem   
+
+      equivalence(zetar , zetak)
+
+      !Compute vertical vorticity from the streamfunction: zetak = - kh2 * psik
+      do izh0=1,n3h0
+         izh1=izh0+1
+         do iky=1,ikty
+            ky = kya(iky)
+            do ikx=1,iktx
+               kx = kxa(ikx)
+               kh2=kx*kx+ky*ky
+               if(L(ikx,iky)==1) then
+                  zetak(ikx,iky,izh0) = -kh2*psik(ikx,iky,izh1)
+               else
+                  zetak(ikx,iky,izh0) = (0.D0,0.D0)
+               end if
+            enddo
+         enddo
+      end do
+
+      call fft_c2r(zetak,zetar,n3h0)
+
+      BRmem = BRk
+      BImem = BIk
+
+      call fft_c2r(BRk,BRr,n3h0)
+      call fft_c2r(BIk,BIr,n3h0)
+      
+
+
+      ! ---- B*zeta ---- !
+
+      rBRr=0.
+      rBIr=0.
+
+      do izh0=1,n3h0
+         izh1=izh0+1
+         izh2=izh0+2
+         do ix=1,n1d
+             do iy=1,n2d
+                if(ix<=n1) then
+
+                   rBRr(ix,iy,izh0) = zetar(ix,iy,izh0)*BRr(ix,iy,izh0)
+                   rBIr(ix,iy,izh0) = zetar(ix,iy,izh0)*BIr(ix,iy,izh0)
+
+                end if
+             end do
+          end do
+       end do
+
+      !Move to k-space
+
+      call fft_r2c(rBRr,rBRk,n3h0)
+      call fft_r2c(rBIr,rBIk,n3h0)
+
+      !Dealias
+
+      do izh0=1,n3h0 
+         do iky=1,ikty
+            do ikx=1,iktx
+               if (L(ikx,iky).eq.0) then                                                               
+                  rBRk(ikx,iky,izh0) = (0.D0,0.D0)
+                  rBIk(ikx,iky,izh0) = (0.D0,0.D0)
+               endif
+            enddo
+         enddo
+      enddo
+
+      BRk = BRmem
+      BIk = BImem
+
+
+
+    END SUBROUTINE refraction_waqg
+
+
+
+
+
 
 
     SUBROUTINE compute_streamfunction(uk,vk,psik)  !Computes the QG streamfunction (rotational part of the horizontal flow)
