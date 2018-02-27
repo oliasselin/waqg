@@ -22,6 +22,14 @@ PROGRAM main
   double complex,   dimension(iktx,ikty,n3h1) :: qok          !Old q 
   double complex,   dimension(iktx,ikty,n3h1) :: qtempk        
 
+  !**** B = LA, and both A and B are decomposed into their real and imag parts (ex.: A = AR + iAI)
+  double complex,   dimension(iktx,ikty,n3h0) :: BRk, BIk, ARk, AIk
+  double precision, dimension(n1d,n2d,n3h0)   :: BRr, BIr, ARr, AIr
+
+  !**** n = nonlinear advection term J(psi,B) **** r = refractive term ~ B*vort
+  double complex,   dimension(iktx,ikty,n3h0) :: nBRk, nBIk, rBRk, rBIk
+  double precision, dimension(n1d,n2d,n3h0)   :: nBRr, nBIr, rBRr, rBIr
+
   double complex,   dimension(iktx,ikty,n3h0) :: dqk         !dissipation
   double complex,   dimension(iktx,ikty,n3h1) :: psik        !pressure, and rhs of pressure equation!
   double precision, dimension(n1d,n2d,n3h1)   :: psir
@@ -47,7 +55,15 @@ PROGRAM main
   equivalence(qr,qk)
   equivalence(nqr,nqk)
 
+  equivalence(BRr,BRk)
+  equivalence(BIr,BIk)
+  equivalence(ARr,ARk)
+  equivalence(AIr,AIk)
 
+  equivalence(nBRr,nBRk)
+  equivalence(nBIr,nBIk)
+  equivalence(rBRr,rBRk)
+  equivalence(rBIr,rBIk)
 
   double precision, dimension(n1d,n2d) :: array2dr
   double complex,   dimension(iktx,ikty) :: array2di
@@ -152,7 +168,8 @@ PROGRAM main
 
  iter=1
  
- call convol_q(nqk,nqr,uk,vk,qk,ur,vr,qr)                                                                          
+! call convol_q(nqk,nqr,uk,vk,qk,ur,vr,qr)                                                                          
+ call convol_waqg(nqk,nBRk,nBIk,nqr,nBRr,nBIr,uk,vk,qk,BRk,BIk,ur,vr,qr,BRr,BIr)
 
  if(linear==1) then
     nqk=(0.D0,0.D0)
@@ -221,7 +238,8 @@ end if
      
      time=iter*delt
 
-     call convol_q(nqk,nqr,uk,vk,qk,ur,vr,qr)                                                                          
+!     call convol_q(nqk,nqr,uk,vk,qk,ur,vr,qr)                                                                          
+     call convol_waqg(nqk,nBRk,nBIk,nqr,nBRr,nBIr,uk,vk,qk,BRk,BIk,ur,vr,qr,BRr,BIr)
 
      if(linear==1) then
         nqk=(0.D0,0.D0)
