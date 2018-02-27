@@ -92,10 +92,10 @@ COMPILE
 chmod 755 COMPILE_STEP
 ./COMPILE_STEP
 ##chmod 755 EXEC_STEP                                                                                                                                       
-sbatch EXEC_STEP
+#sbatch EXEC_STEP
 ##./EXEC_STEP                                                                                                                                               
 
-cp $datadir/$runout $HOME/monitor/
+#cp $datadir/$runout $HOME/monitor/
 
 ################ HELPFUL COMMANDS #####################                                                                             
 ## sbatch myjobscript - submit the file 'myjobscript' to start a job                                                             
