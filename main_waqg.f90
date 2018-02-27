@@ -30,6 +30,10 @@ PROGRAM main
   double complex,   dimension(iktx,ikty,n3h0) :: nBRk, nBIk, rBRk, rBIk
   double precision, dimension(n1d,n2d,n3h0)   :: nBRr, nBIr, rBRr, rBIr
 
+  !**** qw, the wave-averaged feedback onto QGPV ****!
+  double complex,   dimension(iktx,ikty,n3h0) :: qwk
+  double precision, dimension(n1d,n2d,n3h0)   :: qwr
+
   double complex,   dimension(iktx,ikty,n3h0) :: dqk         !dissipation
   double complex,   dimension(iktx,ikty,n3h1) :: psik        !pressure, and rhs of pressure equation!
   double precision, dimension(n1d,n2d,n3h1)   :: psir
@@ -170,6 +174,7 @@ PROGRAM main
  
 ! call convol_q(nqk,nqr,uk,vk,qk,ur,vr,qr)                                                                          
  call convol_waqg(nqk,nBRk,nBIk,nqr,nBRr,nBIr,uk,vk,qk,BRk,BIk,ur,vr,qr,BRr,BIr)
+ call refraction_waqg(rBRk,rBIk,rBRr,rBIr,BRk,BIk,psik,BRr,BIr,psir)
 
  if(linear==1) then
     nqk=(0.D0,0.D0)
@@ -240,6 +245,7 @@ end if
 
 !     call convol_q(nqk,nqr,uk,vk,qk,ur,vr,qr)                                                                          
      call convol_waqg(nqk,nBRk,nBIk,nqr,nBRr,nBIr,uk,vk,qk,BRk,BIk,ur,vr,qr,BRr,BIr)
+     call refraction_waqg(rBRk,rBIk,rBRr,rBIr,BRk,BIk,psik,BRr,BIr,psir)
 
      if(linear==1) then
         nqk=(0.D0,0.D0)

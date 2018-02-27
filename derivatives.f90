@@ -903,6 +903,129 @@ MODULE derivatives
 
 
 
+    SUBROUTINE  compute_qw(qwk,BRk,BIk,qwr,BRr,BIr)
+      ! this subroutine computes the feedback of near-inertial waves onto QGPV
+
+      double complex, dimension(iktx,ikty,n3h0) :: BRk, BIk
+      double precision, dimension(n1d,n2d,n3h0) :: BRr, BIr
+
+      double complex, dimension(iktx,ikty,n3h0) :: BRmem   
+      double complex, dimension(iktx,ikty,n3h0) :: BImem   
+
+      !Can probably be optimized
+      double complex,   dimension(iktx,ikty,n3h0) :: BRxk,BRyk,BIxk,BIyk
+      double precision, dimension(n1d,n2d,n3h0)   :: BRxr,BRyr,BIxr,BIyr
+
+      !This could be one of the above: to optimize
+      double complex,   dimension(iktx,ikty,n3h0) :: tempk
+      double precision, dimension(n1d,n2d,n3h0)   :: tempr
+
+      equivalence(BRxr,BRxk)
+      equivalence(BRyr,BRyk)
+      equivalence(BIxr,BIxk)
+      equivalence(BIyr,BIyk)
+
+      equivalence(tempr,tempk)
+
+      BRxk = (0.D0,0.D0)
+      BRyk = (0.D0,0.D0)
+      BIxk = (0.D0,0.D0)
+      BRyk = (0.D0,0.D0)
+
+      do izh0=1,n3h0 
+         do iky=1,ikty
+            ky = kya(iky)
+            do ikx=1,iktx
+               kx = kxa(ikx)
+               if (L(ikx,iky).eq.1) then
+                  BRxk(ikx,iky,izh0) =  i*kx*BRk(ikx,iky,izh0)
+                  BRyk(ikx,iky,izh0) =  i*ky*BRk(ikx,iky,izh0)
+                  BIxk(ikx,iky,izh0) =  i*kx*BIk(ikx,iky,izh0)
+                  BIyk(ikx,iky,izh0) =  i*ky*BIk(ikx,iky,izh0)
+               endif
+            enddo
+         enddo
+      enddo
+
+      call fft_c2r(BRxk,BRxr,n3h0)
+      call fft_c2r(BRyk,BRyr,n3h0)
+      call fft_c2r(BIxk,BIxr,n3h0)
+      call fft_c2r(BIyk,BIyr,n3h0)
+
+
+      ! ---- 1st term: J(B*,B) ---- !
+
+      qwr=0.
+      
+      do izh0=1,n3h0
+         do ix=1,n1d
+             do iy=1,n2d
+                if(ix<=n1) then
+
+                   qwr(ix,iy,izh0) = BRyr(ix,iy,izh0)*BIxr(ix,iy,izh0) - BRxr(ix,iy,izh0)*BIyr(ix,iy,izh0)
+
+                end if
+             end do
+          end do
+       end do
+
+
+      ! ---- 2nd term: nabla^2 |B|^2 ---- !       
+
+      BRmem = BRk
+      BImem = BIk
+
+      call fft_c2r(BRk,BRr,n3h0)
+      call fft_c2r(BIk,BIr,n3h0)
+
+      tempr = 0.D0
+
+      do izh0=1,n3h0
+         do ix=1,n1d
+             do iy=1,n2d
+                if(ix<=n1) then
+
+                   tempr(ix,iy,izh0) = BRr(ix,iy,izh0)*BRr(ix,iy,izh0) + BIr(ix,iy,izh0)*BIr(ix,iy,izh0)
+
+                end if
+             end do
+          end do
+       end do      
+
+      call fft_r2c(tempr,tempk,n3h0)
+
+
+      ! --- Add the 1st and 2nd term to get qw --- !
+
+      call fft_r2c(qwr,qwk,n3h0)
+            
+      do izh0=1,n3h0
+         do iky=1,ikty
+            ky = kya(iky)
+            do ikx=1,iktx
+               kx = kxa(ikx)
+               kh2 = kx*kx + ky*ky
+               if (L(ikx,iky).eq.1) then
+                  qwk(ikx,iky,izh0) = qwk(ikx,iky,izh0) - (kh2/4.0)*tempk(ikx,iky,izh0)
+               else
+                  qwk(ikx,iky,izh0) = (0.D0,0.D0)
+               endif
+            enddo
+         enddo
+      enddo
+
+
+      BRk = BRmem
+      BIk = BKmem
+
+    END SUBROUTINE compute_qw
+
+
+
+
+
+
+
 
 
     SUBROUTINE compute_streamfunction(uk,vk,psik)  !Computes the QG streamfunction (rotational part of the horizontal flow)
