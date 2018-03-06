@@ -627,7 +627,7 @@ MODULE derivatives
 
       !Terms to be differentiated
       double complex,   dimension(iktx,ikty,n3h0) :: utermk,vtermk
-      double precision, dimension(n1d,n2d,n3h0)   :: utermr,utermr
+      double precision, dimension(n1d,n2d,n3h0)   :: utermr,vtermr
 
       equivalence(utermr,utermk)
       equivalence(vtermr,vtermk)
@@ -906,6 +906,9 @@ MODULE derivatives
     SUBROUTINE  compute_qw(qwk,BRk,BIk,qwr,BRr,BIr)
       ! this subroutine computes the feedback of near-inertial waves onto QGPV
 
+      double complex,   dimension(iktx,ikty,n3h0) :: qwk
+      double precision, dimension(n1d,n2d,n3h0)   :: qwr
+
       double complex, dimension(iktx,ikty,n3h0) :: BRk, BIk
       double precision, dimension(n1d,n2d,n3h0) :: BRr, BIr
 
@@ -957,6 +960,7 @@ MODULE derivatives
 
       qwr=0.
       
+
       do izh0=1,n3h0
          do ix=1,n1d
              do iy=1,n2d
@@ -999,6 +1003,7 @@ MODULE derivatives
 
       call fft_r2c(qwr,qwk,n3h0)
             
+      !Check out the Coriolis factor...
       do izh0=1,n3h0
          do iky=1,ikty
             ky = kya(iky)
@@ -1016,16 +1021,132 @@ MODULE derivatives
 
 
       BRk = BRmem
-      BIk = BKmem
+      BIk = BImem
 
     END SUBROUTINE compute_qw
 
 
 
 
+    SUBROUTINE  compute_sigma(sigma,nBRk, nBIk, rBRk, rBIk)
+      ! this subroutine computes the vertical integral of A at every wavenumber.
+
+
+      double complex, dimension(iktx,ikty,2)               :: sigma_to_reduce     !This is the sum local to each processor. Last dimension: 1=real 2=imag
+      double complex, dimension(iktx,ikty,2), intent(out)  :: sigma               !This is the global sum after all processors shared theirs
+
+      !**** n = nonlinear advection term J(psi,B) **** r = refractive term ~ B*vort                                                                                            
+      double complex,   dimension(iktx,ikty,n3h0), intent(in) :: nBRk, nBIk, rBRk, rBIk
 
 
 
+      !There is the Coriolis parameter missing: figure dimensions out
+      do izh0=1,n3h0 
+         do iky=1,ikty
+            ky = kya(iky)
+            do ikx=1,iktx
+               kx = kxa(ikx)
+               kh2 = kx*kx + ky*ky
+               if ((L(ikx,iky).eq.1) .and. kh2 > 0) then
+                  sigma_to_reduce(ikx,iky,1) = sigma_to_reduce(ikx,iky,1) + (rBRk(ikx,iky,izh0) + 2*nBIk(ikx,iky,izh0))/(1.D0*kh2) 
+                  sigma_to_reduce(ikx,iky,2) = sigma_to_reduce(ikx,iky,2) + (rBIk(ikx,iky,izh0) - 2*nBRk(ikx,iky,izh0))/(1.D0*kh2) 
+               endif
+            enddo
+         enddo
+      enddo
+
+      call mpi_allreduce(sigma_to_reduce,sigma,iktx*ikty*2,MPI_DOUBLE_COMPLEX,MPI_SUM,MPI_COMM_WORLD,ierror)
+
+
+    END SUBROUTINE compute_sigma
+
+
+    SUBROUTINE compute_A(ARk,AIK,BRkt,BIkt,sigma)
+
+      double complex, dimension(iktx,ikty,2), intent(in)  :: sigma               !This is the global sum after all processors shared theirs                                    
+      double complex,   dimension(iktx,ikty,n3h0), intent(out) :: ARk, AIk
+
+      double complex, dimension(iktx,n3, iktyp), intent(in) :: BRkt          !Transposed (ky-parallelization) BRk
+      double complex, dimension(iktx,n3, iktyp), intent(in) :: BIkt          !Transposed (ky-parallelization) BIk 
+
+      !Just for internal usage: A to-be-transposed version.
+      double complex, dimension(iktx,n3, iktyp) :: ARkt          !Transposed (ky-parallelization) BIk                                                            
+      double complex, dimension(iktx,n3, iktyp) :: AIkt          !Transposed (ky-parallelization) BIk                                                               
+ 
+      double complex, dimension(iktx, iktyp) :: sumAR, sumAI, sumBR, sumBI
+      
+      !Just for the pseudo-code:
+      double precision, dimension(n3) :: strat          !This is (f/N dz)^2 at unstaggered grid points: match with existing arrays of proper dimensions.
+
+
+      !-Initialize to 0-!
+      ARkt  = (0.D0,0.D0)
+      AIkt  = (0.D0,0.D0)
+      sumAR = (0.D0,0.D0)
+      sumAI = (0.D0,0.D0)
+      sumBR = (0.D0,0.D0)
+      sumBI = (0.D0,0.D0)
+
+
+      !Compute \tilde{A}, which is \hat{A} up to an arbitrary constant (\hat{A} at z = dz/2 set to 0)
+      DO ikx=1,iktx
+         kx=kxa(ikx)
+         DO ikyp=1,iktyp
+            iky=ikyp+iktyp*mype
+            ky=kya(iky)
+
+            kh2=kx*kx + ky*ky
+
+            if(kh2/=0 .and. L(ikx,iky)==1 ) then
+
+               do iz=2,n3
+
+                  ARkt(ikx,iz,ikyp) = ARkt(ikx,iz-1,ikyp) + sumBR(ikx,ikyp)/strat(iz-1)
+                  AIkt(ikx,iz,ikyp) = AIkt(ikx,iz-1,ikyp) + sumBI(ikx,ikyp)/strat(iz-1)
+
+                  sumAR(ikx,ikyp) = sumAR(ikx,ikyp) + ARkt(ikx,iz,ikyp)
+                  sumAI(ikx,ikyp) = sumAI(ikx,ikyp) + AIkt(ikx,iz,ikyp)
+
+                  sumBR(ikx,ikyp) = sumBR(ikx,ikyp) + BRkt(ikx,iz,ikyp)
+                  sumBI(ikx,ikyp) = sumBI(ikx,ikyp) + BIkt(ikx,iz,ikyp)
+
+               end do
+            end if
+
+         end DO
+      end DO
+
+
+      !Compute \hat{A}, the actual solution we are looking for
+      DO ikx=1,iktx
+         kx=kxa(ikx)
+         DO ikyp=1,iktyp
+            iky=ikyp+iktyp*mype
+            ky=kya(iky)
+
+            kh2=kx*kx + ky*ky
+
+            if(kh2/=0 .and. L(ikx,iky)==1 ) then
+
+               do iz=1,n3
+
+                  ARkt(ikx,iz,ikyp) = ARkt(ikx,iz,ikyp) + ( sigma(ikx,iky,1) - sumAR(ikx,ikyp) )/n3
+                  AIkt(ikx,iz,ikyp) = AIkt(ikx,iz,ikyp) + ( sigma(ikx,iky,2) - sumAI(ikx,ikyp) )/n3
+
+               end do
+            end if
+
+         end DO
+      end DO
+
+      !Transpose A back to the regular z-parallelized world
+      call mpitranspose(ARkt,iktx,n3,iktyp,ARk,ikty,n3h0)
+      call mpitranspose(AIkt,iktx,n3,iktyp,AIk,ikty,n3h0)
+
+
+
+    END SUBROUTINE compute_A
+      
 
 
     SUBROUTINE compute_streamfunction(uk,vk,psik)  !Computes the QG streamfunction (rotational part of the horizontal flow)
