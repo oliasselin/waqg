@@ -43,9 +43,14 @@ PROGRAM main
   double precision, dimension(n1d,n2d,n3h0)   :: rhsr
 
   double complex, dimension(iktx,n3, iktyp) :: qt            !Transposed (ky-parallelization) right-hand side   
+  double complex, dimension(iktx,n3, iktyp) :: BRkt          !Transposed (ky-parallelization) BRk (this array can most likely be recycled)
+  double complex, dimension(iktx,n3, iktyp) :: BIkt          !Transposed (ky-parallelization) BIk (this array can most likely be recycled)
 
   double precision, dimension(n1d,n2d,n3h0)   :: nqr                  
   double complex,   dimension(iktx,ikty,n3h0) :: nqk        
+
+  double complex, dimension(iktx,ikty,2) :: sigma    !Vertial integral of A(kx,ky), 1=real part, 2=imag part
+
 
   equivalence(ur,uk)
   equivalence(vr,vk)
@@ -57,6 +62,7 @@ PROGRAM main
 
   equivalence(psir,psik)
   equivalence(qr,qk)
+  equivalence(qwr,qwk)
   equivalence(nqr,nqk)
 
   equivalence(BRr,BRk)
@@ -220,6 +226,17 @@ PROGRAM main
 
  !Solve the pressure equation laplacian(phi)=f                                                                                                                                                                                      
  call psi_solver(psik,qt)
+
+
+
+
+ ! --- Recover A from B --- !
+
+ call compute_sigma(sigma,nBRk, nBIk, rBRk, rBIk)              !Compute the sum of A
+ call mpitranspose(BRk,iktx,ikty,n3h0,BRkt,n3,iktyp)           !Transpose BR to iky-parallelized space 
+ call mpitranspose(BIk,iktx,ikty,n3h0,BIkt,n3,iktyp)           !Transpose BK to iky-parallelized space 
+ call compute_A(ARk,AIK,BRkt,BIkt,sigma)                       !Compute A!
+
 
  !Compute the corresponding u,v,w and t (u and v to be used in convol)                                                                                                                                    
  call compute_velo(uk,vk,wk,bk,psik)
