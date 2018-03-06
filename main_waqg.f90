@@ -221,12 +221,26 @@ PROGRAM main
  !Generate halo for q
  call generate_halo_q(qk)
 
- !Transpose rhs -> ft                                                                                                                                                                                                          
- call mpitranspose(rhs,iktx,ikty,n3h0,qt,n3,iktyp)
 
- !Solve the pressure equation laplacian(phi)=f                                                                                                                                                                                      
- call psi_solver(psik,qt)
+ ! --- Recover the streamfunction --- !
 
+ call compute_qw(qwk,BRk,BIk,qwr,BRr,BIr)           !Compute qw
+
+ do izh0=1,n3h0                                     ! Compute q* = q - qw
+    izh1=izh0+1
+    do iky=1,ikty
+       do ikx=1,iktx
+          if (L(ikx,iky).eq.1) then
+             qwk(ikx,iky,izh0)=  qk(ikx,iky,izh1) - qwk(ikx,iky,izh0)
+          endif
+       enddo
+    enddo
+ enddo
+
+ call mpitranspose(qwk,iktx,ikty,n3h0,qt,n3,iktyp)  !Transpose rhs -> ft                                                                                     
+ call psi_solver(psik,qt)                           !Solve the pressure equation laplacian(phi)=f                                                                             
+
+ ! ----------------------------------- !
 
 
 
@@ -237,8 +251,10 @@ PROGRAM main
  call mpitranspose(BIk,iktx,ikty,n3h0,BIkt,n3,iktyp)           !Transpose BK to iky-parallelized space 
  call compute_A(ARk,AIK,BRkt,BIkt,sigma)                       !Compute A!
 
+ ! ------------------------ !
 
- !Compute the corresponding u,v,w and t (u and v to be used in convol)                                                                                                                                    
+
+ !Compute the corresponding u,v,w and t (u and v to be used in convol)                                                                                    
  call compute_velo(uk,vk,wk,bk,psik)
  call generate_halo(uk,vk,wk,bk)
 
