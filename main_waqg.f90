@@ -22,6 +22,20 @@ PROGRAM main
   double complex,   dimension(iktx,ikty,n3h1) :: qok          !Old q 
   double complex,   dimension(iktx,ikty,n3h1) :: qtempk        
 
+  !**** B = LA, and both A and B are decomposed into their real and imag parts (ex.: A = AR + iAI)
+  double complex,   dimension(iktx,ikty,n3h0) :: BRk, BIk, ARk, AIk
+  double precision, dimension(n1d,n2d,n3h0)   :: BRr, BIr, ARr, AIr
+  double complex,   dimension(iktx,ikty,n3h0) :: BRok, BIok            !B at the old time step
+  double complex,   dimension(iktx,ikty,n3h0) :: BRtempk, BItempk      !B before filering
+
+  !**** n = nonlinear advection term J(psi,B) **** r = refractive term ~ B*vort
+  double complex,   dimension(iktx,ikty,n3h0) :: nBRk, nBIk, rBRk, rBIk
+  double precision, dimension(n1d,n2d,n3h0)   :: nBRr, nBIr, rBRr, rBIr
+
+  !**** qw, the wave-averaged feedback onto QGPV ****!
+  double complex,   dimension(iktx,ikty,n3h0) :: qwk
+  double precision, dimension(n1d,n2d,n3h0)   :: qwr
+
   double complex,   dimension(iktx,ikty,n3h0) :: dqk         !dissipation
   double complex,   dimension(iktx,ikty,n3h1) :: psik        !pressure, and rhs of pressure equation!
   double precision, dimension(n1d,n2d,n3h1)   :: psir
@@ -31,9 +45,14 @@ PROGRAM main
   double precision, dimension(n1d,n2d,n3h0)   :: rhsr
 
   double complex, dimension(iktx,n3, iktyp) :: qt            !Transposed (ky-parallelization) right-hand side   
+  double complex, dimension(iktx,n3, iktyp) :: BRkt          !Transposed (ky-parallelization) BRk (this array can most likely be recycled)
+  double complex, dimension(iktx,n3, iktyp) :: BIkt          !Transposed (ky-parallelization) BIk (this array can most likely be recycled)
 
   double precision, dimension(n1d,n2d,n3h0)   :: nqr                  
   double complex,   dimension(iktx,ikty,n3h0) :: nqk        
+
+  double complex, dimension(iktx,ikty,2) :: sigma    !Vertial integral of A(kx,ky), 1=real part, 2=imag part
+
 
   equivalence(ur,uk)
   equivalence(vr,vk)
@@ -45,9 +64,18 @@ PROGRAM main
 
   equivalence(psir,psik)
   equivalence(qr,qk)
+  equivalence(qwr,qwk)
   equivalence(nqr,nqk)
 
+  equivalence(BRr,BRk)
+  equivalence(BIr,BIk)
+  equivalence(ARr,ARk)
+  equivalence(AIr,AIk)
 
+  equivalence(nBRr,nBRk)
+  equivalence(nBIr,nBIk)
+  equivalence(rBRr,rBRk)
+  equivalence(rBIr,rBIk)
 
   double precision, dimension(n1d,n2d) :: array2dr
   double complex,   dimension(iktx,ikty) :: array2di
@@ -152,11 +180,8 @@ PROGRAM main
 
  iter=1
  
- call convol_q(nqk,nqr,uk,vk,qk,ur,vr,qr)                                                                          
-
- if(linear==1) then
-    nqk=(0.D0,0.D0)
- end if
+ call convol_waqg(nqk,nBRk,nBIk,nqr,nBRr,nBIr,uk,vk,qk,BRk,BIk,ur,vr,qr,BRr,BIr)
+ call refraction_waqg(rBRk,rBIk,rBRr,rBIr,BRk,BIk,psik,BRr,BIr,psir)
 
  !Compute dissipation 
  call dissipation_q_nv(dqk,qok)
@@ -165,41 +190,71 @@ PROGRAM main
     dqk=(0.D0,0.D0)
  end if
 
- !Compute q^1 with Forward Euler 
- !First compute u* and b^1
- !u* = u^0 + dt Fu^0 + dt Du^0
- !b^1= b^0 + dt Fb^0 + dt Db^0
- 
-     do izh0=1,n3h0
-        izh1=izh0+1
-        do iky=1,ikty
-           ky = kya(iky)
-           do ikx=1,iktx
-              kx = kxa(ikx)
-              kh2=kx*kx+ky*ky
-              diss = nuh*delt*(1.*kh2)**(1.*ilap)              !This does not work !!!!! diss = nuh*(kh2**ilap)*delt 
-              if (L(ikx,iky).eq.1) then
-                 qk(ikx,iky,izh1) = ( qok(ikx,iky,izh1) - delt*nqk(ikx,iky,izh0)  + delt*dqk(ikx,iky,izh0) )*exp(-diss)
-                 rhs(ikx,iky,izh0)= qk(ikx,iky,izh1)
-              else
-                 qk(ikx,iky,izh1) = (0.D0,0.D0)
-                 rhs(ikx,iky,izh0)= (0.D0,0.D0)
-              endif
-           enddo
-        enddo
-     enddo
+
+  qok = qk
+ BRok = BRk
+ BIok = BIk
+
+ !Compute q^1 and B^1 with Forward Euler  
+ do izh0=1,n3h0
+    izh1=izh0+1
+    do iky=1,ikty
+       ky = kya(iky)
+       do ikx=1,iktx
+          kx = kxa(ikx)
+          kh2=kx*kx+ky*ky
+          diss = nuh*delt*(1.*kh2)**(1.*ilap)              !This does not work !!!!! diss = nuh*(kh2**ilap)*delt 
+          if (L(ikx,iky).eq.1) then
+             qk(ikx,iky,izh1) = (  qok(ikx,iky,izh1) - delt* nqk(ikx,iky,izh0)  + delt*dqk(ikx,iky,izh0) )*exp(-diss)
+            BRk(ikx,iky,izh0) = ( BRok(ikx,iky,izh0) - delt*nBRk(ikx,iky,izh0)  - delt*(0.5/(Bu*Ro))*kh2*AIk(ikx,iky,izh0) + delt*0.5*rBIk(ikx,iky,izh0) )*exp(-diss)
+            BIk(ikx,iky,izh0) = ( BIok(ikx,iky,izh0) - delt*nBIk(ikx,iky,izh0)  + delt*(0.5/(Bu*Ro))*kh2*ARk(ikx,iky,izh0) - delt*0.5*rBRk(ikx,iky,izh0) )*exp(-diss)
+          else
+             qk(ikx,iky,izh1) = (0.D0,0.D0)
+            BRk(ikx,iky,izh0) = (0.D0,0.D0)
+            BIk(ikx,iky,izh0) = (0.D0,0.D0)
+          endif
+       enddo
+    enddo
+ enddo
 
 
  !Generate halo for q
  call generate_halo_q(qk)
 
- !Transpose rhs -> ft                                                                                                                                                                                                          
- call mpitranspose(rhs,iktx,ikty,n3h0,qt,n3,iktyp)
 
- !Solve the pressure equation laplacian(phi)=f                                                                                                                                                                                      
- call psi_solver(psik,qt)
+ ! --- Recover the streamfunction --- !
 
- !Compute the corresponding u,v,w and t (u and v to be used in convol)                                                                                                                                    
+ call compute_qw(qwk,BRk,BIk,qwr,BRr,BIr)           ! Compute qw
+
+ do izh0=1,n3h0                                     ! Compute q* = q - qw
+    izh1=izh0+1
+    do iky=1,ikty
+       do ikx=1,iktx
+          if (L(ikx,iky).eq.1) then
+             qwk(ikx,iky,izh0)=  qk(ikx,iky,izh1) - qwk(ikx,iky,izh0)
+          endif
+       enddo
+    enddo
+ enddo
+
+ call mpitranspose(qwk,iktx,ikty,n3h0,qt,n3,iktyp)  !Transpose q*                                                                                      
+ call psi_solver(psik,qt)                           !Solve the QGPV equation L(phi)=q*, assuming psi_z = 0 at top/bot (homogeneous problem)                    
+
+ ! ----------------------------------- !
+
+
+
+ ! --- Recover A from B --- !
+
+ call compute_sigma(sigma,nBRk, nBIk, rBRk, rBIk)              !Compute the sum of A
+ call mpitranspose(BRk,iktx,ikty,n3h0,BRkt,n3,iktyp)           !Transpose BR to iky-parallelized space 
+ call mpitranspose(BIk,iktx,ikty,n3h0,BIkt,n3,iktyp)           !Transpose BK to iky-parallelized space 
+ call compute_A(ARk,AIK,BRkt,BIkt,sigma)                       !Compute A!
+
+ ! ------------------------ !
+
+
+ !Compute the corresponding u,v,w and t (u and v to be used in convol)                                                                                    
  call compute_velo(uk,vk,wk,bk,psik)
  call generate_halo(uk,vk,wk,bk)
 
@@ -221,11 +276,8 @@ end if
      
      time=iter*delt
 
-     call convol_q(nqk,nqr,uk,vk,qk,ur,vr,qr)                                                                          
-
-     if(linear==1) then
-        nqk=(0.D0,0.D0)
-     end if
+     call convol_waqg(nqk,nBRk,nBIk,nqr,nBRr,nBIr,uk,vk,qk,BRk,BIk,ur,vr,qr,BRr,BIr)
+     call refraction_waqg(rBRk,rBIk,rBRr,rBIr,BRk,BIk,psik,BRr,BIr,psir)
 
      !Compute dissipation from qok
      call dissipation_q_nv(dqk,qok)
@@ -235,8 +287,7 @@ end if
      end if
 
 
-     !Compute q^n+1
-     
+     !Compute q^n+1 and B^n+1 using leap-frog
      do izh0=1,n3h0
         izh1=izh0+1
         do iky=1,ikty
@@ -244,46 +295,81 @@ end if
            do ikx=1,iktx
               kx = kxa(ikx)
               kh2=kx*kx+ky*ky
-              diss = nuh*delt*(1.*kh2)**(1.*ilap)              !This does not work !!!!! diss = nuh*(kh2**ilap)*delt                                                                                                          
+              diss = nuh*delt*(1.*kh2)**(1.*ilap)
               if (L(ikx,iky).eq.1) then
                  qtempk(ikx,iky,izh1) =  qok(ikx,iky,izh1)*exp(-2*diss) - 2*delt*nqk(ikx,iky,izh0)*exp(-diss)  + 2*delt*dqk(ikx,iky,izh0)*exp(-2*diss)
-                 rhs(ikx,iky,izh0) = qtempk(ikx,iky,izh1)
+                BRtempk(ikx,iky,izh0) = BRok(ikx,iky,izh0)*exp(-2*diss) - 2*delt*(nBRk(ikx,iky,izh0) + (0.5/(Bu*Ro))*kh2*AIk(ikx,iky,izh0) - 0.5*rBIk(ikx,iky,izh0) )*exp(-diss)
+                BItempk(ikx,iky,izh0) = BIok(ikx,iky,izh0)*exp(-2*diss) - 2*delt*(nBIk(ikx,iky,izh0) - (0.5/(Bu*Ro))*kh2*ARk(ikx,iky,izh0) + 0.5*rBRk(ikx,iky,izh0) )*exp(-diss)
               else
                  qtempk(ikx,iky,izh1) = (0.D0,0.D0)
-                 rhs(ikx,iky,izh0) = (0.D0,0.D0)
+                BRtempk(ikx,iky,izh0) = (0.D0,0.D0)
+                BItempk(ikx,iky,izh0) = (0.D0,0.D0)
               endif
            enddo
         enddo
      enddo
 
 
- !Filter shitz out.
- do izh0=1,n3h0
-    izh1=izh0+1
-    do iky=1,ikty
-       do ikx=1,iktx
-          if (L(ikx,iky).eq.1) then
-             qok(ikx,iky,izh1) =  qk(ikx,iky,izh1) + gamma * ( qok(ikx,iky,izh1) - 2 * qk(ikx,iky,izh1) + qtempk(ikx,iky,izh1) )
-          else
-             qok(ikx,iky,izh1) = (0.D0,0.D0)
-           endif
-       enddo
-    enddo
- enddo
+     !Apply Robert-Asselin filter to damp the leap-frog computational mode
+     do izh0=1,n3h0
+        izh1=izh0+1
+        do iky=1,ikty
+           do ikx=1,iktx
+              if (L(ikx,iky).eq.1) then
+                 qok(ikx,iky,izh1) =  qk(ikx,iky,izh1) + gamma * (  qok(ikx,iky,izh1) - 2 *  qk(ikx,iky,izh1) +  qtempk(ikx,iky,izh1) )
+                BRok(ikx,iky,izh0) = BRk(ikx,iky,izh0) + gamma * ( BRok(ikx,iky,izh0) - 2 * BRk(ikx,iky,izh0) + BRtempk(ikx,iky,izh0) )
+                BIok(ikx,iky,izh0) = BIk(ikx,iky,izh0) + gamma * ( BIok(ikx,iky,izh0) - 2 * BIk(ikx,iky,izh0) + BItempk(ikx,iky,izh0) )
+              else
+                 qok(ikx,iky,izh1) = (0.D0,0.D0)
+                BRok(ikx,iky,izh0) = (0.D0,0.D0)
+                BIok(ikx,iky,izh0) = (0.D0,0.D0)
+              endif
+           enddo
+        enddo
+     enddo
 
 !Overwrite the new field uk with u^{n+1} 
- qk = qtempk
+ qk =  qtempk
+BRk = BRtempk
+BIk = BItempk
 
  !Generate halo for q
  call generate_halo_q(qk)
  call generate_halo_q(qok)
  
 
- !Transpose rhs -> ft                                                                                                                                                               
- call mpitranspose(rhs,iktx,ikty,n3h0,qt,n3,iktyp)
 
- !Solve the pressure equation laplacian(phi)=f                                                                                                                                                                                      
- call psi_solver(psik,qt)
+ ! --- Recover the streamfunction --- !                                                                                                                   
+
+ call compute_qw(qwk,BRk,BIk,qwr,BRr,BIr)           !Compute qw                                                                                          
+
+ do izh0=1,n3h0                                     ! Compute q* = q - qw                                                                                 
+    izh1=izh0+1
+    do iky=1,ikty
+       do ikx=1,iktx
+          if (L(ikx,iky).eq.1) then
+             qwk(ikx,iky,izh0)=  qk(ikx,iky,izh1) - qwk(ikx,iky,izh0)
+          endif
+       enddo
+    enddo
+ enddo
+
+ call mpitranspose(qwk,iktx,ikty,n3h0,qt,n3,iktyp)  !Transpose rhs -> ft                                                                            
+ call psi_solver(psik,qt)                           !Solve the pressure equation laplacian(phi)=f                                                              
+
+ ! ----------------------------------- !  
+
+
+ ! --- Recover A from B --- !                                                                                                                                 
+
+ call compute_sigma(sigma,nBRk, nBIk, rBRk, rBIk)              !Compute the sum of A                                                                                    
+ call mpitranspose(BRk,iktx,ikty,n3h0,BRkt,n3,iktyp)           !Transpose BR to iky-parallelized space                                                                   
+ call mpitranspose(BIk,iktx,ikty,n3h0,BIkt,n3,iktyp)           !Transpose BK to iky-parallelized space                                                                  
+ call compute_A(ARk,AIK,BRkt,BIkt,sigma)                       !Compute A!                                                                                  
+
+ ! ------------------------ !       
+
+
 
  !Compute the corresponding u,v,w and t 
  call compute_velo(uk,vk,wk,bk,psik)

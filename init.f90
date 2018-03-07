@@ -193,7 +193,7 @@ if(base_state==boussinesq) then  !Here it is N ~ tanh, not N^2. Just like in SB2
       r_2(izh2)     =  N2_nd(izh2)
 
 
-      a_ell_u(izh2)=big_F/N2_nd(izh2)
+      a_ell_u(izh2)=Bu/N2_nd(izh2)
 
 
       rho_u(izh2)= 1.D0
@@ -216,7 +216,7 @@ if(base_state==boussinesq) then  !Here it is N ~ tanh, not N^2. Just like in SB2
       rho_s(izh2)= 1.D0
       r_3(izh2)  = 0.D0
 
-      a_ell(izh2)=big_F/N2_nds(izh2)
+      a_ell(izh2)=Bu/N2_nds(izh2)
 
 
    end do
@@ -241,7 +241,7 @@ if(base_state==boussinesq) then  !Here it is N ~ tanh, not N^2. Just like in SB2
       rho_st(iz)= 1.D0
       r_3t(iz)  = 0.D0
 
-      a_ell_t(iz)=big_F/N2_ndst
+      a_ell_t(iz)=Bu/N2_ndst
 
       !Unstag version                                                                                                                                                                                                             
 
@@ -255,7 +255,7 @@ if(base_state==boussinesq) then  !Here it is N ~ tanh, not N^2. Just like in SB2
       r_2ut(iz)    =  N2_ndut
 
       rho_ut(iz)= 1.D0
-      a_ell_ut(iz)=big_F/N2_ndut
+      a_ell_ut(iz)=Bu/N2_ndut
 
       r_3ut(iz)  = 0.D0
 
@@ -417,7 +417,7 @@ end subroutine init_base_state
              kh2 = ikx*ikx + iky*iky
              kh  = sqrt(1.D0*kh2)
              
-             kz  = 1.!kh/sqrt(big_F)     !In non-dim form, kz ~ NH/fL kh, big_F = (fL/NH)^2
+             kz  = 1.!kh/sqrt(Bu)     !In non-dim form, kz ~ NH/fL kh, Bu = (fL/NH)^2
              
              
              if(kh2 >0) then 
@@ -485,7 +485,7 @@ end subroutine init_base_state
              kh2 = ikx*ikx + iky*iky
              kh  = sqrt(1.D0*kh2)
              
-             kz  = kh/sqrt(big_F)     !In non-dim form, kz ~ NH/fL kh, big_F = (fL/NH)^2
+             kz  = kh/sqrt(Bu)     !In non-dim form, kz ~ NH/fL kh, Bu = (fL/NH)^2
              
              
              if(kz>0. .and. kh2 >0) then 

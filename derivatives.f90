@@ -603,6 +603,556 @@ MODULE derivatives
     END SUBROUTINE convol_q
 
 
+
+    SUBROUTINE  convol_waqg(nqk,nBRk,nBIk,nqr,nBRr,nBIr,uk,vk,qk,BRk,BIk,ur,vr,qr,BRr,BIr)
+      ! this subroutine computes ((u.grad)q) = d/dxj(uj q) in the divergence form on the staggered grid.
+      ! Notice that this routine outputs the r-space velocity fields.
+                                                                    
+      double complex, dimension(iktx,ikty,n3h2) :: uk,vk   
+      double complex, dimension(iktx,ikty,n3h1) :: qk   
+      double complex, dimension(iktx,ikty,n3h0) :: nqk   
+      double complex, dimension(iktx,ikty,n3h0) :: BRk, BIk
+      double complex, dimension(iktx,ikty,n3h0) :: nBRk, nBIk
+
+      double complex, dimension(iktx,ikty,n3h1) :: qmem   
+      double complex, dimension(iktx,ikty,n3h0) :: BRmem   
+      double complex, dimension(iktx,ikty,n3h0) :: BImem   
+
+      double precision, dimension(n1d,n2d,n3h2) :: ur,vr
+      double precision, dimension(n1d,n2d,n3h1) :: qr
+      double precision, dimension(n1d,n2d,n3h0) :: nqr
+      double precision, dimension(n1d,n2d,n3h0) :: BRr, BIr
+      double precision, dimension(n1d,n2d,n3h0) :: nBRr, nBIr
+
+
+      !Terms to be differentiated
+      double complex,   dimension(iktx,ikty,n3h0) :: utermk,vtermk
+      double precision, dimension(n1d,n2d,n3h0)   :: utermr,vtermr
+
+      equivalence(utermr,utermk)
+      equivalence(vtermr,vtermk)
+
+      !I think we don't need to keep a copy of u in qg, right?
+      call fft_c2r(uk,ur,n3h2)
+      call fft_c2r(vk,vr,n3h2)
+     
+      qmem  = qk
+      BRmem = BRk
+      BImem = BIk
+
+      call fft_c2r(qk,qr,n3h1)
+      call fft_c2r(BRk,BRr,n3h0)
+      call fft_c2r(BIk,BIr,n3h0)
+      
+
+
+      ! ---- J(psi,q) ---- !
+
+      !Assign values to uterm and vterm
+      !nqk = ikx utermk + iky vtermk 
+      !With A,B and C defined as:
+
+      !utermr_n =  u_n*q_n
+      !utermr_n =  v_n*q_n
+
+      utermr=0.
+      vtermr=0.
+
+      do izh0=1,n3h0
+         izh1=izh0+1
+         izh2=izh0+2
+         do ix=1,n1d
+             do iy=1,n2d
+                if(ix<=n1) then
+
+                   utermr(ix,iy,izh0) = ur(ix,iy,izh2)*qr(ix,iy,izh1)
+                   vtermr(ix,iy,izh0) = vr(ix,iy,izh2)*qr(ix,iy,izh1)
+
+                end if
+             end do
+          end do
+       end do
+
+      !Move to k-space
+
+      call fft_r2c(utermr,utermk,n3h0)
+      call fft_r2c(vtermr,vtermk,n3h0)
+
+      !nqk = ikx utermk + iky vtermk
+
+      do izh0=1,n3h0 
+         do iky=1,ikty
+            ky = kya(iky)
+            do ikx=1,iktx
+               kx = kxa(ikx)
+               if (L(ikx,iky).eq.1) then                                                               
+                  nqk(ikx,iky,izh0) =  i*kx*utermk(ikx,iky,izh0)  +  i*ky*vtermk(ikx,iky,izh0)
+               else
+                  nqk(ikx,iky,izh0) = (0.D0,0.D0)
+               endif
+            enddo
+         enddo
+      enddo
+
+      qk = qmem
+
+
+
+
+
+
+      ! ---- J(psi,BR) ---- !
+
+      utermr=0.
+      vtermr=0.
+
+      do izh0=1,n3h0
+         izh1=izh0+1
+         izh2=izh0+2
+         do ix=1,n1d
+             do iy=1,n2d
+                if(ix<=n1) then
+
+                   utermr(ix,iy,izh0) = ur(ix,iy,izh2)*BRr(ix,iy,izh0)
+                   vtermr(ix,iy,izh0) = vr(ix,iy,izh2)*BRr(ix,iy,izh0)
+
+                end if
+             end do
+          end do
+       end do
+
+      !Move to k-space
+
+      call fft_r2c(utermr,utermk,n3h0)
+      call fft_r2c(vtermr,vtermk,n3h0)
+
+      !nqk = ikx utermk + iky vtermk
+
+      do izh0=1,n3h0 
+         do iky=1,ikty
+            ky = kya(iky)
+            do ikx=1,iktx
+               kx = kxa(ikx)
+               if (L(ikx,iky).eq.1) then                                                               
+                  nBRk(ikx,iky,izh0) =  i*kx*utermk(ikx,iky,izh0)  +  i*ky*vtermk(ikx,iky,izh0)
+               else
+                  nBRk(ikx,iky,izh0) = (0.D0,0.D0)
+               endif
+            enddo
+         enddo
+      enddo
+
+      BRk = BRmem
+
+
+
+
+
+      ! ---- J(psi,BI) ---- !
+
+      utermr=0.
+      vtermr=0.
+
+      do izh0=1,n3h0
+         izh1=izh0+1
+         izh2=izh0+2
+         do ix=1,n1d
+             do iy=1,n2d
+                if(ix<=n1) then
+
+                   utermr(ix,iy,izh0) = ur(ix,iy,izh2)*BIr(ix,iy,izh0)
+                   vtermr(ix,iy,izh0) = vr(ix,iy,izh2)*BIr(ix,iy,izh0)
+
+                end if
+             end do
+          end do
+       end do
+
+      !Move to k-space
+
+      call fft_r2c(utermr,utermk,n3h0)
+      call fft_r2c(vtermr,vtermk,n3h0)
+
+      !nqk = ikx utermk + iky vtermk
+
+      do izh0=1,n3h0 
+         do iky=1,ikty
+            ky = kya(iky)
+            do ikx=1,iktx
+               kx = kxa(ikx)
+               if (L(ikx,iky).eq.1) then                                                               
+                  nBIk(ikx,iky,izh0) =  i*kx*utermk(ikx,iky,izh0)  +  i*ky*vtermk(ikx,iky,izh0)
+               else
+                  nBIk(ikx,iky,izh0) = (0.D0,0.D0)
+               endif
+            enddo
+         enddo
+      enddo
+
+      BIk = BImem
+
+
+
+
+
+
+
+
+
+
+    END SUBROUTINE convol_waqg
+
+
+
+
+
+
+    SUBROUTINE  refraction_waqg(rBRk,rBIk,rBRr,rBIr,BRk,BIk,psik,BRr,BIr,psir)
+      ! this subroutine computes the refractive term: ~B*zeta
+      ! Notice that this routine outputs the r-space velocity fields.
+
+      double complex, dimension(iktx,ikty,n3h1) :: psik   
+      double complex, dimension(iktx,ikty,n3h0) :: zetak 
+      double complex, dimension(iktx,ikty,n3h0) :: BRk, BIk
+      double complex, dimension(iktx,ikty,n3h0) :: rBRk, rBIk
+
+
+      double precision, dimension(n1d,n2d,n3h1) :: psir
+      double precision, dimension(n1d,n2d,n3h0) :: zetar
+      double precision, dimension(n1d,n2d,n3h0) :: BRr, BIr
+      double precision, dimension(n1d,n2d,n3h0) :: rBRr, rBIr
+
+      double complex, dimension(iktx,ikty,n3h0) :: BRmem   
+      double complex, dimension(iktx,ikty,n3h0) :: BImem   
+
+      equivalence(zetar , zetak)
+
+      !Compute vertical vorticity from the streamfunction: zetak = - kh2 * psik
+      do izh0=1,n3h0
+         izh1=izh0+1
+         do iky=1,ikty
+            ky = kya(iky)
+            do ikx=1,iktx
+               kx = kxa(ikx)
+               kh2=kx*kx+ky*ky
+               if(L(ikx,iky)==1) then
+                  zetak(ikx,iky,izh0) = -kh2*psik(ikx,iky,izh1)
+               else
+                  zetak(ikx,iky,izh0) = (0.D0,0.D0)
+               end if
+            enddo
+         enddo
+      end do
+
+      call fft_c2r(zetak,zetar,n3h0)
+
+      BRmem = BRk
+      BImem = BIk
+
+      call fft_c2r(BRk,BRr,n3h0)
+      call fft_c2r(BIk,BIr,n3h0)
+      
+
+
+      ! ---- B*zeta ---- !
+
+      rBRr=0.
+      rBIr=0.
+
+      do izh0=1,n3h0
+         izh1=izh0+1
+         izh2=izh0+2
+         do ix=1,n1d
+             do iy=1,n2d
+                if(ix<=n1) then
+
+                   rBRr(ix,iy,izh0) = zetar(ix,iy,izh0)*BRr(ix,iy,izh0)
+                   rBIr(ix,iy,izh0) = zetar(ix,iy,izh0)*BIr(ix,iy,izh0)
+
+                end if
+             end do
+          end do
+       end do
+
+      !Move to k-space
+
+      call fft_r2c(rBRr,rBRk,n3h0)
+      call fft_r2c(rBIr,rBIk,n3h0)
+
+      !Dealias
+
+      do izh0=1,n3h0 
+         do iky=1,ikty
+            do ikx=1,iktx
+               if (L(ikx,iky).eq.0) then                                                               
+                  rBRk(ikx,iky,izh0) = (0.D0,0.D0)
+                  rBIk(ikx,iky,izh0) = (0.D0,0.D0)
+               endif
+            enddo
+         enddo
+      enddo
+
+      BRk = BRmem
+      BIk = BImem
+
+
+
+    END SUBROUTINE refraction_waqg
+
+
+
+
+
+    SUBROUTINE  compute_qw(qwk,BRk,BIk,qwr,BRr,BIr)
+      ! this subroutine computes the feedback of near-inertial waves onto QGPV
+
+      double complex,   dimension(iktx,ikty,n3h0) :: qwk
+      double precision, dimension(n1d,n2d,n3h0)   :: qwr
+
+      double complex, dimension(iktx,ikty,n3h0) :: BRk, BIk
+      double precision, dimension(n1d,n2d,n3h0) :: BRr, BIr
+
+      double complex, dimension(iktx,ikty,n3h0) :: BRmem   
+      double complex, dimension(iktx,ikty,n3h0) :: BImem   
+
+      !Can probably be optimized
+      double complex,   dimension(iktx,ikty,n3h0) :: BRxk,BRyk,BIxk,BIyk
+      double precision, dimension(n1d,n2d,n3h0)   :: BRxr,BRyr,BIxr,BIyr
+
+      !This could be one of the above: to optimize
+      double complex,   dimension(iktx,ikty,n3h0) :: tempk
+      double precision, dimension(n1d,n2d,n3h0)   :: tempr
+
+      equivalence(BRxr,BRxk)
+      equivalence(BRyr,BRyk)
+      equivalence(BIxr,BIxk)
+      equivalence(BIyr,BIyk)
+
+      equivalence(tempr,tempk)
+
+      BRxk = (0.D0,0.D0)
+      BRyk = (0.D0,0.D0)
+      BIxk = (0.D0,0.D0)
+      BRyk = (0.D0,0.D0)
+
+      do izh0=1,n3h0 
+         do iky=1,ikty
+            ky = kya(iky)
+            do ikx=1,iktx
+               kx = kxa(ikx)
+               if (L(ikx,iky).eq.1) then
+                  BRxk(ikx,iky,izh0) =  i*kx*BRk(ikx,iky,izh0)
+                  BRyk(ikx,iky,izh0) =  i*ky*BRk(ikx,iky,izh0)
+                  BIxk(ikx,iky,izh0) =  i*kx*BIk(ikx,iky,izh0)
+                  BIyk(ikx,iky,izh0) =  i*ky*BIk(ikx,iky,izh0)
+               endif
+            enddo
+         enddo
+      enddo
+
+      call fft_c2r(BRxk,BRxr,n3h0)
+      call fft_c2r(BRyk,BRyr,n3h0)
+      call fft_c2r(BIxk,BIxr,n3h0)
+      call fft_c2r(BIyk,BIyr,n3h0)
+
+
+      ! ---- 1st term: (i/2) J(B*,B) ---- !
+
+      ! Note that (i/2) J(B*,B) = (i/2)*(2i) J(Br,Bi) = - J(Br,Bi) = (Bry Bix - Brx Biy)
+
+
+      qwr=0.
+      
+
+      do izh0=1,n3h0
+         do ix=1,n1d
+             do iy=1,n2d
+                if(ix<=n1) then
+
+                   qwr(ix,iy,izh0) = BRyr(ix,iy,izh0)*BIxr(ix,iy,izh0) - BRxr(ix,iy,izh0)*BIyr(ix,iy,izh0)
+
+                end if
+             end do
+          end do
+       end do
+
+
+      ! ---- 2nd term: |B|^2 ---- !       
+
+      BRmem = BRk
+      BImem = BIk
+
+      call fft_c2r(BRk,BRr,n3h0)
+      call fft_c2r(BIk,BIr,n3h0)
+
+      tempr = 0.D0
+
+      do izh0=1,n3h0
+         do ix=1,n1d
+             do iy=1,n2d
+                if(ix<=n1) then
+
+                   tempr(ix,iy,izh0) = BRr(ix,iy,izh0)*BRr(ix,iy,izh0) + BIr(ix,iy,izh0)*BIr(ix,iy,izh0)
+
+                end if
+             end do
+          end do
+       end do      
+
+      call fft_r2c(tempr,tempk,n3h0)
+
+
+      ! --- Add the 1st and 2nd term to get qw --- !
+
+      call fft_r2c(qwr,qwk,n3h0)
+            
+      
+      do izh0=1,n3h0
+         do iky=1,ikty
+            ky = kya(iky)
+            do ikx=1,iktx
+               kx = kxa(ikx)
+               kh2 = kx*kx + ky*ky
+               if (L(ikx,iky).eq.1) then
+                  qwk(ikx,iky,izh0) = qwk(ikx,iky,izh0) - 0.25*kh2*tempk(ikx,iky,izh0)
+               else
+                  qwk(ikx,iky,izh0) = (0.D0,0.D0)
+               endif
+            enddo
+         enddo
+      enddo
+
+
+      ! --- Get the right dimensions --- !
+      qwk = qwk*Ro*W2F  
+
+      BRk = BRmem
+      BIk = BImem
+
+    END SUBROUTINE compute_qw
+
+
+
+
+    SUBROUTINE  compute_sigma(sigma,nBRk, nBIk, rBRk, rBIk)
+      ! this subroutine computes the vertical integral of A at every wavenumber.
+
+
+      double complex, dimension(iktx,ikty,2)               :: sigma_to_reduce     !This is the sum local to each processor. Last dimension: 1=real 2=imag
+      double complex, dimension(iktx,ikty,2), intent(out)  :: sigma               !This is the global sum after all processors shared theirs
+
+      !**** n = nonlinear advection term J(psi,B) **** r = refractive term ~ B*vort                                                                                            
+      double complex,   dimension(iktx,ikty,n3h0), intent(in) :: nBRk, nBIk, rBRk, rBIk
+
+
+
+      !There is the Coriolis parameter missing: figure dimensions out
+      do izh0=1,n3h0 
+         do iky=1,ikty
+            ky = kya(iky)
+            do ikx=1,iktx
+               kx = kxa(ikx)
+               kh2 = kx*kx + ky*ky
+               if ((L(ikx,iky).eq.1) .and. kh2 > 0) then
+                  sigma_to_reduce(ikx,iky,1) = sigma_to_reduce(ikx,iky,1) + (rBRk(ikx,iky,izh0) + 2*nBIk(ikx,iky,izh0))/(1.D0*kh2) 
+                  sigma_to_reduce(ikx,iky,2) = sigma_to_reduce(ikx,iky,2) + (rBIk(ikx,iky,izh0) - 2*nBRk(ikx,iky,izh0))/(1.D0*kh2) 
+               endif
+            enddo
+         enddo
+      enddo
+
+      call mpi_allreduce(sigma_to_reduce,sigma,iktx*ikty*2,MPI_DOUBLE_COMPLEX,MPI_SUM,MPI_COMM_WORLD,ierror)
+
+      ! Get the right dimensions !
+      sigma = sigma*Bu*Ro
+
+    END SUBROUTINE compute_sigma
+
+
+    SUBROUTINE compute_A(ARk,AIK,BRkt,BIkt,sigma)
+
+      double complex, dimension(iktx,ikty,2), intent(in)  :: sigma               !This is the global sum after all processors shared theirs                                    
+      double complex,   dimension(iktx,ikty,n3h0), intent(out) :: ARk, AIk
+
+      double complex, dimension(iktx,n3, iktyp), intent(in) :: BRkt          !Transposed (ky-parallelization) BRk
+      double complex, dimension(iktx,n3, iktyp), intent(in) :: BIkt          !Transposed (ky-parallelization) BIk 
+
+      !Just for internal usage: A to-be-transposed version.
+      double complex, dimension(iktx,n3, iktyp) :: ARkt          !Transposed (ky-parallelization) BIk                                                            
+      double complex, dimension(iktx,n3, iktyp) :: AIkt          !Transposed (ky-parallelization) BIk                                                               
+ 
+      double complex, dimension(iktx, iktyp) :: sumAR, sumAI, sumBR, sumBI
+      
+      !-Initialize to 0-!
+      ARkt  = (0.D0,0.D0)
+      AIkt  = (0.D0,0.D0)
+      sumAR = (0.D0,0.D0)
+      sumAI = (0.D0,0.D0)
+      sumBR = (0.D0,0.D0)
+      sumBI = (0.D0,0.D0)
+
+
+      !Compute \tilde{A}, which is \hat{A} up to an arbitrary constant (\hat{A} at z = dz/2 set to 0)
+      DO ikx=1,iktx
+         kx=kxa(ikx)
+         DO ikyp=1,iktyp
+            iky=ikyp+iktyp*mype
+            ky=kya(iky)
+
+            kh2=kx*kx + ky*ky
+
+            if(kh2/=0 .and. L(ikx,iky)==1 ) then
+
+               do iz=2,n3
+
+                  ARkt(ikx,iz,ikyp) = ARkt(ikx,iz-1,ikyp) + sumBR(ikx,ikyp)*r_2ut(iz-1)*dz*dz
+                  AIkt(ikx,iz,ikyp) = AIkt(ikx,iz-1,ikyp) + sumBI(ikx,ikyp)*r_2ut(iz-1)*dz*dz
+
+                  sumAR(ikx,ikyp) = sumAR(ikx,ikyp) + ARkt(ikx,iz,ikyp)
+                  sumAI(ikx,ikyp) = sumAI(ikx,ikyp) + AIkt(ikx,iz,ikyp)
+
+                  sumBR(ikx,ikyp) = sumBR(ikx,ikyp) + BRkt(ikx,iz,ikyp)
+                  sumBI(ikx,ikyp) = sumBI(ikx,ikyp) + BIkt(ikx,iz,ikyp)
+
+               end do
+            end if
+
+         end DO
+      end DO
+
+
+      !Compute \hat{A}, the actual solution we are looking for
+      DO ikx=1,iktx
+         kx=kxa(ikx)
+         DO ikyp=1,iktyp
+            iky=ikyp+iktyp*mype
+            ky=kya(iky)
+
+            kh2=kx*kx + ky*ky
+
+            if(kh2/=0 .and. L(ikx,iky)==1 ) then
+
+               do iz=1,n3
+
+                  ARkt(ikx,iz,ikyp) = ARkt(ikx,iz,ikyp) + ( sigma(ikx,iky,1) - sumAR(ikx,ikyp) )/n3
+                  AIkt(ikx,iz,ikyp) = AIkt(ikx,iz,ikyp) + ( sigma(ikx,iky,2) - sumAI(ikx,ikyp) )/n3
+
+               end do
+            end if
+
+         end DO
+      end DO
+
+      !Transpose A back to the regular z-parallelized world
+      call mpitranspose(ARkt,iktx,n3,iktyp,ARk,ikty,n3h0)
+      call mpitranspose(AIkt,iktx,n3,iktyp,AIk,ikty,n3h0)
+
+
+
+    END SUBROUTINE compute_A
+      
+
+
     SUBROUTINE compute_streamfunction(uk,vk,psik)  !Computes the QG streamfunction (rotational part of the horizontal flow)
 
       double complex,   dimension(iktx,ikty,n3h2), intent(in)  :: uk,vk
@@ -756,7 +1306,7 @@ MODULE derivatives
                kx = kxa(ikx)
                kh2=kx*kx+ky*ky
                if (L(ikx,iky).eq.1) then
-                  lhs(ikx,iky,izh0) = (rho_u(izh2+1)/rho_s(izh2+1))*wak(ikx,iky,izh1+1) - (rho_u(izh2)*(rho_s(izh2+1)+rho_s(izh2))/(rho_s(izh2+1)*rho_s(izh2)) + r_1(izh2)*r_2(izh2)*dz*dz*kh2/big_F)*wak(ikx,iky,izh1) +  (rho_u(izh2-1)/rho_s(izh2))*wak(ikx,iky,izh1-1)
+                  lhs(ikx,iky,izh0) = (rho_u(izh2+1)/rho_s(izh2+1))*wak(ikx,iky,izh1+1) - (rho_u(izh2)*(rho_s(izh2+1)+rho_s(izh2))/(rho_s(izh2+1)*rho_s(izh2)) + r_1(izh2)*r_2(izh2)*dz*dz*kh2/Bu)*wak(ikx,iky,izh1) +  (rho_u(izh2-1)/rho_s(izh2))*wak(ikx,iky,izh1-1)
                else
                   lhs(ikx,iky,izh0) = (0.D0,0.D0)
                endif
@@ -771,7 +1321,7 @@ MODULE derivatives
                kx = kxa(ikx)
                kh2=kx*kx+ky*ky
                if (L(ikx,iky).eq.1) then
-                  lhs(ikx,iky,1) = (rho_u(izbot2+1)/rho_s(izbot2+1))*wak(ikx,iky,izbot1+1) - (rho_u(izbot2)*(rho_s(izbot2+1)+rho_s(izbot2))/(rho_s(izbot2+1)*rho_s(izbot2)) + r_1(izbot2)*r_2(izbot2)*dz*dz*kh2/big_F)*wak(ikx,iky,izbot1) 
+                  lhs(ikx,iky,1) = (rho_u(izbot2+1)/rho_s(izbot2+1))*wak(ikx,iky,izbot1+1) - (rho_u(izbot2)*(rho_s(izbot2+1)+rho_s(izbot2))/(rho_s(izbot2+1)*rho_s(izbot2)) + r_1(izbot2)*r_2(izbot2)*dz*dz*kh2/Bu)*wak(ikx,iky,izbot1) 
                else
                   lhs(ikx,iky,1) = (0.D0,0.D0)
                endif
@@ -787,7 +1337,7 @@ MODULE derivatives
                kx = kxa(ikx)
                kh2=kx*kx+ky*ky
                if (L(ikx,iky).eq.1) then
-                  lhs(ikx,iky,n3h0-1) = - (rho_u(iztop2-1)*(rho_s(iztop2)+rho_s(iztop2-1))/(rho_s(iztop2)*rho_s(iztop2-1)) + r_1(iztop2-1)*r_2(iztop2-1)*dz*dz*kh2/big_F)*wak(ikx,iky,iztop1-1) +  (rho_u(iztop2-2)/rho_s(iztop2-1))*wak(ikx,iky,iztop1-2)
+                  lhs(ikx,iky,n3h0-1) = - (rho_u(iztop2-1)*(rho_s(iztop2)+rho_s(iztop2-1))/(rho_s(iztop2)*rho_s(iztop2-1)) + r_1(iztop2-1)*r_2(iztop2-1)*dz*dz*kh2/Bu)*wak(ikx,iky,iztop1-1) +  (rho_u(iztop2-2)/rho_s(iztop2-1))*wak(ikx,iky,iztop1-2)
                   lhs(ikx,iky,n3h0) = (0.D0,0.D0)
                else
                   lhs(ikx,iky,n3h0-1) = (0.D0,0.D0)
