@@ -224,7 +224,7 @@ PROGRAM main
 
  ! --- Recover the streamfunction --- !
 
- call compute_qw(qwk,BRk,BIk,qwr,BRr,BIr)           !Compute qw
+ call compute_qw(qwk,BRk,BIk,qwr,BRr,BIr)           ! Compute qw
 
  do izh0=1,n3h0                                     ! Compute q* = q - qw
     izh1=izh0+1

@@ -1063,6 +1063,8 @@ MODULE derivatives
 
       call mpi_allreduce(sigma_to_reduce,sigma,iktx*ikty*2,MPI_DOUBLE_COMPLEX,MPI_SUM,MPI_COMM_WORLD,ierror)
 
+      ! Get the right dimensions !
+      sigma = sigma*Bu*Ro
 
     END SUBROUTINE compute_sigma
 
@@ -1107,8 +1109,11 @@ MODULE derivatives
 
                do iz=2,n3
 
-                  ARkt(ikx,iz,ikyp) = ARkt(ikx,iz-1,ikyp) + sumBR(ikx,ikyp)/strat(iz-1)
-                  AIkt(ikx,iz,ikyp) = AIkt(ikx,iz-1,ikyp) + sumBI(ikx,ikyp)/strat(iz-1)
+!                  ARkt(ikx,iz,ikyp) = ARkt(ikx,iz-1,ikyp) + sumBR(ikx,ikyp)/strat(iz-1)
+!                  AIkt(ikx,iz,ikyp) = AIkt(ikx,iz-1,ikyp) + sumBI(ikx,ikyp)/strat(iz-1)
+
+                  ARkt(ikx,iz,ikyp) = ARkt(ikx,iz-1,ikyp) + sumBR(ikx,ikyp)*N2_ndut(iz-1)*dz*dz
+                  AIkt(ikx,iz,ikyp) = AIkt(ikx,iz-1,ikyp) + sumBI(ikx,ikyp)*N2_ndut(iz-1)*dz*dz
 
                   sumAR(ikx,ikyp) = sumAR(ikx,ikyp) + ARkt(ikx,iz,ikyp)
                   sumAI(ikx,ikyp) = sumAI(ikx,ikyp) + AIkt(ikx,iz,ikyp)
