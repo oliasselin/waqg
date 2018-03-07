@@ -144,13 +144,13 @@ MODULE parameters
     double precision, parameter :: cor=0.0001!0.00000000001!0.0005 !0.0001                           !Actual f = 0.0001 s^-1 (real value of planet Earth)
     double precision, parameter :: L_scale=5.*(0.5*(sqrt(N_2_trop)+sqrt(N_2_stra))*H_scale/cor)  !200*H_scale                 !Actual L in m ( x_real = L x' where x' in [0:2pi] is the nondim x.)
     double precision, parameter :: U_scale=1.                        !Actual U in m/s (u_real = U u' where u' is the nondim velocity ur implemented in the code)
-
+    double precision, parameter :: Uw_scale=1.                       !Characteristic magnitude of wave velocity (wave counterpart to U_scale for flow)
    
-    double precision, parameter :: Ar2= (H_scale/L_scale)**2!(1./64.)**2!(1./10.)**2 !0.01     !Aspect ratio squared = (H/L)^2     
-    double precision, parameter :: Ro = U_scale/(cor*L_scale)                                  !Rossby number  U/fL
-    double precision, parameter :: Fr = U_scale/(0.5*(sqrt(N_2_trop)+sqrt(N_2_stra))*H_scale)  !Froude number  U/N(z0)H
-
-    double precision, parameter :: big_F = Fr*Fr/(Ro*Ro)                    ! (Fr/Ro)^2
+    double precision, parameter :: Ar2 = (H_scale/L_scale)**2                                   !(1./64.)**2!(1./10.)**2 !0.01     !Aspect ratio squared = (H/L)^2     
+    double precision, parameter :: Ro  = U_scale/(cor*L_scale)                                  !Rossby number  U/fL
+    double precision, parameter :: Fr  = U_scale/(0.5*(sqrt(N_2_trop)+sqrt(N_2_stra))*H_scale)  !Froude number  U/N(z0)H
+    double precision, parameter :: W2F = (Uw_scale/U_scale)**2                                  ! wave to flow velocity magnitude squared
+    double precision, parameter :: Bu  = Fr*Fr/(Ro*Ro)                                          ! (Fr/Ro)^2 = Burger number 
 
 
 

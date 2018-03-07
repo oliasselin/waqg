@@ -1302,7 +1302,7 @@ MODULE derivatives
                kx = kxa(ikx)
                kh2=kx*kx+ky*ky
                if (L(ikx,iky).eq.1) then
-                  lhs(ikx,iky,izh0) = (rho_u(izh2+1)/rho_s(izh2+1))*wak(ikx,iky,izh1+1) - (rho_u(izh2)*(rho_s(izh2+1)+rho_s(izh2))/(rho_s(izh2+1)*rho_s(izh2)) + r_1(izh2)*r_2(izh2)*dz*dz*kh2/big_F)*wak(ikx,iky,izh1) +  (rho_u(izh2-1)/rho_s(izh2))*wak(ikx,iky,izh1-1)
+                  lhs(ikx,iky,izh0) = (rho_u(izh2+1)/rho_s(izh2+1))*wak(ikx,iky,izh1+1) - (rho_u(izh2)*(rho_s(izh2+1)+rho_s(izh2))/(rho_s(izh2+1)*rho_s(izh2)) + r_1(izh2)*r_2(izh2)*dz*dz*kh2/Bu)*wak(ikx,iky,izh1) +  (rho_u(izh2-1)/rho_s(izh2))*wak(ikx,iky,izh1-1)
                else
                   lhs(ikx,iky,izh0) = (0.D0,0.D0)
                endif
@@ -1317,7 +1317,7 @@ MODULE derivatives
                kx = kxa(ikx)
                kh2=kx*kx+ky*ky
                if (L(ikx,iky).eq.1) then
-                  lhs(ikx,iky,1) = (rho_u(izbot2+1)/rho_s(izbot2+1))*wak(ikx,iky,izbot1+1) - (rho_u(izbot2)*(rho_s(izbot2+1)+rho_s(izbot2))/(rho_s(izbot2+1)*rho_s(izbot2)) + r_1(izbot2)*r_2(izbot2)*dz*dz*kh2/big_F)*wak(ikx,iky,izbot1) 
+                  lhs(ikx,iky,1) = (rho_u(izbot2+1)/rho_s(izbot2+1))*wak(ikx,iky,izbot1+1) - (rho_u(izbot2)*(rho_s(izbot2+1)+rho_s(izbot2))/(rho_s(izbot2+1)*rho_s(izbot2)) + r_1(izbot2)*r_2(izbot2)*dz*dz*kh2/Bu)*wak(ikx,iky,izbot1) 
                else
                   lhs(ikx,iky,1) = (0.D0,0.D0)
                endif
@@ -1333,7 +1333,7 @@ MODULE derivatives
                kx = kxa(ikx)
                kh2=kx*kx+ky*ky
                if (L(ikx,iky).eq.1) then
-                  lhs(ikx,iky,n3h0-1) = - (rho_u(iztop2-1)*(rho_s(iztop2)+rho_s(iztop2-1))/(rho_s(iztop2)*rho_s(iztop2-1)) + r_1(iztop2-1)*r_2(iztop2-1)*dz*dz*kh2/big_F)*wak(ikx,iky,iztop1-1) +  (rho_u(iztop2-2)/rho_s(iztop2-1))*wak(ikx,iky,iztop1-2)
+                  lhs(ikx,iky,n3h0-1) = - (rho_u(iztop2-1)*(rho_s(iztop2)+rho_s(iztop2-1))/(rho_s(iztop2)*rho_s(iztop2-1)) + r_1(iztop2-1)*r_2(iztop2-1)*dz*dz*kh2/Bu)*wak(ikx,iky,iztop1-1) +  (rho_u(iztop2-2)/rho_s(iztop2-1))*wak(ikx,iky,iztop1-2)
                   lhs(ikx,iky,n3h0) = (0.D0,0.D0)
                else
                   lhs(ikx,iky,n3h0-1) = (0.D0,0.D0)

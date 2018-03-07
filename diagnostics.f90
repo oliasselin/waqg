@@ -136,10 +136,10 @@ CONTAINS
                 if(L(ikx,iky)==1) then
                    ks(iz) = ks(iz) + real( uk(ikx,iky,izh2)*CONJG( uk(ikx,iky,izh2) ) + vk(ikx,iky,izh2)*CONJG( vk(ikx,iky,izh2) ) )
                    ku(iz) = ku(iz) + real( wk(ikx,iky,izh2)*CONJG( wk(ikx,iky,izh2) ) )*Ar2
-                   ps_quad(iz) = ps_quad(iz) + real( bk(ikx,iky,izh2)*CONJG( bk(ikx,iky,izh2) ) )*(big_F*r_1s(izh2)/r_2s(izh2))         
+                   ps_quad(iz) = ps_quad(iz) + real( bk(ikx,iky,izh2)*CONJG( bk(ikx,iky,izh2) ) )*(Bu*r_1s(izh2)/r_2s(izh2))         
 
                    ks_rot(iz) = ks_rot(iz) + real( u_rot(ikx,iky,izh1)*CONJG( u_rot(ikx,iky,izh1) ) + v_rot(ikx,iky,izh1)*CONJG( v_rot(ikx,iky,izh1) ) )
-                   pu_rot(iz) = pu_rot(iz) + real( b_rot(ikx,iky,izh1)*CONJG( b_rot(ikx,iky,izh1) ) )*(big_F*r_1(izh2)/r_2(izh2))
+                   pu_rot(iz) = pu_rot(iz) + real( b_rot(ikx,iky,izh1)*CONJG( b_rot(ikx,iky,izh1) ) )*(Bu*r_1(izh2)/r_2(izh2))
 
                 end if
                 
@@ -152,10 +152,10 @@ CONTAINS
           
           ks(iz) = ks(iz) - 0.5*real( uk(1,1,izh2)*CONJG( uk(1,1,izh2) ) + vk(1,1,izh2)*CONJG( vk(1,1,izh2) ) )
           ku(iz) = ku(iz) - 0.5*real( wk(1,1,izh2)*CONJG( wk(1,1,izh2) ) )*Ar2
-          ps_quad(iz) = ps_quad(iz) - 0.5*real( bk(1,1,izh2)*CONJG( bk(1,1,izh2) ) )*(big_F*r_1s(izh2)/r_2s(izh2))    
+          ps_quad(iz) = ps_quad(iz) - 0.5*real( bk(1,1,izh2)*CONJG( bk(1,1,izh2) ) )*(Bu*r_1s(izh2)/r_2s(izh2))    
 
           ks_rot(iz) = ks_rot(iz) - 0.5*real( u_rot(1,1,izh1)*CONJG( u_rot(1,1,izh1) ) + v_rot(1,1,izh1)*CONJG( v_rot(1,1,izh1) ) )
-          pu_rot(iz) = pu_rot(iz) - 0.5*real( b_rot(1,1,izh1)*CONJG( b_rot(1,1,izh1) ) )*(big_F*r_1(izh2)/r_2(izh2))
+          pu_rot(iz) = pu_rot(iz) - 0.5*real( b_rot(1,1,izh1)*CONJG( b_rot(1,1,izh1) ) )*(Bu*r_1(izh2)/r_2(izh2))
 
           
        end do
@@ -377,8 +377,8 @@ CONTAINS
                    U_peak = U_peak + spz(mode,1)
                   
                    spz(mode,1)   = spz(mode,1) + 0.5*Ar2*( real( wk(ikx,iky,izh2s)*CONJG(wk(ikx,iky,izh2s)) )  + real( wk(ikx,iky,izh2s-1)*CONJG(wk(ikx,iky,izh2s-1)) )  )  !w interpol
-!                   spz(mode,2)   = spz(mode,2) + 0.5*( real( tk(ikx,iky,izh2s)*CONJG(tk(ikx,iky,izh2s)) )  + real( tk(ikx,iky,izh2s-1)*CONJG(tk(ikx,iky,izh2s-1)) )  )*(big_F*r_1s(izh2s)/r_2s(izh2s))  !t interpol
-                    spz(mode,2)   = spz(mode,2) + real( bk(ikx,iky,izh2s)*CONJG(bk(ikx,iky,izh2s)) )*(big_F*r_1s(izh2s)/r_2s(izh2s))  !b is not interpolated (avail at stag points
+!                   spz(mode,2)   = spz(mode,2) + 0.5*( real( tk(ikx,iky,izh2s)*CONJG(tk(ikx,iky,izh2s)) )  + real( tk(ikx,iky,izh2s-1)*CONJG(tk(ikx,iky,izh2s-1)) )  )*(Bu*r_1s(izh2s)/r_2s(izh2s))  !t interpol
+                    spz(mode,2)   = spz(mode,2) + real( bk(ikx,iky,izh2s)*CONJG(bk(ikx,iky,izh2s)) )*(Bu*r_1s(izh2s)/r_2s(izh2s))  !b is not interpolated (avail at stag points
                    num_modes(mode) = num_modes(mode) + 2
                    
                 endif
@@ -505,14 +505,14 @@ CONTAINS
               !Assuming energy_rot goes like u_r^2 + v_r^2 + b_r^2
               spz(mode,1)   = spz(mode,1) + real( u_rot(ikx,iky,izh1s)*CONJG(u_rot(ikx,iky,izh1s)) )   !u on staggered grid                                        
               spz(mode,1)   = spz(mode,1) + real( v_rot(ikx,iky,izh1s)*CONJG(v_rot(ikx,iky,izh1s)) )   !v on staggered grid    
-!              spz(mode,1)   = spz(mode,1) + 0.5*( real( b_rot(ikx,iky,izh1s)*CONJG(b_rot(ikx,iky,izh1s)) )  + real( b_rot(ikx,iky,izh1s-1)*CONJG(b_rot(ikx,iky,izh1s-1)) )  )*(big_F*r_1s(izh2s)/r_2s(izh2s)) 
-              !big_F was forgotten in the line above
+!              spz(mode,1)   = spz(mode,1) + 0.5*( real( b_rot(ikx,iky,izh1s)*CONJG(b_rot(ikx,iky,izh1s)) )  + real( b_rot(ikx,iky,izh1s-1)*CONJG(b_rot(ikx,iky,izh1s-1)) )  )*(Bu*r_1s(izh2s)/r_2s(izh2s)) 
+              !Bu was forgotten in the line above
 
               !Assuming energy_div goes like u_d^2 + v_d^2 + w_d^2 + b_d^2
               spz(mode,2)   = spz(mode,2) + real( (uk(ikx,iky,izh2s) - u_rot(ikx,iky,izh1s))*CONJG( uk(ikx,iky,izh2s) - u_rot(ikx,iky,izh1s)   ) )   !u on staggered grid 
               spz(mode,2)   = spz(mode,2) + real( (vk(ikx,iky,izh2s) - v_rot(ikx,iky,izh1s))*CONJG( vk(ikx,iky,izh2s) - v_rot(ikx,iky,izh1s)   ) )   !v on staggered grid 
               spz(mode,2)   = spz(mode,2) + 0.5*( real( wk(ikx,iky,izh2s)*CONJG(wk(ikx,iky,izh2s)) )  + real( wk(ikx,iky,izh2s-1)*CONJG(wk(ikx,iky,izh2s-1)) )  )*Ar2  !w_div=wk  
-!              spz(mode,2)   = spz(mode,2) + 0.5*( real(( tk(ikx,iky,izh2s) - b_rot(ikx,iky,izh1s)  )*CONJG( tk(ikx,iky,izh2s) - b_rot(ikx,iky,izh1s) ) )  + real((tk(ikx,iky,izh2s-1) - b_rot(ikx,iky,izh1s-1) )*CONJG( tk(ikx,iky,izh2s-1) - b_rot(ikx,iky,izh1s-1) ) )  )*(big_F*r_1s(izh2s)/r_2s(izh2s))  !t interpolated  
+!              spz(mode,2)   = spz(mode,2) + 0.5*( real(( tk(ikx,iky,izh2s) - b_rot(ikx,iky,izh1s)  )*CONJG( tk(ikx,iky,izh2s) - b_rot(ikx,iky,izh1s) ) )  + real((tk(ikx,iky,izh2s-1) - b_rot(ikx,iky,izh1s-1) )*CONJG( tk(ikx,iky,izh2s-1) - b_rot(ikx,iky,izh1s-1) ) )  )*(Bu*r_1s(izh2s)/r_2s(izh2s))  !t interpolated  
 
 
               num_modes(mode) = num_modes(mode) + 2
@@ -2413,7 +2413,7 @@ end subroutine hspec
     write(unit_run,*) "N/f = ",real(sqrt(N_2_trop)/cor)," in the troposphere"
     write(unit_run,*) "N/f = ",real(sqrt(N_2_stra)/cor)," in the stratosphere"
     write(unit_run,*) "Ar = H/L = 1/",L_scale/H_scale
-    write(unit_run,*) "Ro = ",Ro,"   Fr = ",Fr,"   big_F = ",big_F    !Average Fr
+    write(unit_run,*) "Ro = ",Ro,"   Fr = ",Fr,"   Bu = ",Bu    !Average Fr
     
     write(unit_run,*) "Transition wavelengths (DIM)"
     write(unit_run,*)  
@@ -2427,8 +2427,8 @@ end subroutine hspec
     write(unit_run,*) "Transition wavenumbers (NONDIM) - for SQG behavior, kD << kh << kJ" 
     write(unit_run,*) 
 
-    write(unit_run,*) "kD = ",sqrt(big_F)/(0.5*twopi)   !fL/NH *1/D' where D' is the nondim dist between tropopause and bot or top.
-    write(unit_run,*) "kJ = ",sqrt(big_F)/H_N
+    write(unit_run,*) "kD = ",sqrt(Bu)/(0.5*twopi)   !fL/NH *1/D' where D' is the nondim dist between tropopause and bot or top.
+    write(unit_run,*) "kJ = ",sqrt(Bu)/H_N
     write(unit_run,*) "kT = N/3 = ",n1/3          !This is the max well-resolved wavenumber
 
     write(unit_run,*) "Numerical Stability"
@@ -2693,7 +2693,7 @@ END SUBROUTINE continuity_anelastic
              if(L(ikx,iky)==1) then
                 ks(iz) = ks(iz) + real( uk(ikx,iky,izh2)*CONJG( uk(ikx,iky,izh2) ) + vk(ikx,iky,izh2)*CONJG( vk(ikx,iky,izh2) ) )
                 ku(iz) = ku(iz) + real( wk(ikx,iky,izh2)*CONJG( wk(ikx,iky,izh2) ) )*Ar2
-                ps(iz) = ps(iz) + real( bk(ikx,iky,izh2)*CONJG( bk(ikx,iky,izh2) ) )*(big_F*r_1(izh2)/r_2(izh2))
+                ps(iz) = ps(iz) + real( bk(ikx,iky,izh2)*CONJG( bk(ikx,iky,izh2) ) )*(Bu*r_1(izh2)/r_2(izh2))
              end if
 
           enddo
@@ -2703,7 +2703,7 @@ END SUBROUTINE continuity_anelastic
 
        ks(iz) = ks(iz) - 0.5*real( uk(1,1,izh2)*CONJG( uk(1,1,izh2) ) + vk(1,1,izh2)*CONJG( vk(1,1,izh2) ) )
        ku(iz) = ku(iz) - 0.5*real( wk(1,1,izh2)*CONJG( wk(1,1,izh2) ) )*Ar2
-       ps(iz) = ps(iz) - 0.5*real( bk(1,1,izh2)*CONJG( bk(1,1,izh2) ) )*(big_F*r_1(izh2)/r_2(izh2))
+       ps(iz) = ps(iz) - 0.5*real( bk(1,1,izh2)*CONJG( bk(1,1,izh2) ) )*(Bu*r_1(izh2)/r_2(izh2))
 
     end do
 
