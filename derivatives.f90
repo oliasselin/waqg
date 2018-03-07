@@ -956,7 +956,10 @@ MODULE derivatives
       call fft_c2r(BIyk,BIyr,n3h0)
 
 
-      ! ---- 1st term: J(B*,B) ---- !
+      ! ---- 1st term: (i/2) J(B*,B) ---- !
+
+      ! Note that (i/2) J(B*,B) = (i/2)*(2i) J(Br,Bi) = - J(Br,Bi) = (Bry Bix - Brx Biy)
+
 
       qwr=0.
       
@@ -1003,7 +1006,7 @@ MODULE derivatives
 
       call fft_r2c(qwr,qwk,n3h0)
             
-      !Check out the Coriolis factor...
+      
       do izh0=1,n3h0
          do iky=1,ikty
             ky = kya(iky)
@@ -1011,7 +1014,7 @@ MODULE derivatives
                kx = kxa(ikx)
                kh2 = kx*kx + ky*ky
                if (L(ikx,iky).eq.1) then
-                  qwk(ikx,iky,izh0) = qwk(ikx,iky,izh0) - (kh2/4.0)*tempk(ikx,iky,izh0)
+                  qwk(ikx,iky,izh0) = qwk(ikx,iky,izh0) - 0.25*kh2*tempk(ikx,iky,izh0)
                else
                   qwk(ikx,iky,izh0) = (0.D0,0.D0)
                endif
@@ -1019,6 +1022,9 @@ MODULE derivatives
          enddo
       enddo
 
+
+      ! --- Get the right dimensions --- !
+      qwk = qwk*Ro*W2F  
 
       BRk = BRmem
       BIk = BImem
