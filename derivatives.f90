@@ -1083,10 +1083,6 @@ MODULE derivatives
  
       double complex, dimension(iktx, iktyp) :: sumAR, sumAI, sumBR, sumBI
       
-      !Just for the pseudo-code:
-      double precision, dimension(n3) :: strat          !This is (f/N dz)^2 at unstaggered grid points: match with existing arrays of proper dimensions.
-
-
       !-Initialize to 0-!
       ARkt  = (0.D0,0.D0)
       AIkt  = (0.D0,0.D0)
@@ -1109,11 +1105,8 @@ MODULE derivatives
 
                do iz=2,n3
 
-!                  ARkt(ikx,iz,ikyp) = ARkt(ikx,iz-1,ikyp) + sumBR(ikx,ikyp)/strat(iz-1)
-!                  AIkt(ikx,iz,ikyp) = AIkt(ikx,iz-1,ikyp) + sumBI(ikx,ikyp)/strat(iz-1)
-
-                  ARkt(ikx,iz,ikyp) = ARkt(ikx,iz-1,ikyp) + sumBR(ikx,ikyp)*N2_ndut(iz-1)*dz*dz
-                  AIkt(ikx,iz,ikyp) = AIkt(ikx,iz-1,ikyp) + sumBI(ikx,ikyp)*N2_ndut(iz-1)*dz*dz
+                  ARkt(ikx,iz,ikyp) = ARkt(ikx,iz-1,ikyp) + sumBR(ikx,ikyp)*r_2ut(iz-1)*dz*dz
+                  AIkt(ikx,iz,ikyp) = AIkt(ikx,iz-1,ikyp) + sumBI(ikx,ikyp)*r_2ut(iz-1)*dz*dz
 
                   sumAR(ikx,ikyp) = sumAR(ikx,ikyp) + ARkt(ikx,iz,ikyp)
                   sumAI(ikx,ikyp) = sumAI(ikx,ikyp) + AIkt(ikx,iz,ikyp)
