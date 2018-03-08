@@ -75,7 +75,7 @@ MODULE parameters
     !----------!
 
     integer, parameter :: boussinesq=1
-    integer, parameter :: constant_N=0
+    integer, parameter :: constant_N=1
     integer, parameter :: base_state=1
     integer, parameter :: fraction=128                   !If h#=150m, then fraction=133.333333~128
     double precision :: H_N = L3/fraction                          !Caracteristic length scale of N^2 for the TANH prof. (1/alpha...)
@@ -150,7 +150,7 @@ MODULE parameters
     double precision, parameter :: Ro  = U_scale/(cor*L_scale)                                  !Rossby number  U/fL
     double precision, parameter :: Fr  = U_scale/(0.5*(sqrt(N_2_trop)+sqrt(N_2_stra))*H_scale)  !Froude number  U/N(z0)H
     double precision, parameter :: W2F = (Uw_scale/U_scale)**2                                  ! wave to flow velocity magnitude squared
-    double precision, parameter :: Bu  = Fr*Fr/(Ro*Ro)                                          ! (Fr/Ro)^2 = Burger number 
+    double precision, parameter :: Bu  = 1. !Fr*Fr/(Ro*Ro)                                          ! (Fr/Ro)^2 = Burger number 
 
 
 
@@ -159,7 +159,7 @@ MODULE parameters
 
     real :: time=0.
     integer :: iter
-    integer :: itermax=1000000000
+    integer :: itermax=0  !1000000000
     real :: maxtime=40                      
     double precision, parameter :: delt=0.05*U_scale*dz    !0.0005*U_scale*dz                ! T_visc = 0.25D0*dz*dz/nu
     double precision, parameter :: gamma=1e-2!4e-3!1e-2!7.e-3            !Robert filter parameter

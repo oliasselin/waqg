@@ -730,6 +730,10 @@ end subroutine init_base_state
       hlev1=(nz1-n3h0)/2
       hlev2=(nz2-n3h0)/2
       hlev3=(nz3-n3h0)/2
+
+      f1 = 0.
+      f2 = 0.
+      f3 = 0.
       
 do ix=1,n1d
    x=xa(ix)
@@ -784,10 +788,6 @@ do ix=1,n1d
          if(z1>=0) f1(ix,iy,iz1)=0.!sin(x)*cos(x)! cos(x)*cos(y)
          if(z2>=0) f2(ix,iy,iz2)=0.!-sin(x)*sin(y)
          if(z3>=0) f3(ix,iy,iz3)=2*sin(2*z3)*cos(2*z3)!sin(z3)*cos(z3)
-      else
-         if(z1>=0) f1(ix,iy,iz1)=0.
-         if(z2>=0) f2(ix,iy,iz2)=0.
-         if(z3>=0) f3(ix,iy,iz3)=0.
       end if
 
       !In this case, the X-marked arrays (on the top and bottom mype will not be initialized at all. Shouldn't cause any problem since we never invoke them.
@@ -817,6 +817,10 @@ end do
       hlev1=(nz1-n3h0)/2
       hlev2=(nz2-n3h0)/2
       hlev3=(nz3-n3h0)/2
+
+      f1s = 0.
+      f2s = 0.
+      f3s = 0.
       
 do ix=1,n1d
    x=xa(ix)
@@ -868,13 +872,9 @@ do ix=1,n1d
          end if
 
       if(ix<=n1) then
-         if(z1>=0) f1s(ix,iy,iz1)=-(2./3.)*cos(2*z1)*sin(y)*cos(3*y)!sin(x)*cos(x)! cos(x)*cos(y)
-         if(z2>=0) f2s(ix,iy,iz2)=-(4./3.)*cos(3*y)*sin(3*y)!-sin(x)*sin(y)
-         if(z3>=0) f3s(ix,iy,iz3)=0.!sin(z3)*cos(z3)
-      else
-         if(z1>=0) f1s(ix,iy,iz1)=0.
-         if(z2>=0) f2s(ix,iy,iz2)=0.
-         if(z3>=0) f3s(ix,iy,iz3)=0.
+         if(z1>=0 .and. izh0==1) f1s(ix,iy,iz1)=-cos(initial_k*x)/dz                 !q is nonzero only at the bottom grid point
+         if(z2>=0)               f2s(ix,iy,iz2)=(1./initial_k)*cos(initial_k*x)*cosh(initial_k*(z2-twopi))/sinh(twopi*initial_k) 
+         if(z3>=0)               f3s(ix,iy,iz3)=0.!sin(z3)*cos(z3)
       end if
 
       !In this case, the X-marked arrays (on the top and bottom mype will not be initialized at all. Shouldn't cause any problem since we never invoke them.

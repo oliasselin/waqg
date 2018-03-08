@@ -96,8 +96,8 @@ PROGRAM main
 
   equivalence(u_rotr,u_rot)
 
-
-
+  ! For the bogus-sheet test only
+  double precision ::   error,L1_local,L2_local,Li_local,L1_global,L2_global,Li_global
 
   !********************** Initializing... *******************************!
 
@@ -109,65 +109,63 @@ PROGRAM main
   call initialize_fftw(array2dr,array2di,fr_even,fk_even,fr_odd,fk_odd)
   call init_arrays
   call init_base_state
-  if(mype==0)  call validate_run
-
-  if(init_vertical_structure==generic) then 
-     call init_psi_generic(uk,vk,wk,bk,psik,psir)
-     call init_q(qk,psik)
-  elseif(init_vertical_structure==smith_bernard) then
-     call init_psi_generic(uk,vk,wk,bk,psik,psir)   !Init a fully general psi
-     call init_q_sb(rhs,psik)       !Compute the jump-dominated PV as in Smith & Bernard (2013)
-     call mpitranspose(rhs,iktx,ikty,n3h0,qt,n3,iktyp)
-     call psi_solver(psik,qt)
-     call compute_velo(uk,vk,wk,bk,psik)
-
-    !Set q from normalized rhs                                                                                                                                                                                                      
-    do izh0=1,n3h0
-       izh1=izh0+1
-       do iky=1,ikty
-          do ikx=1,iktx
-             if (L(ikx,iky).eq.1) then
-                 qk(ikx,iky,izh1) =  rhs(ikx,iky,izh0)
-              else
-                 qk(ikx,iky,izh1) = (0.D0,0.D0)
-              endif
-           enddo
-        enddo
-     enddo
-  end if
-
- if(norm_trop==1) call normalize_trop(uk,vk,wk,bk,psik,qk,wak)
-
- call generate_halo(uk,vk,wk,bk)
- call generate_halo_q(qk) 
-
- qok=qk
+!  if(mype==0)  call validate_run
 
 
- !Initial diagnostics!
- !*******************!
-
- !Compute war/wak if desired                                                                                                                                                     
- if(out_omega==1)  then
-    call omega_eqn_rhs(rhs,rhsr,psik)
-    call mpitranspose(rhs,iktx,ikty,n3h0,qt,n3,iktyp)
-    call omega_equation(wak,qt)
- end if
-
- if(out_etot ==1) call diag_zentrum(uk,vk,wk,bk,wak,psik,u_rot)
+  !************************************!
+  !***** Testing the bogus sheets *****!
+  !************************************!
+  
+  if(mype==0) write(*,*) "Accuracy of bogus sheets for N=",n3,"on ",npe,"processors"
 
 
- do id_field=1,nfields                                            
-    if(out_slice ==1)  call slices(uk,vk,wk,bk,wak,u_rot,ur,vr,wr,br,war,u_rotr,id_field)
- end do
- 
-! if(out_slab == 1 ) then
-!    if(mype==slab_mype) call print_slab(uk,vk)
-!    if(mype==slab_mype) call slab_klist
-! end if
+  ! Define the true, analytical solution for psi (war) and the bogus PV (nqr)  ---- See diary 03-2018, March 7th !
+  call generate_fields_stag(nqr,n3h0,war,n3h1,AIr,n3h0) 
 
- if(out_eta == 1 ) call tropopause_meanders(uk,vk,wk,bk,ur,vr,wr,br)
+  !fft q_bogus to k-space
+  call fft_r2c(nqr,nqk,n3h0)
+  
+  !Invert q for psi
+  call mpitranspose(nqk,iktx,ikty,n3h0,qt,n3,iktyp)  !Transpose q*                                                                                                                  
+  call psi_solver(psik,qt)
 
+  !ifft psik to real-space
+  call fft_c2r(psik,psir,n3h1)  
+
+
+  error   =0.
+  L1_local=0.
+  L2_local=0.
+  Li_local=0.
+  L1_global=0.
+  L2_global=0.
+  Li_global=0.
+
+  do izh0=1,n3h0
+     izh1=izh0+1
+     do ix=1,n1
+        do iy=1,n2 
+
+           error = DABS(psir(ix,iy,izh1)-war(ix,iy,izh1))
+           L1_local = L1_local + error
+           L2_local = L2_local + error**2
+           
+           if(error > Li_local) Li_local = error 
+           
+        end do
+     end do
+  end do
+
+
+
+  call mpi_reduce(L1_local,L1_global, 1,MPI_DOUBLE,MPI_SUM,0,MPI_COMM_WORLD,ierror)  
+  call mpi_reduce(L2_local,L2_global, 1,MPI_DOUBLE,MPI_SUM,0,MPI_COMM_WORLD,ierror)  
+  call mpi_reduce(Li_local,Li_global, 1,MPI_DOUBLE,MPI_MAX,0,MPI_COMM_WORLD,ierror)  
+
+  if(mype==0) write(*,*) "L1=",L1_global/(n1*n2*n3),"L2=",sqrt(L2_global/(n1*n2*n3)),"Linf=",Li_global
+
+
+  !***** The end (since itermax was set to 0 ) *****!
 
 
  !************************************************************************!
@@ -404,7 +402,6 @@ if(out_etot ==1 .and. mod(iter,freq_etot )==0) call diag_zentrum(uk,vk,wk,bk,wak
  if(time>maxtime) EXIT
 end do !End loop
 
- if(mype==0)  write(*,*) n1,ave_cpu/(1.*itermax-1.)
 
 !************ Terminating processes **********************!                                                                                                                         
 
