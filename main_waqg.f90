@@ -162,7 +162,14 @@ PROGRAM main
   call mpi_reduce(L2_local,L2_global, 1,MPI_DOUBLE,MPI_SUM,0,MPI_COMM_WORLD,ierror)  
   call mpi_reduce(Li_local,Li_global, 1,MPI_DOUBLE,MPI_MAX,0,MPI_COMM_WORLD,ierror)  
 
-  if(mype==0) write(*,*) "L1=",L1_global/(n1*n2*n3),"L2=",sqrt(L2_global/(n1*n2*n3)),"Linf=",Li_global
+!  if(mype==0) write(*,*) "L1=",L1_global/(n1*n2*n3),"L2=",sqrt(L2_global/(n1*n2*n3)),"Linf=",Li_global
+
+  if (mype==0) then
+     open (unit = 154673, file = "lnorms.dat", access='append', status='old')
+     write(154673,"(I6,E12.5,E12.5,E12.5)") n3,L1_global/(n1*n2*n3),sqrt(L2_global/(n1*n2*n3)),Li_global
+  end if
+
+
 
 
   !***** The end (since itermax was set to 0 ) *****!

@@ -872,9 +872,9 @@ do ix=1,n1d
          end if
 
       if(ix<=n1) then
-         if(z1>=0 .and. izh0==1) f1s(ix,iy,iz1)=-cos(initial_k*x)/dz                 !q is nonzero only at the bottom grid point
-         if(z2>=0)               f2s(ix,iy,iz2)=(1./initial_k)*cos(initial_k*x)*cosh(initial_k*(z2-twopi))/sinh(twopi*initial_k) 
-         if(z3>=0)               f3s(ix,iy,iz3)=0.!sin(z3)*cos(z3)
+         if(z1>=0 .and. izh0==1 .and. mype==0) f1s(ix,iy,iz1)=-cos(initial_k*x)/dz                 !q is nonzero only at the bottom grid point
+         if(z2>=0)                             f2s(ix,iy,iz2)=(1./initial_k)*cos(initial_k*x)*cosh(initial_k*(z2-twopi))/sinh(twopi*initial_k) 
+         if(z3>=0)                             f3s(ix,iy,iz3)=0.!sin(z3)*cos(z3)
       end if
 
       !In this case, the X-marked arrays (on the top and bottom mype will not be initialized at all. Shouldn't cause any problem since we never invoke them.

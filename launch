@@ -45,7 +45,7 @@ cat > EXEC_STEP << EXEC
 #SBATCH -e bogus.e%j     # Name of stderr error file
 #SBATCH -p development     # Queue (partition) name
 #SBATCH -N 1               # Total # of nodes 
-#SBATCH -n 32              # Total # of mpi tasks
+#SBATCH -n 16              # Total # of mpi tasks
 #SBATCH -t 00:00:30        # Run time (hh:mm:ss)
 #SBATCH --mail-user=oasselin@ucsd.edu
 ##SBATCH --mail-type=all    # Send email at begin and end of job
