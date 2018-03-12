@@ -882,7 +882,7 @@ do ix=1,n1d
       if(ix<=n1) then
          if(z1>=0) f1s(ix,iy,iz1)=cos(apx*x + bpx)*cos(apy*y + bpy)*cos(apz*z1 + bpz)
          if(z2>=0) f2s(ix,iy,iz2)=cos(abx*x + bbx)*cos(aby*y + bby)*cos(abz*z2 + bbz)
-         if(z3>=0) f3s(ix,iy,iz3)=apx*aby*sin(apx*x + bpx)*cos(apy*y + bpy)*cos(apz*z3 + bpz)*cos(abx*x + bbx)*sin(aby*y + bby)*cos(abz*z3 + bbz) - apy*abx*cos(apx*x + bpx)*sin(apy*y + bpy)*cos(apz*z3 + bpz)*sin(abx*x + bbx)*cos(aby*y + bby)*cos(abz*z3 + bbz)
+         if(z3>=0) f3s(ix,iy,iz3)=-(apx*apx + apy*apy)*cos(apx*x + bpx)*cos(apy*y + bpy)*cos(apz*z3 + bpz)*cos(abx*x + bbx)*cos(aby*y + bby)*cos(abz*z3 + bbz)
       end if
 
       !In this case, the X-marked arrays (on the top and bottom mype will not be initialized at all. Shouldn't cause any problem since we never invoke them.

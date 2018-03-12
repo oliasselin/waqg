@@ -114,21 +114,19 @@ PROGRAM main
   !***** Testing the bogus sheets *****!
   !************************************!
   
-  if(mype==0) write(*,*) "Accuracy of J(psi,Br)",n3,"on ",npe,"processors"
+  if(mype==0) write(*,*) "Accuracy of refraction",n3,"on ",npe,"processors"
 
 
   ! Define the true, analytical solution for nBRr (AIr) --- See diary 03-2018, March 12th !
-  call generate_fields_stag(psir,n3h1,qr,n3h1,AIr,n3h0) 
+  call generate_fields_stag(psir,n3h1,BIr,n3h0,AIr,n3h0) 
 
   call fft_r2c(psir,psik,n3h1)
-  call fft_r2c(qr,qk,n3h1)
+  call fft_r2c(BIr,BIk,n3h0)
 
-  call compute_velo(uk,vk,wk,bk,psik)
-  
-  call convol_waqg(nqk,nBRk,nBIk,nqr,nBRr,nBIr,uk,vk,qk,BRk,BIk,ur,vr,qr,BRr,BIr)
+  call refraction_waqg(rBRk,rBIk,rBRr,rBIr,BRk,BIk,psik,BRr,BIr,psir)
 
   !ifft psik to real-space
-  call fft_c2r(nqk,nqr,n3h0)  
+  call fft_c2r(rBIk,rBIr,n3h0)  
 
 
   error   =0.
@@ -144,7 +142,7 @@ PROGRAM main
      do ix=1,n1
         do iy=1,n2 
 
-           error = DABS(nqr(ix,iy,izh0)-AIr(ix,iy,izh0))
+           error = DABS(rBIr(ix,iy,izh0)-AIr(ix,iy,izh0))
            L1_local = L1_local + error
            L2_local = L2_local + error**2
            
@@ -164,7 +162,7 @@ PROGRAM main
 
   if (mype==0) then
 !     open (unit = 154673, file = "adv-err.dat", access='append', status='old')
-     open (unit = 154673, file = "adv-errq.dat")
+     open (unit = 154673, file = "ref-errI.dat")
      write(154673,"(I6,E12.5,E12.5,E12.5)") n3,L1_global/(n1*n2*n3),sqrt(L2_global/(n1*n2*n3)),Li_global
   end if
 
