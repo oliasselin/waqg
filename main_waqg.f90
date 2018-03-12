@@ -109,28 +109,26 @@ PROGRAM main
   call initialize_fftw(array2dr,array2di,fr_even,fk_even,fr_odd,fk_odd)
   call init_arrays
   call init_base_state
-!  if(mype==0)  call validate_run
-
 
   !************************************!
   !***** Testing the bogus sheets *****!
   !************************************!
   
-  if(mype==0) write(*,*) "Accuracy of bogus sheets for N=",n3,"on ",npe,"processors"
+  if(mype==0) write(*,*) "Accuracy of J(psi,Br)",n3,"on ",npe,"processors"
 
 
-  ! Define the true, analytical solution for psi (war) and the bogus PV (nqr)  ---- See diary 03-2018, March 7th !
-  call generate_fields_stag(nqr,n3h0,war,n3h1,AIr,n3h0) 
+  ! Define the true, analytical solution for nBRr (AIr) --- See diary 03-2018, March 12th !
+  call generate_fields_stag(psir,n3h1,qr,n3h1,AIr,n3h0) 
 
-  !fft q_bogus to k-space
-  call fft_r2c(nqr,nqk,n3h0)
+  call fft_r2c(psir,psik,n3h1)
+  call fft_r2c(qr,qk,n3h1)
+
+  call compute_velo(uk,vk,wk,bk,psik)
   
-  !Invert q for psi
-  call mpitranspose(nqk,iktx,ikty,n3h0,qt,n3,iktyp)  !Transpose q*                                                                                                                  
-  call psi_solver(psik,qt)
+  call convol_waqg(nqk,nBRk,nBIk,nqr,nBRr,nBIr,uk,vk,qk,BRk,BIk,ur,vr,qr,BRr,BIr)
 
   !ifft psik to real-space
-  call fft_c2r(psik,psir,n3h1)  
+  call fft_c2r(nqk,nqr,n3h0)  
 
 
   error   =0.
@@ -146,7 +144,7 @@ PROGRAM main
      do ix=1,n1
         do iy=1,n2 
 
-           error = DABS(psir(ix,iy,izh1)-war(ix,iy,izh1))
+           error = DABS(nqr(ix,iy,izh0)-AIr(ix,iy,izh0))
            L1_local = L1_local + error
            L2_local = L2_local + error**2
            
@@ -165,7 +163,8 @@ PROGRAM main
 !  if(mype==0) write(*,*) "L1=",L1_global/(n1*n2*n3),"L2=",sqrt(L2_global/(n1*n2*n3)),"Linf=",Li_global
 
   if (mype==0) then
-     open (unit = 154673, file = "lnorms.dat", access='append', status='old')
+!     open (unit = 154673, file = "adv-err.dat", access='append', status='old')
+     open (unit = 154673, file = "adv-errq.dat")
      write(154673,"(I6,E12.5,E12.5,E12.5)") n3,L1_global/(n1*n2*n3),sqrt(L2_global/(n1*n2*n3)),Li_global
   end if
 

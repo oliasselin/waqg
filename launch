@@ -3,8 +3,8 @@
 
 runout=monitorjob
 
-sourdir=/scratch/05518/oasselin/test_bogus/source/
-datadir=/scratch/05518/oasselin/test_bogus/output/
+sourdir=/scratch/05518/oasselin/test_adv/source/
+datadir=/scratch/05518/oasselin/test_adv/output/
 
 mkdir -p $sourdir
 mkdir -p $datadir
@@ -40,12 +40,12 @@ cat > EXEC_STEP << EXEC
 #
 #----------------------------------------------------
 
-#SBATCH -J bogus         # Job name
-#SBATCH -o bogus.o%j     # Name of stdout output file
-#SBATCH -e bogus.e%j     # Name of stderr error file
+#SBATCH -J adv         # Job name
+#SBATCH -o adv.o%j     # Name of stdout output file
+#SBATCH -e adv.e%j     # Name of stderr error file
 #SBATCH -p development     # Queue (partition) name
 #SBATCH -N 1               # Total # of nodes 
-#SBATCH -n 16              # Total # of mpi tasks
+#SBATCH -n 2              # Total # of mpi tasks
 #SBATCH -t 00:00:30        # Run time (hh:mm:ss)
 #SBATCH --mail-user=oasselin@ucsd.edu
 ##SBATCH --mail-type=all    # Send email at begin and end of job

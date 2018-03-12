@@ -814,6 +814,14 @@ end do
       integer :: iz1,iz2,iz3
 
 
+      double precision :: apx=4.,apy=2.,apz=7.
+      double precision :: bpx=5.,bpy=4.,bpz=54.
+      double precision :: abx=2.,aby=6.,abz=33.
+      double precision :: bbx=1.,bby=3.,bbz=12.
+
+   
+
+
       hlev1=(nz1-n3h0)/2
       hlev2=(nz2-n3h0)/2
       hlev3=(nz3-n3h0)/2
@@ -872,9 +880,9 @@ do ix=1,n1d
          end if
 
       if(ix<=n1) then
-         if(z1>=0 .and. izh0==1 .and. mype==0) f1s(ix,iy,iz1)=-cos(initial_k*x)/dz                 !q is nonzero only at the bottom grid point
-         if(z2>=0)                             f2s(ix,iy,iz2)=(1./initial_k)*cos(initial_k*x)*cosh(initial_k*(z2-twopi))/sinh(twopi*initial_k) 
-         if(z3>=0)                             f3s(ix,iy,iz3)=0.!sin(z3)*cos(z3)
+         if(z1>=0) f1s(ix,iy,iz1)=cos(apx*x + bpx)*cos(apy*y + bpy)*cos(apz*z1 + bpz)
+         if(z2>=0) f2s(ix,iy,iz2)=cos(abx*x + bbx)*cos(aby*y + bby)*cos(abz*z2 + bbz)
+         if(z3>=0) f3s(ix,iy,iz3)=apx*aby*sin(apx*x + bpx)*cos(apy*y + bpy)*cos(apz*z3 + bpz)*cos(abx*x + bbx)*sin(aby*y + bby)*cos(abz*z3 + bbz) - apy*abx*cos(apx*x + bpx)*sin(apy*y + bpy)*cos(apz*z3 + bpz)*sin(abx*x + bbx)*cos(aby*y + bby)*cos(abz*z3 + bbz)
       end if
 
       !In this case, the X-marked arrays (on the top and bottom mype will not be initialized at all. Shouldn't cause any problem since we never invoke them.
