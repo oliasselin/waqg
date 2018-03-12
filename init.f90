@@ -814,10 +814,10 @@ end do
       integer :: iz1,iz2,iz3
 
 
-      double precision :: apx=4.,apy=2.,apz=7.
-      double precision :: bpx=5.,bpy=4.,bpz=54.
-      double precision :: abx=2.,aby=6.,abz=33.
-      double precision :: bbx=1.,bby=3.,bbz=12.
+      double precision :: arx=4.,ary=2.,arz=7.
+      double precision :: brx=5.,bry=4.,brz=54.
+      double precision :: aix=2.,aiy=6.,aiz=33.
+      double precision :: bix=1.,biy=3.,biz=12.
 
    
 
@@ -880,11 +880,26 @@ do ix=1,n1d
          end if
 
       if(ix<=n1) then
-         if(z1>=0) f1s(ix,iy,iz1)=cos(apx*x + bpx)*cos(apy*y + bpy)*cos(apz*z1 + bpz)
-         if(z2>=0) f2s(ix,iy,iz2)=cos(abx*x + bbx)*cos(aby*y + bby)*cos(abz*z2 + bbz)
-         if(z3>=0) f3s(ix,iy,iz3)=-(apx*apx + apy*apy)*cos(apx*x + bpx)*cos(apy*y + bpy)*cos(apz*z3 + bpz)*cos(abx*x + bbx)*cos(aby*y + bby)*cos(abz*z3 + bbz)
-      end if
+         if(z1>=0) f1s(ix,iy,iz1)=cos(arx*x + brx)*cos(ary*y + bry)*cos(arz*z1 + brz)         !BR
+         if(z2>=0) f2s(ix,iy,iz2)=cos(aix*x + bix)*cos(aiy*y + biy)*cos(aiz*z2 + biz)         !BI
+!         if(z3>=0) f3s(ix,iy,iz3)=-0.5*(arx*arx*cos(2.*arx*x + 2.*brx)*cos(ary*y + bry)*cos(ary*y + bry) + ary*ary*cos(2.*ary*y + 2.*bry)*cos(arx*x + brx)*cos(arx*x + brx))*cos(arz*z3 + brz)*cos(arz*z3 + brz) -0.5*(aix*aix*cos(2.*aix*x + 2.*bix)*cos(aiy*y + biy)*cos(aiy*y + biy) + aiy*aiy*cos(2.*aiy*y + 2.*biy)*cos(aix*x + bix)*cos(aix*x + bix))*cos(aiz*z3 + biz)*cos(aiz*z3 + biz)
+         if(z3>=0) then 
+            f3s(ix,iy,iz3)=aix*ary*sin(aix*x + bix)*cos(aiy*y + biy)*cos(aiz*z3 + biz)*cos(arx*x + brx)*sin(ary*y + bry)*cos(arz*z3 + brz)  -  aiy*arx*cos(aix*x + bix)*sin(aiy*y + biy)*cos(aiz*z3 + biz)*sin(arx*x + brx)*cos(ary*y + bry)*cos(arz*z3 + brz)
+            f3s(ix,iy,iz3)= f3s(ix,iy,iz3) -0.5*(arx*arx*cos(2.*arx*x + 2.*brx)*cos(ary*y + bry)*cos(ary*y + bry) + ary*ary*cos(2.*ary*y + 2.*bry)*cos(arx*x + brx)*cos(arx*x + brx))*cos(arz*z3 + brz)*cos(arz*z3 + brz)
+            f3s(ix,iy,iz3)= f3s(ix,iy,iz3) -0.5*(aix*aix*cos(2.*aix*x + 2.*bix)*cos(aiy*y + biy)*cos(aiy*y + biy) + aiy*aiy*cos(2.*aiy*y + 2.*biy)*cos(aix*x + bix)*cos(aix*x + bix))*cos(aiz*z3 + biz)*cos(aiz*z3 + biz)           
+         end if
 
+!nabla^2 Br^2
+!-0.5*(arx*arx*cos(2.*arx*x + 2.*brx)*cos(ary*y + bry)*cos(ary*y + bry) + ary*ary*cos(2.*ary*y + 2.*bry)*cos(arx*x + brx)*cos(arx*x + brx))*cos(arz*z3 + brz)*cos(arz*z3 + brz)
+!(-2.*arx*arx*cos(2*arx*x + 2*brx)*cos(ary*y + bry)*cos(ary*y + bry)  - 2.*ary*ary*cos(2*ary*y + 2*bry)*cos(arx*x + brx)*cos(arx*x + brx)   )*cos(arz*z3 + brz)**cos(arz*z3 + brz)
+
+!nabla^2 Bi^2
+!-0.5*(aix*aix*cos(2.*aix*x + 2.*bix)*cos(aiy*y + biy)*cos(aiy*y + biy) + aiy*aiy*cos(2.*aiy*y + 2.*biy)*cos(aix*x + bix)*cos(aix*x + bix))*cos(aiz*z3 + biz)*cos(aiz*z3 + biz)
+!(-2.*aix*aix*cos(2*aix*x + 2*bix)*cos(aiy*y + biy)*cos(aiy*y + biy)  - 2.*aiy*aiy*cos(2*aiy*y + 2*biy)*cos(aix*x + bix)*cos(aix*x + bix)   )*cos(aiz*z3 + biz)**cos(aiz*z3 + biz)
+
+
+      end if
+      
       !In this case, the X-marked arrays (on the top and bottom mype will not be initialized at all. Shouldn't cause any problem since we never invoke them.
 
       end do

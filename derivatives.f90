@@ -920,15 +920,15 @@ MODULE derivatives
       double precision, dimension(n1d,n2d,n3h0)   :: BRxr,BRyr,BIxr,BIyr
 
       !This could be one of the above: to optimize
-      double complex,   dimension(iktx,ikty,n3h0) :: tempk
-      double precision, dimension(n1d,n2d,n3h0)   :: tempr
+      double complex,   dimension(iktx,ikty,n3h0) :: tempqwk
+      double precision, dimension(n1d,n2d,n3h0)   :: tempqwr
 
       equivalence(BRxr,BRxk)
       equivalence(BRyr,BRyk)
       equivalence(BIxr,BIxk)
       equivalence(BIyr,BIyk)
 
-      equivalence(tempr,tempk)
+      equivalence(tempqwr,tempqwk)
 
       BRxk = (0.D0,0.D0)
       BRyk = (0.D0,0.D0)
@@ -985,28 +985,27 @@ MODULE derivatives
       call fft_c2r(BRk,BRr,n3h0)
       call fft_c2r(BIk,BIr,n3h0)
 
-      tempr = 0.D0
+      tempqwr = 0.D0
 
       do izh0=1,n3h0
          do ix=1,n1d
              do iy=1,n2d
                 if(ix<=n1) then
 
-                   tempr(ix,iy,izh0) = BRr(ix,iy,izh0)*BRr(ix,iy,izh0) + BIr(ix,iy,izh0)*BIr(ix,iy,izh0)
+                   tempqwr(ix,iy,izh0) = BRr(ix,iy,izh0)*BRr(ix,iy,izh0) + BIr(ix,iy,izh0)*BIr(ix,iy,izh0)
 
                 end if
              end do
           end do
        end do      
 
-      call fft_r2c(tempr,tempk,n3h0)
+      call fft_r2c(tempqwr,tempqwk,n3h0)
 
 
       ! --- Add the 1st and 2nd term to get qw --- !
 
       call fft_r2c(qwr,qwk,n3h0)
             
-      
       do izh0=1,n3h0
          do iky=1,ikty
             ky = kya(iky)
@@ -1014,7 +1013,7 @@ MODULE derivatives
                kx = kxa(ikx)
                kh2 = kx*kx + ky*ky
                if (L(ikx,iky).eq.1) then
-                  qwk(ikx,iky,izh0) = qwk(ikx,iky,izh0) - 0.25*kh2*tempk(ikx,iky,izh0)
+                  qwk(ikx,iky,izh0) = qwk(ikx,iky,izh0) - 0.25*kh2*tempqwk(ikx,iky,izh0)
                else
                   qwk(ikx,iky,izh0) = (0.D0,0.D0)
                endif
@@ -1024,7 +1023,7 @@ MODULE derivatives
 
 
       ! --- Get the right dimensions --- !
-      qwk = qwk*Ro*W2F  
+!      qwk = qwk*Ro*W2F    !Commented for test only.
 
       BRk = BRmem
       BIk = BImem
