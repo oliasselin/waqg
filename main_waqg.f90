@@ -115,7 +115,7 @@ PROGRAM main
   !************************************!
   
   write(*,*) "Hello, world! This is mype=",mype
-  if(mype==0) write(*,*) "Accuracy of qw",n3,"on ",npe,"processors"
+  if(mype==0) write(*,*) "Accuracy of LA-inversion",n3,"on ",npe,"processors"
 
 
   ! Define the true, analytical solution for ARr (nqr) --- See diary 03-2018, March 12th !

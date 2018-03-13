@@ -252,7 +252,13 @@ if(base_state==boussinesq) then  !Here it is N ~ tanh, not N^2. Just like in SB2
       if(constant_N==1)  N2_ndut = 1.D0
 
       r_1ut(iz)    =  1.D0
-      r_2ut(iz)    =  N2_ndut
+!      r_2ut(iz)    =  N2_ndut      !commented for testing variable-N LA-inversion only
+
+      !For test only!
+      r_2ut(iz) = exp(alpha_test*(z-z0))
+      !-------------!
+
+
 
       rho_ut(iz)= 1.D0
       a_ell_ut(iz)=Bu/N2_ndut
@@ -264,7 +270,6 @@ if(base_state==boussinesq) then  !Here it is N ~ tanh, not N^2. Just like in SB2
 
    a_helm = 1./Ar2
    b_helm = 0.
-
 
   end if !base_state==...
 
@@ -880,9 +885,15 @@ do ix=1,n1d
          end if
 
       if(ix<=n1) then
-         if(z1>=0) f1s(ix,iy,iz1)=-arz*arz*cos(arx*x + brx)*cos(ary*y + bry)*cos(arz*z1)                !BR
+         if(z1>=0) f1s(ix,iy,iz1)=-arz*cos(arx*x + brx)*cos(ary*y + bry)*exp(-alpha_test*(z1-z0))*( arz*cos(arz*z1) - alpha_test*sin(arz*z1) )
          if(z2>=0) f2s(ix,iy,iz2)=0.5*(arx*arx+ary*ary)*cos(arx*x + brx)*cos(ary*y + bry)*cos(arz*z2)   !nBI
          if(z3>=0) f3s(ix,iy,iz3)=cos(arx*x + brx)*cos(ary*y + bry)*cos(arz*z3)                         !AR analytical solution
+
+!         if(z1>=0) f1s(ix,iy,iz1)=-arz*arz*cos(arx*x + brx)*cos(ary*y + bry)*cos(arz*z1)                !BR
+!         if(z2>=0) f2s(ix,iy,iz2)=0.5*(arx*arx+ary*ary)*cos(arx*x + brx)*cos(ary*y + bry)*cos(arz*z2)   !nBI
+!         if(z3>=0) f3s(ix,iy,iz3)=cos(arx*x + brx)*cos(ary*y + bry)*cos(arz*z3)                         !AR analytical solution
+
+
       end if
       
       !In this case, the X-marked arrays (on the top and bottom mype will not be initialized at all. Shouldn't cause any problem since we never invoke them.

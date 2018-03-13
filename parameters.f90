@@ -52,6 +52,8 @@ MODULE parameters
     double precision, parameter :: z_env   = twopi/8!twopi/3.!twopi/8         !Center of the tanh enveloppe
     double precision, parameter :: sig_env = twopi/24!twopi/6.!twopi/24      !Width  of the tanh enveloppe
     double precision, parameter :: z0  = L3/2                   !Position of the tropopause (between 0 and L3)
+    double precision, parameter :: alpha_test = 1.5             !Exponential N: just a test
+
 
     
     !Normalization at the tropopause!
