@@ -880,24 +880,9 @@ do ix=1,n1d
          end if
 
       if(ix<=n1) then
-         if(z1>=0) f1s(ix,iy,iz1)=cos(arx*x + brx)*cos(ary*y + bry)*cos(arz*z1 + brz)         !BR
-         if(z2>=0) f2s(ix,iy,iz2)=cos(aix*x + bix)*cos(aiy*y + biy)*cos(aiz*z2 + biz)         !BI
-!         if(z3>=0) f3s(ix,iy,iz3)=-0.5*(arx*arx*cos(2.*arx*x + 2.*brx)*cos(ary*y + bry)*cos(ary*y + bry) + ary*ary*cos(2.*ary*y + 2.*bry)*cos(arx*x + brx)*cos(arx*x + brx))*cos(arz*z3 + brz)*cos(arz*z3 + brz) -0.5*(aix*aix*cos(2.*aix*x + 2.*bix)*cos(aiy*y + biy)*cos(aiy*y + biy) + aiy*aiy*cos(2.*aiy*y + 2.*biy)*cos(aix*x + bix)*cos(aix*x + bix))*cos(aiz*z3 + biz)*cos(aiz*z3 + biz)
-         if(z3>=0) then 
-            f3s(ix,iy,iz3)=aix*ary*sin(aix*x + bix)*cos(aiy*y + biy)*cos(aiz*z3 + biz)*cos(arx*x + brx)*sin(ary*y + bry)*cos(arz*z3 + brz)  -  aiy*arx*cos(aix*x + bix)*sin(aiy*y + biy)*cos(aiz*z3 + biz)*sin(arx*x + brx)*cos(ary*y + bry)*cos(arz*z3 + brz)
-            f3s(ix,iy,iz3)= f3s(ix,iy,iz3) -0.5*(arx*arx*cos(2.*arx*x + 2.*brx)*cos(ary*y + bry)*cos(ary*y + bry) + ary*ary*cos(2.*ary*y + 2.*bry)*cos(arx*x + brx)*cos(arx*x + brx))*cos(arz*z3 + brz)*cos(arz*z3 + brz)
-            f3s(ix,iy,iz3)= f3s(ix,iy,iz3) -0.5*(aix*aix*cos(2.*aix*x + 2.*bix)*cos(aiy*y + biy)*cos(aiy*y + biy) + aiy*aiy*cos(2.*aiy*y + 2.*biy)*cos(aix*x + bix)*cos(aix*x + bix))*cos(aiz*z3 + biz)*cos(aiz*z3 + biz)           
-         end if
-
-!nabla^2 Br^2
-!-0.5*(arx*arx*cos(2.*arx*x + 2.*brx)*cos(ary*y + bry)*cos(ary*y + bry) + ary*ary*cos(2.*ary*y + 2.*bry)*cos(arx*x + brx)*cos(arx*x + brx))*cos(arz*z3 + brz)*cos(arz*z3 + brz)
-!(-2.*arx*arx*cos(2*arx*x + 2*brx)*cos(ary*y + bry)*cos(ary*y + bry)  - 2.*ary*ary*cos(2*ary*y + 2*bry)*cos(arx*x + brx)*cos(arx*x + brx)   )*cos(arz*z3 + brz)**cos(arz*z3 + brz)
-
-!nabla^2 Bi^2
-!-0.5*(aix*aix*cos(2.*aix*x + 2.*bix)*cos(aiy*y + biy)*cos(aiy*y + biy) + aiy*aiy*cos(2.*aiy*y + 2.*biy)*cos(aix*x + bix)*cos(aix*x + bix))*cos(aiz*z3 + biz)*cos(aiz*z3 + biz)
-!(-2.*aix*aix*cos(2*aix*x + 2*bix)*cos(aiy*y + biy)*cos(aiy*y + biy)  - 2.*aiy*aiy*cos(2*aiy*y + 2*biy)*cos(aix*x + bix)*cos(aix*x + bix)   )*cos(aiz*z3 + biz)**cos(aiz*z3 + biz)
-
-
+         if(z1>=0) f1s(ix,iy,iz1)=-arz*arz*cos(arx*x + brx)*cos(ary*y + bry)*cos(arz*z1)                !BR
+         if(z2>=0) f2s(ix,iy,iz2)=0.5*(arx*arx+ary*ary)*cos(arx*x + brx)*cos(ary*y + bry)*cos(arz*z2)   !nBI
+         if(z3>=0) f3s(ix,iy,iz3)=cos(arx*x + brx)*cos(ary*y + bry)*cos(arz*z3)                         !AR analytical solution
       end if
       
       !In this case, the X-marked arrays (on the top and bottom mype will not be initialized at all. Shouldn't cause any problem since we never invoke them.

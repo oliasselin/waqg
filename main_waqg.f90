@@ -111,23 +111,35 @@ PROGRAM main
   call init_base_state
 
   !************************************!
-  !***** Testing the bogus sheets *****!
+  !***** Testing the LA inversion *****!
   !************************************!
   
   write(*,*) "Hello, world! This is mype=",mype
   if(mype==0) write(*,*) "Accuracy of qw",n3,"on ",npe,"processors"
 
 
-  ! Define the true, analytical solution for nBRr (AIr) --- See diary 03-2018, March 12th !
-  call generate_fields_stag(BRr,n3h0,BIr,n3h0,AIr,n3h0) 
+  ! Define the true, analytical solution for ARr (nqr) --- See diary 03-2018, March 12th !
 
+  call generate_fields_stag(BRr,n3h0,nBIr,n3h0,nqr,n3h0) 
+  rBRk = (0.D0,0.D0)
+  rBIk = (0.D0,0.D0)
+  nBRk = (0.D0,0.D0)
+  BIk  = (0.D0,0.D0)
+  
   call fft_r2c(BRr,BRk,n3h0)
-  call fft_r2c(BIr,BIk,n3h0)
+  call fft_r2c(nBIr,nBIk,n3h0)
 
-  call compute_qw(qwk,BRk,BIk,qwr,BRr,BIr) 
+
+
+  call compute_sigma(sigma,nBRk, nBIk, rBRk, rBIk)              !Compute the sum of A                                                                                    
+  call mpitranspose(BRk,iktx,ikty,n3h0,BRkt,n3,iktyp)           !Transpose BR to iky-parallelized space                                                               
+  call mpitranspose(BIk,iktx,ikty,n3h0,BIkt,n3,iktyp)           !Transpose BK to iky-parallelized space                                                                  
+  call compute_A(ARk,AIK,BRkt,BIkt,sigma)                       !Compute A!                                                                                     
+  
+
   
   !ifft psik to real-space
-  call fft_c2r(qwk,qwr,n3h0)  
+  call fft_c2r(ARk,ARr,n3h0)  
 
 
   error   =0.
@@ -143,7 +155,7 @@ PROGRAM main
      do ix=1,n1
         do iy=1,n2 
 
-           error = DABS(qwr(ix,iy,izh0)-AIr(ix,iy,izh0))
+           error = DABS(ARr(ix,iy,izh0)-nqr(ix,iy,izh0))
 !           error = DABS(AIr(ix,iy,izh0))        !seems ok
 !           error = DABS(qwr(ix,iy,izh0))        !seems ok
            L1_local = L1_local + error
@@ -165,7 +177,7 @@ PROGRAM main
 
   if (mype==0) then
 !     open (unit = 154673, file = "adv-err.dat", access='append', status='old')
-     open (unit = 154673, file = "qw-err.dat")
+     open (unit = 154673, file = "LA-err.dat")
      write(154673,"(I6,E12.5,E12.5,E12.5)") n3,L1_global/(n1*n2*n3),sqrt(L2_global/(n1*n2*n3)),Li_global
   end if
 

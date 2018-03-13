@@ -1043,7 +1043,8 @@ MODULE derivatives
       !**** n = nonlinear advection term J(psi,B) **** r = refractive term ~ B*vort                                                                                            
       double complex,   dimension(iktx,ikty,n3h0), intent(in) :: nBRk, nBIk, rBRk, rBIk
 
-
+      sigma_to_reduce = (0.D0,0.D0)
+      sigma           = (0.D0,0.D0)
 
       !There is the Coriolis parameter missing: figure dimensions out
       do izh0=1,n3h0 
@@ -1063,7 +1064,7 @@ MODULE derivatives
       call mpi_allreduce(sigma_to_reduce,sigma,iktx*ikty*2,MPI_DOUBLE_COMPLEX,MPI_SUM,MPI_COMM_WORLD,ierror)
 
       ! Get the right dimensions !
-      sigma = sigma*Bu*Ro
+!      sigma = sigma*Bu*Ro     !Commented for test only
 
     END SUBROUTINE compute_sigma
 
@@ -1087,9 +1088,16 @@ MODULE derivatives
       AIkt  = (0.D0,0.D0)
       sumAR = (0.D0,0.D0)
       sumAI = (0.D0,0.D0)
-      sumBR = (0.D0,0.D0)
-      sumBI = (0.D0,0.D0)
 
+      DO ikx=1,iktx
+         DO ikyp=1,iktyp
+            iky=ikyp+iktyp*mype
+            if(kh2/=0 .and. L(ikx,iky)==1 ) then
+               sumBR(ikx,ikyp) = BRkt(ikx,1,ikyp)
+               sumBI(ikx,ikyp) = BIkt(ikx,1,ikyp)
+            end if
+         end DO
+      end DO
 
       !Compute \tilde{A}, which is \hat{A} up to an arbitrary constant (\hat{A} at z = dz/2 set to 0)
       DO ikx=1,iktx

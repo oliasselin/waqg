@@ -3,8 +3,8 @@
 
 runout=monitorjob
 
-sourdir=/scratch/05518/oasselin/test_qw/source/
-datadir=/scratch/05518/oasselin/test_qw/output/
+sourdir=/scratch/05518/oasselin/test_la/source/
+datadir=/scratch/05518/oasselin/test_la/output/
 
 mkdir -p $sourdir
 mkdir -p $datadir
@@ -40,9 +40,9 @@ cat > EXEC_STEP << EXEC
 #
 #----------------------------------------------------
 
-#SBATCH -J qw         # Job name
-#SBATCH -o qw.o%j     # Name of stdout output file
-#SBATCH -e qw.e%j     # Name of stderr error file
+#SBATCH -J la         # Job name
+#SBATCH -o la.o%j     # Name of stdout output file
+#SBATCH -e la.e%j     # Name of stderr error file
 #SBATCH -p development     # Queue (partition) name
 #SBATCH -N 1               # Total # of nodes 
 #SBATCH -n 2              # Total # of mpi tasks
