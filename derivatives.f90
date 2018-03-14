@@ -1037,14 +1037,14 @@ MODULE derivatives
     SUBROUTINE  compute_sigma(sigma,nBRk, nBIk, rBRk, rBIk)
       ! this subroutine computes the vertical integral of A at every wavenumber.
 
-
       double complex, dimension(iktx,ikty,2)               :: sigma_to_reduce     !This is the sum local to each processor. Last dimension: 1=real 2=imag
       double complex, dimension(iktx,ikty,2), intent(out)  :: sigma               !This is the global sum after all processors shared theirs
 
       !**** n = nonlinear advection term J(psi,B) **** r = refractive term ~ B*vort                                                                                            
       double complex,   dimension(iktx,ikty,n3h0), intent(in) :: nBRk, nBIk, rBRk, rBIk
 
-
+      sigma_to_reduce = (0.D0,0.D0)
+      sigma           = (0.D0,0.D0)
 
       !There is the Coriolis parameter missing: figure dimensions out
       do izh0=1,n3h0 
