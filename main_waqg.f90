@@ -114,12 +114,10 @@ PROGRAM main
   !***** Testing the LA inversion *****!
   !************************************!
   
-  write(*,*) "Hello, world! This is mype=",mype
   if(mype==0) write(*,*) "Accuracy of LA-inversion",n3,"on ",npe,"processors"
 
 
   ! Define the true, analytical solution for ARr (nqr) --- See diary 03-2018, March 12th !
-
   call generate_fields_stag(BRr,n3h0,nBIr,n3h0,nqr,n3h0) 
   rBRk = (0.D0,0.D0)
   rBIk = (0.D0,0.D0)
@@ -128,8 +126,6 @@ PROGRAM main
   
   call fft_r2c(BRr,BRk,n3h0)
   call fft_r2c(nBIr,nBIk,n3h0)
-
-
 
   call compute_sigma(sigma,nBRk, nBIk, rBRk, rBIk)              !Compute the sum of A                                                                                    
   call mpitranspose(BRk,iktx,ikty,n3h0,BRkt,n3,iktyp)           !Transpose BR to iky-parallelized space                                                               

@@ -1071,7 +1071,7 @@ MODULE derivatives
 
     SUBROUTINE compute_A(ARk,AIK,BRkt,BIkt,sigma)
 
-      double complex, dimension(iktx,ikty,2), intent(in)  :: sigma               !This is the global sum after all processors shared theirs                                    
+      double complex,   dimension(iktx,ikty,2),    intent(in)  :: sigma               !This is the global sum after all processors shared theirs                                    
       double complex,   dimension(iktx,ikty,n3h0), intent(out) :: ARk, AIk
 
       double complex, dimension(iktx,n3, iktyp), intent(in) :: BRkt          !Transposed (ky-parallelization) BRk
@@ -1091,6 +1091,7 @@ MODULE derivatives
       sumBR = (0.D0,0.D0)
       sumBI = (0.D0,0.D0)
 
+      !Initialize sumB to B_1 = B(dz/2)
       DO ikx=1,iktx
          kx=kxa(ikx)
          DO ikyp=1,iktyp
@@ -1100,6 +1101,10 @@ MODULE derivatives
             if(kh2/=0 .and. L(ikx,iky)==1 ) then
                sumBR(ikx,ikyp) = BRkt(ikx,1,ikyp)
                sumBI(ikx,ikyp) = BIkt(ikx,1,ikyp)
+
+               !For test only
+!               if( abs(BRkt(ikx,1,ikyp)) > 0.00001 ) write(*,*) "Nontrivial wavenumber couple: (ikx,iky,ikyp,mype)=",ikx,iky,ikyp,mype 
+
             end if
          end DO
       end DO
@@ -1132,7 +1137,6 @@ MODULE derivatives
          end DO
       end DO
 
-
       !Compute \hat{A}, the actual solution we are looking for
       DO ikx=1,iktx
          kx=kxa(ikx)
@@ -1155,6 +1159,65 @@ MODULE derivatives
          end DO
       end DO
 
+
+
+      !*****************************************!
+
+
+
+
+      !Test only: remove all trivial wavenumbers!
+      if(mype==0) write(*,*) "Sums for alpha_test   = ",alpha_test
+
+      if(mype==0) write(*,*) "Value of sumBR(5,3)   = ",sumBR(5,3)
+      if(mype==1) write(*,*) "Value of sumBR(5,127) = ",sumBR(5,63)
+
+      if(mype==0) write(*,*) "Value of sumAR(5,3)   = ",sumAR(5,3)
+      if(mype==1) write(*,*) "Value of sumAR(5,127) = ",sumAR(5,63)
+
+
+      !Let's try to sum B from scratch
+      sumBR = (0.D0,0.D0)
+
+      DO ikx=1,iktx
+         DO ikyp=1,iktyp
+            do iz=1,n3
+               sumBR(ikx,ikyp) = sumBR(ikx,ikyp) + BRkt(ikx,iz,ikyp)
+            end do
+         end DO
+      end DO
+
+      !Second try
+      if(mype==0) write(*,*) "Trying again... "
+
+      if(mype==0) write(*,*) "Value of sumBR(5,3)   = ",sumBR(5,3)
+      if(mype==1) write(*,*) "Value of sumBR(5,127) = ",sumBR(5,63)
+
+
+
+
+      DO ikx=1,iktx
+         kx=kxa(ikx)
+         DO ikyp=1,iktyp
+            iky=ikyp+iktyp*mype
+            ky=kya(iky)
+
+            kh2=kx*kx + ky*ky
+
+            if(ikx /= 5 .and. (iky /= 3 .or. iky /= 127) ) then
+
+               do iz=1,n3
+
+                  ARkt(ikx,iz,ikyp) = (0.D0,0.D0)
+                  AIkt(ikx,iz,ikyp) = (0.D0,0.D0)
+
+               end do
+            end if
+
+         end DO
+      end DO
+      !End test!
+
       !Transpose A back to the regular z-parallelized world
       call mpitranspose(ARkt,iktx,n3,iktyp,ARk,ikty,n3h0)
       call mpitranspose(AIkt,iktx,n3,iktyp,AIk,ikty,n3h0)
@@ -1163,6 +1226,7 @@ MODULE derivatives
 
     END SUBROUTINE compute_A
       
+
 
 
     SUBROUTINE compute_streamfunction(uk,vk,psik)  !Computes the QG streamfunction (rotational part of the horizontal flow)

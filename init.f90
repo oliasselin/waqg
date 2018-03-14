@@ -823,7 +823,7 @@ end do
       double precision :: brx=5.,bry=4.,brz=54.
       double precision :: aix=2.,aiy=6.,aiz=33.
       double precision :: bix=1.,biy=3.,biz=12.
-
+      double precision :: Ri_temp,Ri1_temp
    
 
 
@@ -885,7 +885,37 @@ do ix=1,n1d
          end if
 
       if(ix<=n1) then
-         if(z1>=0) f1s(ix,iy,iz1)=-arz*cos(arx*x + brx)*cos(ary*y + bry)*exp(-alpha_test*(z1-z0))*( arz*cos(arz*z1) - alpha_test*sin(arz*z1) )
+!         if(z1>=0) f1s(ix,iy,iz1)=-arz*cos(arx*x + brx)*cos(ary*y + bry)*exp(-alpha_test*(z1-z0))*( arz*cos(arz*z1) - alpha_test*sin(arz*z1) )
+
+         if(z1>=0) then 
+            
+            Ri_temp  = exp(alpha_test*(z1+dz/2.-z0))
+            Ri1_temp = exp(alpha_test*(z1-dz/2.-z0))
+
+            f1s(ix,iy,iz1)=cos(arz*(z1+dz))/Ri_temp - (1./Ri_temp + 1./Ri1_temp)*cos(arz*z1) + cos(arz*(z1-dz))/Ri1_temp
+
+            !Correct for the top
+            if(mype==(npe-1) .and. izh0 ==n3h0) then
+
+               write(*,*) "I'm at the top, z1 =",z1,"and 2pi-dz/2",twopi-dz/2.
+
+               f1s(ix,iy,iz1)=(cos(arz*z1) + cos(arz*(z1-dz)))/Ri1_temp
+
+            end if
+
+            !Correct for the bottom
+            if(mype==0 .and. izh0 ==1) then
+
+               write(*,*) "I'm at the bottom, z1 =",z1,"and dz/2",dz/2.
+
+               f1s(ix,iy,iz1)=(cos(arz*(z1+dz))-cos(arz*z1))/Ri_temp
+
+            end if
+
+            f1s(ix,iy,iz1)=f1s(ix,iy,iz1)*cos(arx*x + brx)*cos(ary*y + bry)/(dz*dz)            
+
+         end if
+
          if(z2>=0) f2s(ix,iy,iz2)=0.5*(arx*arx+ary*ary)*cos(arx*x + brx)*cos(ary*y + bry)*cos(arz*z2)   !nBI
          if(z3>=0) f3s(ix,iy,iz3)=cos(arx*x + brx)*cos(ary*y + bry)*cos(arz*z3)                         !AR analytical solution
 
