@@ -920,11 +920,13 @@ end subroutine hspec
   !!!!! SLICES !!!!!
   !****************!
 
-  subroutine slices(uk,vk,wk,bk,wak,u_rot,ur,vr,wr,br,war,u_rotr,id_field)
+  subroutine slices(uk,vk,wk,bk,wak,u_rot,ur,vr,wr,br,war,u_rotr,ARr,nqr,id_field)
 
     double complex, dimension(iktx,ikty,n3h2) :: uk,vk,wk,bk
     double complex, dimension(iktx,ikty,n3h1) :: zzk,wak,u_rot     !COULD BE OPTIMIZED 
     
+    double precision, dimension(n1d,n2d,n3h0)   :: ARr,nqr
+
     double precision,    dimension(n1d,n2d,n3h2) :: ur,vr,wr,br
     double precision,    dimension(n1d,n2d,n3h1) :: zzr,war,u_rotr
 
@@ -1059,6 +1061,10 @@ end subroutine hspec
        
        call fft_c2r(zzk,zzr,n3h1)
        field = Ro*zzr
+    elseif(id_field==8) then
+       field = ARr
+    elseif(id_field==9) then
+       field = nqr
     end if
 
 

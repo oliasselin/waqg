@@ -2,7 +2,7 @@ MODULE parameters
 
    IMPLICIT NONE
 
-    integer, parameter :: n1=32, n2=32, n3=2048
+    integer, parameter :: n1=128, n2=128, n3=128
     integer, parameter :: npe=2
 
     integer, parameter :: n1d=n1+2, n2d=n2, n3d=n3
@@ -52,7 +52,7 @@ MODULE parameters
     double precision, parameter :: z_env   = twopi/8!twopi/3.!twopi/8         !Center of the tanh enveloppe
     double precision, parameter :: sig_env = twopi/24!twopi/6.!twopi/24      !Width  of the tanh enveloppe
     double precision, parameter :: z0  = L3/2                   !Position of the tropopause (between 0 and L3)
-    double precision, parameter :: alpha_test = 1.5             !Exponential N: just a test
+    double precision, parameter :: alpha_test = -1.5             !Exponential N: just a test
 
 
     
@@ -238,14 +238,14 @@ MODULE parameters
 
     !Slices
     integer, parameter :: max_slices = 99     
-    integer, parameter :: nfields  = 7         !Don't forget to change tag_slice_xz(nfields) accordingly in "mpi.f90"
+    integer, parameter :: nfields  = 9         !Don't forget to change tag_slice_xz(nfields) accordingly in "mpi.f90"
     integer, parameter :: nfields2 = 5         !Don't forget to change tag_slice_xz(nfields) accordingly in "mpi.f90"
     integer :: count_slice(nfields) = 0       !number of slices
     integer :: count_slice2(nfields2) = 0       !number of slices
     integer :: zval=n3/2                      !z-level at which we wish to plo a slice                                                                                                                               
     integer :: yval=n2/2
     integer :: xval=n1/2
-    integer :: hlvl(nfields)=[2,1,2,1,2,1,1]                                   
+    integer :: hlvl(nfields)=[2,1,2,1,2,1,1,0,0]                                   
     integer :: hlvl2(nfields2)=[1,1,1,1,0]                                   
 
     integer, parameter :: bot_height = n3/2+5*n3/fraction

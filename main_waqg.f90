@@ -181,7 +181,9 @@ PROGRAM main
      write(154673,"(I6,E12.5,E12.5,E12.5)") n3,L1_global/(n1*n2*n3),sqrt(L2_global/(n1*n2*n3)),Li_global
   end if
 
-
+ do id_field=7,nfields                                                                                                                                                                  
+    call slices(uk,vk,wk,bk,wak,u_rot,ur,vr,wr,br,war,u_rotr,ARr,nqr,id_field)                          
+ end do  
 
 
   !***** The end (since itermax was set to 0 ) *****!
@@ -408,9 +410,9 @@ BIk = BItempk
 
 if(out_etot ==1 .and. mod(iter,freq_etot )==0) call diag_zentrum(uk,vk,wk,bk,wak,psik,u_rot)
 
- do id_field=1,nfields
-    if(out_slice ==1 .and. mod(iter,freq_slice)==0 .and. count_slice(id_field)<max_slices)  call slices(uk,vk,wk,bk,wak,u_rot,ur,vr,wr,br,war,u_rotr,id_field)
- end do
+! do id_field=1,nfields
+!    if(out_slice ==1 .and. mod(iter,freq_slice)==0 .and. count_slice(id_field)<max_slices)  call slices(uk,vk,wk,bk,wak,u_rot,ur,vr,wr,br,war,u_rotr,id_field)
+! end do
 
  if(out_eta == 1 .and. mod(iter,freq_eta)==0 ) call tropopause_meanders(uk,vk,wk,bk,ur,vr,wr,br)
 
