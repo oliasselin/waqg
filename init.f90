@@ -916,7 +916,7 @@ do ix=1,n1d
 
          end if
 
-         if(z2>=0) f2s(ix,iy,iz2)=0.5*(arx*arx+ary*ary)*cos(arx*x + brx)*cos(ary*y + bry)*cos(arz*z2)   !nBI
+         if(z2>=0) f2s(ix,iy,iz2)=-0.5*(arx*arx+ary*ary)*cos(arx*x + brx)*cos(ary*y + bry)*cos(arz*z2)   !nBI
          if(z3>=0) f3s(ix,iy,iz3)=cos(arx*x + brx)*cos(ary*y + bry)*cos(arz*z3)                         !AR analytical solution
 
 !         if(z1>=0) f1s(ix,iy,iz1)=-arz*arz*cos(arx*x + brx)*cos(ary*y + bry)*cos(arz*z1)                !BR

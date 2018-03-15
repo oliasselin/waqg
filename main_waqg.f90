@@ -118,14 +118,14 @@ PROGRAM main
 
 
   ! Define the true, analytical solution for ARr (nqr) --- See diary 03-2018, March 12th !
-  call generate_fields_stag(BRr,n3h0,nBIr,n3h0,nqr,n3h0) 
+  call generate_fields_stag(BIr,n3h0,nBRr,n3h0,nqr,n3h0) 
   rBRk = (0.D0,0.D0)
   rBIk = (0.D0,0.D0)
-  nBRk = (0.D0,0.D0)
-  BIk  = (0.D0,0.D0)
+  nBIk = (0.D0,0.D0)
+  BRk  = (0.D0,0.D0)
   
-  call fft_r2c(BRr,BRk,n3h0)
-  call fft_r2c(nBIr,nBIk,n3h0)
+  call fft_r2c(BIr,BIk,n3h0)
+  call fft_r2c(nBRr,nBRk,n3h0)
 
   call compute_sigma(sigma,nBRk, nBIk, rBRk, rBIk)              !Compute the sum of A                                                                                    
   call mpitranspose(BRk,iktx,ikty,n3h0,BRkt,n3,iktyp)           !Transpose BR to iky-parallelized space                                                               
@@ -135,7 +135,7 @@ PROGRAM main
 
   
   !ifft psik to real-space
-  call fft_c2r(ARk,ARr,n3h0)  
+  call fft_c2r(AIk,AIr,n3h0)  
 
 
   error   =0.
@@ -151,7 +151,7 @@ PROGRAM main
      do ix=1,n1
         do iy=1,n2 
 
-           error = DABS(ARr(ix,iy,izh0)-nqr(ix,iy,izh0))
+           error = DABS(AIr(ix,iy,izh0)-nqr(ix,iy,izh0))
 !           error = DABS(AIr(ix,iy,izh0))        !seems ok
 !           error = DABS(qwr(ix,iy,izh0))        !seems ok
            L1_local = L1_local + error
@@ -173,12 +173,12 @@ PROGRAM main
 
   if (mype==0) then
 !     open (unit = 154673, file = "adv-err.dat", access='append', status='old')
-     open (unit = 154673, file = "LA-err.dat")
+     open (unit = 154673, file = "LA-errI.dat")
      write(154673,"(I6,E12.5,E12.5,E12.5)") n3,L1_global/(n1*n2*n3),sqrt(L2_global/(n1*n2*n3)),Li_global
   end if
 
  do id_field=7,nfields                                                                                                                                                                  
-    call slices(uk,vk,wk,bk,wak,u_rot,ur,vr,wr,br,war,u_rotr,ARr,nqr,id_field)                          
+    call slices(uk,vk,wk,bk,wak,u_rot,ur,vr,wr,br,war,u_rotr,AIr,nqr,id_field)                          
  end do  
 
 
