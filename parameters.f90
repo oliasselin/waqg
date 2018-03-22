@@ -2,8 +2,8 @@ MODULE parameters
 
    IMPLICIT NONE
 
-    integer, parameter :: n1=128, n2=128, n3=128
-    integer, parameter :: npe=32
+    integer, parameter :: n1=32, n2=32, n3=32
+    integer, parameter :: npe=2
 
     integer, parameter :: n1d=n1+2, n2d=n2, n3d=n3
     integer, parameter :: n3h0=n3/npe, n3h1=n3/npe+2, n3h2=n3/npe+4
@@ -160,9 +160,9 @@ MODULE parameters
     real :: time=0.
     integer :: iter
     integer :: itermax=1000000000
-    real :: maxtime=40                      
-    double precision, parameter :: delt=0.05*U_scale*dz    !0.0005*U_scale*dz                ! T_visc = 0.25D0*dz*dz/nu
-    double precision, parameter :: gamma=1e-2!4e-3!1e-2!7.e-3            !Robert filter parameter
+    real :: maxtime=1.                      
+    double precision, parameter :: delt=0.05*U_scale*dz/2./10.    !0.0005*U_scale*dz                ! T_visc = 0.25D0*dz*dz/nu
+    double precision, parameter :: gamma=0.!1e-2!4e-3!1e-2!7.e-3            !Robert filter parameter
 
     !Other successful viscosity: 5e-2 * (10./ktrunc_x ) **2. 
     !PERFECT VISCOSITY: 0.01 * (64./(1.*n1)) **(4./3.)
@@ -236,14 +236,14 @@ MODULE parameters
 
     !Slices
     integer, parameter :: max_slices = 99     
-    integer, parameter :: nfields  = 7         !Don't forget to change tag_slice_xz(nfields) accordingly in "mpi.f90"
+    integer, parameter :: nfields  = 9         !Don't forget to change tag_slice_xz(nfields) accordingly in "mpi.f90"
     integer, parameter :: nfields2 = 5         !Don't forget to change tag_slice_xz(nfields) accordingly in "mpi.f90"
     integer :: count_slice(nfields) = 0       !number of slices
     integer :: count_slice2(nfields2) = 0       !number of slices
     integer :: zval=n3/2                      !z-level at which we wish to plo a slice                                                                                                                               
     integer :: yval=n2/2
     integer :: xval=n1/2
-    integer :: hlvl(nfields)=[2,1,2,1,2,1,1]                                   
+    integer :: hlvl(nfields)=[2,1,2,1,2,1,1,1,1]                                   
     integer :: hlvl2(nfields2)=[1,1,1,1,0]                                   
 
     integer, parameter :: bot_height = n3/2+5*n3/fraction
