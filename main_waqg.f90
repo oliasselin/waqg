@@ -97,6 +97,21 @@ PROGRAM main
   equivalence(u_rotr,u_rot)
 
 
+!For the comprehensive test only.
+  double complex,   dimension(iktx,ikty,n3h0) :: Fqk, Fjk, Fdk, Ftk    !Forcing terms
+  double precision, dimension(n1d,n2d,n3h0)   :: Fqr, Fjr, Fdr
+
+  double complex,   dimension(iktx,ikty,n3h1) :: psitk, qtk       !Exact solution for psi and q
+  double precision, dimension(n1d,n2d,n3h1)   :: psitr, qtr   
+
+  double precision ::   error,L1_local,L2_local,Li_local,L1_global,L2_global,Li_global
+
+  equivalence(Fqr,Fqk)
+  equivalence(Fjr,Fjk)
+  equivalence(Fdr,Fdk)
+
+  equivalence(psitr,psitk)
+  equivalence(qtr,qtk)
 
 
   !********************** Initializing... *******************************!
@@ -157,8 +172,8 @@ PROGRAM main
  if(out_etot ==1) call diag_zentrum(uk,vk,wk,bk,wak,psik,u_rot)
 
 
- do id_field=1,nfields                                            
-    if(out_slice ==1)  call slices(uk,vk,wk,bk,wak,u_rot,ur,vr,wr,br,war,u_rotr,id_field)
+ do id_field=8,nfields                                            
+    if(out_slice ==1)  call slices(uk,vk,wk,bk,wak,u_rot,ur,vr,wr,br,war,u_rotr,psir,psitr,id_field)
  end do
  
 ! if(out_slab == 1 ) then
@@ -386,20 +401,13 @@ BIk = BItempk
     call omega_equation(wak,qt)
     call generate_halo_q(wak)
  end if
- 
-
 
 if(out_etot ==1 .and. mod(iter,freq_etot )==0) call diag_zentrum(uk,vk,wk,bk,wak,psik,u_rot)
 
- do id_field=1,nfields
-    if(out_slice ==1 .and. mod(iter,freq_slice)==0 .and. count_slice(id_field)<max_slices)  call slices(uk,vk,wk,bk,wak,u_rot,ur,vr,wr,br,war,u_rotr,id_field)
+
+ do id_field=8,nfields                                            
+    if(out_slice ==1 .and. mod(iter,freq_slice)==0 .and. count_slice(id_field)<max_slices)  call slices(uk,vk,wk,bk,wak,u_rot,ur,vr,wr,br,war,u_rotr,psir,psitr*cos(a_t*time),id_field)
  end do
-
- if(out_eta == 1 .and. mod(iter,freq_eta)==0 ) call tropopause_meanders(uk,vk,wk,bk,ur,vr,wr,br)
-
-
-! if(out_slab == 1 .and. mod(iter,freq_slab)==0 .and. mype==slab_mype) call print_slab(uk,vk)
-
 
  if(time>maxtime) EXIT
 end do !End loop
