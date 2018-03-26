@@ -2329,7 +2329,7 @@ end subroutine hspec
     if(delt >= U_scale/(L_scale*sqrt(N_2_stra)) )then          !Equivalently dt must be < U/NL. Worst case with max(N)=Ns
        write(*,*) "Can't resolve GW, min(Fr_H)=",U_scale/(L_scale*sqrt(N_2_stra))
 !       stop
-    elseif(base_state < 3 .and. delt >= (sqrt(Ar2)*Fr)  )then
+    elseif(delt >= (sqrt(Ar2)*Fr)  )then
        write(*,*) "Can't resolve GW"
 !       stop
     end if
@@ -2380,13 +2380,10 @@ end subroutine hspec
    
 
 
-    write(unit_run,*) "TANH N^2 profile"
-    write(unit_run,*) "Base-state=",base_state
+    write(unit_run,*) "Stratification=",stratification
     write(unit_run,*)
     write(unit_run,*) "N_troposphere  = ",real(sqrt(N_2_trop))
     write(unit_run,*) "N_stratosphere = ",real(sqrt(N_2_stra))
-    write(unit_run,*)
-    write(unit_run,*) "Constant N?",constant_N
     write(unit_run,*)
     write(unit_run,*) "h = ",real(H_scale*H_N),"meters"
     write(unit_run,*) "h_NONDIM = 2pi/",fraction," or ",real(1.*n3/(1.*fraction)),"dz"

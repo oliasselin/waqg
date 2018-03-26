@@ -51,7 +51,7 @@ MODULE parameters
     integer, parameter :: enveloppe = 0                    !1: Enveloppe allowing b=0 at the boundaries
     double precision, parameter :: z_env   = twopi/8!twopi/3.!twopi/8         !Center of the tanh enveloppe
     double precision, parameter :: sig_env = twopi/24!twopi/6.!twopi/24      !Width  of the tanh enveloppe
-    double precision, parameter :: z0  = L3/2                   !Position of the tropopause (between 0 and L3)
+    double precision, parameter :: z0  = L3/2                   !Middle of the domain / Position of the tropopause (between 0 and L3)
 
     
     !Normalization at the tropopause!
@@ -74,15 +74,18 @@ MODULE parameters
     !Base-state!
     !----------!
 
-    integer, parameter :: boussinesq=1
-    integer, parameter :: constant_N=0
-    integer, parameter :: base_state=1
+    integer, parameter :: tropopause=1, exponential=2, constant_N=3
+    integer, parameter :: stratification = exponential
+
+    !Stratification = tropopause!
     integer, parameter :: fraction=128                   !If h#=150m, then fraction=133.333333~128
     double precision :: H_N = L3/fraction                          !Caracteristic length scale of N^2 for the TANH prof. (1/alpha...)
     double precision, parameter :: N_2_trop = 0.0001 !(2.*grav/10000.)*(1-t0_bot)/(1+t0_bot)             !BV frequency at the tropopause + in the tropsphere
     double precision, parameter :: N_2_stra = 0.0004                    !BV frequency in the stratosphere
     double precision, parameter :: gamma_N1=(sqrt(N_2_stra)-sqrt(N_2_trop))/(sqrt(N_2_stra)+sqrt(N_2_trop))       !This is alpha for N~1+alpha tanh(z/h)
 
+    !Stratification = exponential!
+    double precision, parameter :: N2_scale = 1.D0   !N^2 ~ exp(N2_scale*(z-z0) 
 
    ! USEFUL INDEX !                                                                                                                          
    ! ------------ !                                                                                                                         

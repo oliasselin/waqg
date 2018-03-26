@@ -178,99 +178,86 @@ subroutine init_base_state
 
   double precision :: N2_nd(n3h2),N2_nds(n3h2),N2_ndst,N2_ndut   !nondimensional N^2, (un)staggered and (un)transposed
 
-if(base_state==boussinesq) then  !Here it is N ~ tanh, not N^2. Just like in SB2013. Note that I replaced gamma_N with gamma_N1...
+  do izh2=1,n3h2
+   
+     z=zah2(izh2)     !Unstaggered fields
+     zs=zash2(izh2)   !Staggered   fields
+     
+     if(stratification==tropopause) then
+        N2_nd(izh2)   =  (gamma_N1*tanh( (z -z0)/H_N) + 1.)**2
+        N2_nds(izh2)  =  (gamma_N1*tanh( (zs-z0)/H_N) + 1.)**2        
+     else if(stratification==exponential) then
+        N2_nd(izh2)   = exp( N2_scale*(z -z0) )
+        N2_nds(izh2)  = exp( N2_scale*(zs-z0) )
+     else if(stratification==constant_N) then
+        N2_nd(izh2)   = 1.D0
+        N2_nds(izh2)  = 1.D0
+     else
+        write(*,*) "Undefined stratification profile. Aborting."
+        stop
+     end if
 
-   do izh2=1,n3h2
+     r_1(izh2)     =  1.D0
+     r_1s(izh2)    =  1.D0
+     r_2(izh2)     =  N2_nd(izh2)
+     r_2s(izh2)    =  N2_nds(izh2)
 
-      z=zah2(izh2)
+     a_ell_u(izh2) = Bu/N2_nd(izh2)
+     a_ell(izh2)   = Bu/N2_nds(izh2)
+     
+     rho_u(izh2)   = 1.D0
+     rho_s(izh2)   = 1.D0
+     
+     r_3u(izh2)    = 0.D0
+     r_3(izh2)     = 0.D0
 
-      !Unstaggered buddies                                                                                                                                                                                                 
-      N2_nd(izh2)   =  (gamma_N1*tanh( (z-z0)/H_N) + 1.)**2
-
-      if(constant_N==1) N2_nd(izh2) = 1.D0
-
-      r_1(izh2)     =  1.D0
-      r_2(izh2)     =  N2_nd(izh2)
-
-
-      a_ell_u(izh2)=Bu/N2_nd(izh2)
-
-
-      rho_u(izh2)= 1.D0
-
-      r_3u(izh2)  = 0.D0
-
-
-
-
-      !Staggered buddies                                                                                                                                                                                                        
-      zs=zash2(izh2)
-
-      N2_nds(izh2)  =  (gamma_N1*tanh( (zs-z0)/H_N) + 1.)**2
-
-      if(constant_N==1) N2_nds(izh2) = 1.D0
-
-      r_1s(izh2)    =  1.D0
-      r_2s(izh2)    =  N2_nds(izh2)
-
-      rho_s(izh2)= 1.D0
-      r_3(izh2)  = 0.D0
-
-      a_ell(izh2)=Bu/N2_nds(izh2)
-
-
-   end do
+  end do
 
    !Special case: I need r_1 at z=0.
-   r_1(izbot2-1) = 1.D0
+  r_1(izbot2-1) = 1.D0
+  
+  
+  !Transposed fields (r_3 rho_0 a_ell b_ell a_helm b_helm)                                                                                                                                                                
+  do iz=1,n3
+     
+     z  = za(iz)
+     zs = zas(iz)
+     
+     
+     if(stratification==tropopause) then
+        N2_ndut =  (gamma_N1*tanh( (z -z0)/H_N) + 1.)**2
+        N2_ndst =  (gamma_N1*tanh( (zs-z0)/H_N) + 1.)**2
+     else if(stratification==exponential) then
+        N2_ndut =  exp( N2_scale*(z -z0) )
+        N2_ndst =  exp( N2_scale*(zs-z0) )
+     else if(stratification==constant_N) then
+        N2_ndut   = 1.D0
+        N2_ndst  = 1.D0
+     else
+        write(*,*) "Undefined stratification profile. Aborting."
+        stop
+     end if
 
-
-   !Transposed buddies (r_3 rho_0 a_ell b_ell a_helm b_helm)                                                                                                                                                                
-   do iz=1,n3
-
-      zs=zas(iz)
-
-
-      N2_ndst      =  (gamma_N1*tanh( (zs-z0)/H_N) + 1.)**2
-
-      if(constant_N==1) N2_ndst = 1.D0
-
-      r_1st(iz)    =  1.D0
-      r_2st(iz)    =  N2_ndst
-
-      rho_st(iz)= 1.D0
-      r_3t(iz)  = 0.D0
-
-      a_ell_t(iz)=Bu/N2_ndst
-
-      !Unstag version                                                                                                                                                                                                             
-
-      z =za(iz)
-
-      N2_ndut      =  (gamma_N1*tanh( (z-z0)/H_N) + 1.)**2
-
-      if(constant_N==1)  N2_ndut = 1.D0
-
-      r_1ut(iz)    =  1.D0
-      r_2ut(iz)    =  N2_ndut
-
-      rho_ut(iz)= 1.D0
-      a_ell_ut(iz)=Bu/N2_ndut
-
-      r_3ut(iz)  = 0.D0
-
-
-   end do
-
-   a_helm = 1./Ar2
-   b_helm = 0.
-
-
-  end if !base_state==...
-
-
-
-
+     r_1ut(iz)    =  1.D0
+     r_1st(iz)    =  1.D0
+     
+     r_2ut(iz)    =  N2_ndut
+     r_2st(iz)    =  N2_ndst
+     
+     rho_ut(iz)= 1.D0
+     rho_st(iz)= 1.D0
+     
+     r_3ut(iz)  = 0.D0
+     r_3t(iz)  = 0.D0
+     
+     a_ell_ut(iz)= Bu/N2_ndut
+     a_ell_t(iz) = Bu/N2_ndst
+     
+  end do
+  
+  a_helm = 1./Ar2
+  b_helm = 0.
+  
 end subroutine init_base_state
 
 
