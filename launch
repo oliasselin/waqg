@@ -1,7 +1,7 @@
 #!/bin/bash
 
 number_of_nodes=1
-number_of_tasks=8
+number_of_tasks=2
 
 sourdir=/scratch/05518/oasselin/test/source/
 datadir=/scratch/05518/oasselin/test/output/
@@ -89,5 +89,5 @@ COMPILE
 chmod 755 COMPILE_STEP
 ./COMPILE_STEP
 ##chmod 755 EXEC_STEP                                                                                                                                       
-#sbatch EXEC_STEP
+sbatch EXEC_STEP
 ##./EXEC_STEP                                                                                                                                               

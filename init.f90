@@ -217,7 +217,13 @@ subroutine init_base_state
   r_1(izbot2-1) = 1.D0
   
   
-  !Transposed fields (r_3 rho_0 a_ell b_ell a_helm b_helm)                                                                                                                                                                
+  !Transposed fields (r_3 rho_0 a_ell b_ell a_helm b_helm)                                                                                                                              
+
+  !Print base-state!
+  if (mype==0) open (unit = 154673, file = "rucoeff.dat")
+  if (mype==0) open (unit = 154674, file = "rscoeff.dat")
+  
+                          
   do iz=1,n3
      
      z  = za(iz)
@@ -252,12 +258,15 @@ subroutine init_base_state
      
      a_ell_ut(iz)= Bu/N2_ndut
      a_ell_t(iz) = Bu/N2_ndst
-     
+
+     write(154673,"(E12.5,E12.5,E12.5,E12.5,E12.5)") z ,r_1ut(iz),r_2ut(iz),r_3ut(iz),a_ell_ut(iz)
+     write(154674,"(E12.5,E12.5,E12.5,E12.5,E12.5)") zs,r_1st(iz),r_2st(iz),r_3t(iz), a_ell_t(iz)
+
   end do
   
   a_helm = 1./Ar2
   b_helm = 0.
-  
+
 end subroutine init_base_state
 
 
