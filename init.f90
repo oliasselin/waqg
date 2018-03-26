@@ -870,7 +870,7 @@ do ix=1,n1d
 
             f2s(ix,iy,iz2) = -(a_x*a_x*cos(a_x*x + b_x) + a_y*a_y*cos(a_y*y + b_y))*cos(a_z*z2)
 
-            f2s(ix,iy,iz2) = f2s(ix,iy,iz2) + ( cos(a_x*x + b_x) + cos(a_y*y + b_y) ) * ( alpha_test*a_z*sin(a_z*z2) - a_z*a_z*cos(a_z*z2) )*exp(-alpha_test*(z2-z0))
+            f2s(ix,iy,iz2) = f2s(ix,iy,iz2) + ( cos(a_x*x + b_x) + cos(a_y*y + b_y) ) * ( N2_scale*a_z*sin(a_z*z2) - a_z*a_z*cos(a_z*z2) )*exp(-N2_scale*(z2-z0))
 
          end if
          if(z3>=0) f3s(ix,iy,iz3)=0.
@@ -958,7 +958,7 @@ SUBROUTINE generate_fields_stag2(f1s,nz1,f2s,nz2,f3s,nz3) !generate_fields for s
                  
                  f1s(ix,iy,iz1) = a_t*(a_x*a_x*cos(a_x*x + b_x) + a_y*a_y*cos(a_y*y + b_y))*cos(a_z*z1)
                  
-                 f1s(ix,iy,iz1) = f1s(ix,iy,iz1) - a_t*( cos(a_x*x + b_x) + cos(a_y*y + b_y) ) * ( alpha_test*a_z*sin(a_z*z1) - a_z*a_z*cos(a_z*z1) )*exp(-alpha_test*(z1-z0))
+                 f1s(ix,iy,iz1) = f1s(ix,iy,iz1) - a_t*( cos(a_x*x + b_x) + cos(a_y*y + b_y) ) * ( N2_scale*a_z*sin(a_z*z1) - a_z*a_z*cos(a_z*z1) )*exp(-N2_scale*(z1-z0))
 
               end if
               if(z2>=0) f2s(ix,iy,iz2)=a_x*a_y*sin(a_x*x + b_x)*sin(a_y*y + b_y)*cos(a_z*z2)*cos(a_z*z2)*(a_x*a_x - a_y*a_y)
@@ -966,7 +966,7 @@ SUBROUTINE generate_fields_stag2(f1s,nz1,f2s,nz2,f3s,nz3) !generate_fields for s
                  
                  f3s(ix,iy,iz3) = ( (a_x**(2.*(ilap+1)))*cos(a_x*x + b_x) + (a_y**(2.*(ilap+1)))*cos(a_y*y + b_y))*cos(a_z*z3)
                  
-                 f3s(ix,iy,iz3) = nuh*f3s(ix,iy,iz3) - nuh*( (a_x**(2.*(ilap)))*cos(a_x*x + b_x) + (a_y**(2.*(ilap)))*cos(a_y*y + b_y) ) * ( alpha_test*a_z*sin(a_z*z3) - a_z*a_z*cos(a_z*z3) )*exp(-alpha_test*(z3-z0))
+                 f3s(ix,iy,iz3) = nuh*f3s(ix,iy,iz3) - nuh*( (a_x**(2.*(ilap)))*cos(a_x*x + b_x) + (a_y**(2.*(ilap)))*cos(a_y*y + b_y) ) * ( N2_scale*a_z*sin(a_z*z3) - a_z*a_z*cos(a_z*z3) )*exp(-N2_scale*(z3-z0))
                  
               end if
               

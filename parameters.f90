@@ -26,6 +26,14 @@ MODULE parameters
     real, parameter :: ktrunc_z = twopi/L3 * float(n3)/3.           ! dimensional truncation wavenumber (x)
 
 
+    !For comprehensive test only!
+    !---------------------------!
+
+
+    double precision, parameter :: a_x = 3., a_y = 4., a_z = 5., a_t = 1.
+    double precision, parameter :: b_x = 2., b_y = 3.
+
+
     !Tags to specify run!
     !-------------------!
     
