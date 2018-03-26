@@ -1,15 +1,13 @@
 #!/bin/bash
 
+number_of_nodes=1
+number_of_tasks=8
 
-runout=monitorjob
-
-sourdir=/scratch/05518/oasselin/test_waqg/source/
-datadir=/scratch/05518/oasselin/test_waqg/output/
+sourdir=/scratch/05518/oasselin/test/source/
+datadir=/scratch/05518/oasselin/test/output/
 
 mkdir -p $sourdir
 mkdir -p $datadir
-
-rm -f $sourdir/*
 
 cd $sourdir
 
@@ -40,16 +38,16 @@ cat > EXEC_STEP << EXEC
 #
 #----------------------------------------------------
 
-#SBATCH -J waqg_test         # Job name
-#SBATCH -o waqg_test.o%j     # Name of stdout output file
-#SBATCH -e waqg_test.e%j     # Name of stderr error file
-#SBATCH -p development     # Queue (partition) name
-#SBATCH -N 1               # Total # of nodes 
-#SBATCH -n 32              # Total # of mpi tasks
-#SBATCH -t 00:00:30        # Run time (hh:mm:ss)
+#SBATCH -J test                       # Job name
+#SBATCH -o $HOME/monitor/test.o%j     # Name of stdout output file
+#SBATCH -e $HOME/monitor/test.e%j     # Name of stderr error file
+#SBATCH -p development                # Queue (partition) name
+#SBATCH -N $number_of_nodes           # Total # of nodes 
+#SBATCH -n $number_of_tasks           # Total # of mpi tasks
+#SBATCH -t 00:00:30                   # Run time (hh:mm:ss)
 #SBATCH --mail-user=oasselin@ucsd.edu
-##SBATCH --mail-type=all    # Send email at begin and end of job
-#SBATCH -A TG-OCE180004    # Allocation name (req'd if you have more than 1)
+##SBATCH --mail-type=all              # Send email at begin and end of job
+#SBATCH -A TG-OCE180004               # Allocation name (req'd if you have more than 1)
 
 ################ EXECUTE #######################                                                                                               
 cd $datadir
@@ -83,7 +81,6 @@ SPEC=special.f90
 
 
 #Compile with MPIf90                                                                                                                                       
-#mpif90 -mkl $PARA         $MPI    $FFT    $FILE     $DERI           $ELLI        $SPEC $DIAG $INIT  $MAIN -o exec_qg
 mpif90 -mkl parameters.f90 mpi.f90 fft.f90 files.f90 derivatives.f90 elliptic.f90 special.f90 diagnostics.f90 init.f90 main_waqg.f90 -o exec_qg
 
 
@@ -94,10 +91,3 @@ chmod 755 COMPILE_STEP
 ##chmod 755 EXEC_STEP                                                                                                                                       
 #sbatch EXEC_STEP
 ##./EXEC_STEP                                                                                                                                               
-
-#cp $datadir/$runout $HOME/monitor/
-
-################ HELPFUL COMMANDS #####################                                                                             
-## sbatch myjobscript - submit the file 'myjobscript' to start a job                                                             
-##squeue -u username - display the status of all your jobs                                                                                            
-##scancel jobid - delete the job from the queue using the jobid
