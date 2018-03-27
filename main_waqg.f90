@@ -245,17 +245,23 @@ PROGRAM main
  call convol_waqg(nqk,nBRk,nBIk,nqr,nBRr,nBIr,uk,vk,qk,BRk,BIk,ur,vr,qr,BRr,BIr)
  call refraction_waqg(rBRk,rBIk,rBRr,rBIr,BRk,BIk,psik,BRr,BIr,psir)
 
- !Compute dissipation 
- call dissipation_q_nv(dqk,qok)
- 
- if(inviscid==1) then
-    dqk=(0.D0,0.D0)
- end if
-
-
   qok = qk
  BRok = BRk
  BIok = BIk
+
+ !Compute the forcing!
+ do izh0=1,n3h0
+    do iky=1,ikty
+       do ikx=1,iktx
+          if (L(ikx,iky).eq.1) then
+             Ftk(ikx,iky,izh0) = Fqk(ikx,iky,izh0)*sin(a_t*(time-delt)) + Fjk(ikx,iky,izh0)*cos(a_t*(time-delt))*cos(a_t*(time-delt)) + Fdk(ikx,iky,izh0)*cos(a_t*(time-delt))
+          else
+             Ftk(ikx,iky,izh0) = (0.D0,0.D0)
+          endif
+       enddo
+    enddo
+ enddo
+
 
  !Compute q^1 and B^1 with Forward Euler  
  do izh0=1,n3h0
@@ -267,7 +273,7 @@ PROGRAM main
           kh2=kx*kx+ky*ky
           diss = nuh*delt*(1.*kh2)**(1.*ilap)              !This does not work !!!!! diss = nuh*(kh2**ilap)*delt 
           if (L(ikx,iky).eq.1) then
-             qk(ikx,iky,izh1) = (  qok(ikx,iky,izh1) - delt* nqk(ikx,iky,izh0)  + delt*dqk(ikx,iky,izh0) )*exp(-diss)
+             qk(ikx,iky,izh1) = (  qok(ikx,iky,izh1) - delt* nqk(ikx,iky,izh0)  + delt*Ftk(ikx,iky,izh0) + delt*dqk(ikx,iky,izh0) )*exp(-diss)
             BRk(ikx,iky,izh0) = ( BRok(ikx,iky,izh0) - delt*nBRk(ikx,iky,izh0)  - delt*(0.5/(Bu*Ro))*kh2*AIk(ikx,iky,izh0) + delt*0.5*rBIk(ikx,iky,izh0) )*exp(-diss)
             BIk(ikx,iky,izh0) = ( BIok(ikx,iky,izh0) - delt*nBIk(ikx,iky,izh0)  + delt*(0.5/(Bu*Ro))*kh2*ARk(ikx,iky,izh0) - delt*0.5*rBRk(ikx,iky,izh0) )*exp(-diss)
           else
@@ -341,12 +347,18 @@ end if
      call convol_waqg(nqk,nBRk,nBIk,nqr,nBRr,nBIr,uk,vk,qk,BRk,BIk,ur,vr,qr,BRr,BIr)
      call refraction_waqg(rBRk,rBIk,rBRr,rBIr,BRk,BIk,psik,BRr,BIr,psir)
 
-     !Compute dissipation from qok
-     call dissipation_q_nv(dqk,qok)
-
-     if(inviscid==1) then
-        dqk=(0.D0,0.D0)
-     end if
+     !Compute the forcing!
+     do izh0=1,n3h0
+        do iky=1,ikty
+           do ikx=1,iktx
+              if (L(ikx,iky).eq.1) then
+                 Ftk(ikx,iky,izh0) = Fqk(ikx,iky,izh0)*sin(a_t*(time-delt)) + Fjk(ikx,iky,izh0)*cos(a_t*(time-delt))*cos(a_t*(time-delt)) + Fdk(ikx,iky,izh0)*cos(a_t*(time-delt))
+              else
+                 Ftk(ikx,iky,izh0) = (0.D0,0.D0)
+              endif
+           enddo
+        enddo
+     enddo
 
 
      !Compute q^n+1 and B^n+1 using leap-frog
@@ -359,7 +371,7 @@ end if
               kh2=kx*kx+ky*ky
               diss = nuh*delt*(1.*kh2)**(1.*ilap)
               if (L(ikx,iky).eq.1) then
-                 qtempk(ikx,iky,izh1) =  qok(ikx,iky,izh1)*exp(-2*diss) - 2*delt*nqk(ikx,iky,izh0)*exp(-diss)  + 2*delt*dqk(ikx,iky,izh0)*exp(-2*diss)
+                 qtempk(ikx,iky,izh1) =  qok(ikx,iky,izh1)*exp(-2*diss) - 2*delt*nqk(ikx,iky,izh0)*exp(-diss) + 2*delt*nqk(ikx,iky,izh0)*exp(-diss) + 2*delt*dqk(ikx,iky,izh0)*exp(-2*diss)
                 BRtempk(ikx,iky,izh0) = BRok(ikx,iky,izh0)*exp(-2*diss) - 2*delt*(nBRk(ikx,iky,izh0) + (0.5/(Bu*Ro))*kh2*AIk(ikx,iky,izh0) - 0.5*rBIk(ikx,iky,izh0) )*exp(-diss)
                 BItempk(ikx,iky,izh0) = BIok(ikx,iky,izh0)*exp(-2*diss) - 2*delt*(nBIk(ikx,iky,izh0) - (0.5/(Bu*Ro))*kh2*ARk(ikx,iky,izh0) + 0.5*rBRk(ikx,iky,izh0) )*exp(-diss)
               else
@@ -458,8 +470,6 @@ if(out_etot ==1 .and. mod(iter,freq_etot )==0) call diag_zentrum(uk,vk,wk,bk,wak
 
  if(time>maxtime) EXIT
 end do !End loop
-
- if(mype==0)  write(*,*) n1,ave_cpu/(1.*itermax-1.)
 
 !************ Terminating processes **********************!                                                                                                                         
 
