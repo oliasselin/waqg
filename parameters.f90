@@ -2,7 +2,7 @@ MODULE parameters
 
    IMPLICIT NONE
 
-    integer, parameter :: n1=32, n2=32, n3=32
+    integer, parameter :: n1=32, n2=32, n3=512
     integer, parameter :: npe=2
 
     integer, parameter :: n1d=n1+2, n2d=n2, n3d=n3
@@ -29,6 +29,7 @@ MODULE parameters
     !For comprehensive test only!
     !---------------------------!
 
+    integer, parameter :: init_test = 1
 
     double precision, parameter :: a_x = 3., a_y = 4., a_z = 5., a_t = 1.
     double precision, parameter :: b_x = 2., b_y = 3.
@@ -161,7 +162,7 @@ MODULE parameters
     double precision, parameter :: Ro  = U_scale/(cor*L_scale)                                  !Rossby number  U/fL
     double precision, parameter :: Fr  = U_scale/(0.5*(sqrt(N_2_trop)+sqrt(N_2_stra))*H_scale)  !Froude number  U/N(z0)H
     double precision, parameter :: W2F = (Uw_scale/U_scale)**2                                  ! wave to flow velocity magnitude squared
-    double precision, parameter :: Bu  = Fr*Fr/(Ro*Ro)                                          ! (Fr/Ro)^2 = Burger number 
+    double precision, parameter :: Bu  = 1.!Fr*Fr/(Ro*Ro)                                          ! (Fr/Ro)^2 = Burger number 
 
 
 
@@ -170,7 +171,7 @@ MODULE parameters
 
     real :: time=0.
     integer :: iter
-    integer :: itermax=1000000000
+    integer :: itermax=1
     real :: maxtime=40                      
     double precision, parameter :: delt=0.05*U_scale*dz    !0.0005*U_scale*dz                ! T_visc = 0.25D0*dz*dz/nu
     double precision, parameter :: gamma=1e-2!4e-3!1e-2!7.e-3            !Robert filter parameter

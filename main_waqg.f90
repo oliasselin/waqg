@@ -126,65 +126,112 @@ PROGRAM main
   call init_base_state
   if(mype==0)  call validate_run
 
-  if(init_vertical_structure==generic) then 
-     call init_psi_generic(uk,vk,wk,bk,psik,psir)
-     call init_q(qk,psik)
-  elseif(init_vertical_structure==smith_bernard) then
-     call init_psi_generic(uk,vk,wk,bk,psik,psir)   !Init a fully general psi
-     call init_q_sb(rhs,psik)       !Compute the jump-dominated PV as in Smith & Bernard (2013)
-     call mpitranspose(rhs,iktx,ikty,n3h0,qt,n3,iktyp)
-     call psi_solver(psik,qt)
-     call compute_velo(uk,vk,wk,bk,psik)
+  !Initialize the test!
+  !*******************!
 
-    !Set q from normalized rhs                                                                                                                                                                                                      
-    do izh0=1,n3h0
-       izh1=izh0+1
-       do iky=1,ikty
-          do ikx=1,iktx
-             if (L(ikx,iky).eq.1) then
-                 qk(ikx,iky,izh1) =  rhs(ikx,iky,izh0)
-              else
-                 qk(ikx,iky,izh1) = (0.D0,0.D0)
+  !First generate the exact solution and the associated forcing term
+  call generate_fields_stag(psitr,n3h1,qtr,n3h1,war,n3h1) 
+  call generate_fields_stag2(Fqr,n3h0,Fjr,n3h0,Fdr,n3h0) 
+  psir = psitr
+
+  !Move to Fourier space.
+  call fft_r2c(psir,psik,n3h1)
+  call fft_r2c(Fqr,Fqk,n3h0)
+  call fft_r2c(Fjr,Fjk,n3h0)
+  call fft_r2c(Fdr,Fdk,n3h0)
+
+  !Set wave terms to 0.
+  BRk = (0.D0,0.D0)
+  BIk = (0.D0,0.D0)
+  ARk = (0.D0,0.D0)
+  AIk = (0.D0,0.D0)
+  !No vertival diffusion
+  dqk=(0.D0,0.D0)
+
+  !Initialize the other fields
+  call init_q(qk,psik)
+  call compute_velo(uk,vk,wk,bk,psik)
+
+  call generate_halo(uk,vk,wk,bk)
+  call generate_halo_q(qk) 
+
+
+  !Test that the initial conditions are consistent!
+  !***********************************************!
+
+  if(init_test==1) then
+
+     !Computing the initial error (just to make sure)
+     do izh0=1,n3h0                                  
+        izh1=izh0+1
+        do iky=1,ikty
+           do ikx=1,iktx
+              if (L(ikx,iky).eq.1) then
+                 qwk(ikx,iky,izh0) = qk(ikx,iky,izh1)
               endif
            enddo
         enddo
      enddo
+     
+     call mpitranspose(qwk,iktx,ikty,n3h0,qt,n3,iktyp)  !Transpose q*                                                          
+     call psi_solver(psik,qt)
+
+     call fft_c2r(psik,psir,n3h1)
+     call fft_c2r(qk,qr,n3h1)
+
+     error   =0.
+     L1_local=0.
+     L2_local=0.
+     Li_local=0.
+     L1_global=0.
+     L2_global=0.
+     Li_global=0.
+
+     do izh0=1,n3h0
+        izh1=izh0+1
+        do ix=1,n1
+           do iy=1,n2 
+              
+!              error = ABS( psitr(ix,iy,izh1) - psir(ix,iy,izh1) )
+              error = ABS( qtr(ix,iy,izh1) - qr(ix,iy,izh1) )
+              L1_local = L1_local + error
+              L2_local = L2_local + error**2
+              
+              if(error > Li_local) Li_local = error 
+              
+           end do
+        end do
+     end do
+     
+     call mpi_reduce(L1_local,L1_global, 1,MPI_DOUBLE,MPI_SUM,0,MPI_COMM_WORLD,ierror)  
+     call mpi_reduce(L2_local,L2_global, 1,MPI_DOUBLE,MPI_SUM,0,MPI_COMM_WORLD,ierror)  
+     call mpi_reduce(Li_local,Li_global, 1,MPI_DOUBLE,MPI_MAX,0,MPI_COMM_WORLD,ierror)  
+     
+     if (mype==0) then
+        open (unit = 15467, file = "init-err.dat")
+        write(15467,"(I6,E12.5,E12.5,E12.5)") n3,L1_global/(n1*n2*n3),sqrt(L2_global/(n1*n2*n3)),Li_global
+     end if
+
+     call fft_r2c(psir,psik,n3h1)
+     call fft_r2c(qr,qk,n3h1)
+
   end if
-
- if(norm_trop==1) call normalize_trop(uk,vk,wk,bk,psik,qk,wak)
-
- call generate_halo(uk,vk,wk,bk)
- call generate_halo_q(qk) 
-
- qok=qk
 
 
  !Initial diagnostics!
  !*******************!
 
- !Compute war/wak if desired                                                                                                                                                     
- if(out_omega==1)  then
-    call omega_eqn_rhs(rhs,rhsr,psik)
-    call mpitranspose(rhs,iktx,ikty,n3h0,qt,n3,iktyp)
-    call omega_equation(wak,qt)
- end if
-
  if(out_etot ==1) call diag_zentrum(uk,vk,wk,bk,wak,psik,u_rot)
 
 
+ call fft_c2r(qk,qr,n3h1)
  do id_field=8,nfields                                            
-    if(out_slice ==1)  call slices(uk,vk,wk,bk,wak,u_rot,ur,vr,wr,br,war,u_rotr,psir,psitr,id_field)
+!    if(out_slice ==1)  call slices(uk,vk,wk,bk,wak,u_rot,ur,vr,wr,br,war,u_rotr,psir,psitr,id_field)
+    if(out_slice ==1)  call slices(uk,vk,wk,bk,wak,u_rot,ur,vr,wr,br,war,u_rotr,qr,qtr,id_field)
  end do
+ call fft_r2c(qr,qk,n3h1)
+
  
-! if(out_slab == 1 ) then
-!    if(mype==slab_mype) call print_slab(uk,vk)
-!    if(mype==slab_mype) call slab_klist
-! end if
-
- if(out_eta == 1 ) call tropopause_meanders(uk,vk,wk,bk,ur,vr,wr,br)
-
-
-
  !************************************************************************!
  !*** 1st time timestep using the projection method with Forward Euler ***!
  !************************************************************************!
