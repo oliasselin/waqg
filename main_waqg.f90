@@ -246,7 +246,7 @@ PROGRAM main
  iter=1
  
  call convol_waqg(nqk,nBRk,nBIk,nqr,nBRr,nBIr,uk,vk,qk,BRk,BIk,ur,vr,qr,BRr,BIr)
- call refraction_waqg(rBRk,rBIk,rBRr,rBIr,BRk,BIk,psik,BRr,BIr,psir)
+! call refraction_waqg(rBRk,rBIk,rBRr,rBIr,BRk,BIk,psik,BRr,BIr,psir)
 
   qok = qk
  BRok = BRk
@@ -295,14 +295,14 @@ PROGRAM main
 
  ! --- Recover the streamfunction --- !
 
- call compute_qw(qwk,BRk,BIk,qwr,BRr,BIr)           ! Compute qw
+! call compute_qw(qwk,BRk,BIk,qwr,BRr,BIr)           ! Compute qw
 
  do izh0=1,n3h0                                     ! Compute q* = q - qw
     izh1=izh0+1
     do iky=1,ikty
        do ikx=1,iktx
           if (L(ikx,iky).eq.1) then
-             qwk(ikx,iky,izh0)=  qk(ikx,iky,izh1) - qwk(ikx,iky,izh0)
+             qwk(ikx,iky,izh0)=  qk(ikx,iky,izh1) !- qwk(ikx,iky,izh0)
           endif
        enddo
     enddo
@@ -317,10 +317,10 @@ PROGRAM main
 
  ! --- Recover A from B --- !
 
- call compute_sigma(sigma,nBRk, nBIk, rBRk, rBIk)              !Compute the sum of A
- call mpitranspose(BRk,iktx,ikty,n3h0,BRkt,n3,iktyp)           !Transpose BR to iky-parallelized space 
- call mpitranspose(BIk,iktx,ikty,n3h0,BIkt,n3,iktyp)           !Transpose BK to iky-parallelized space 
- call compute_A(ARk,AIK,BRkt,BIkt,sigma)                       !Compute A!
+! call compute_sigma(sigma,nBRk, nBIk, rBRk, rBIk)              !Compute the sum of A
+! call mpitranspose(BRk,iktx,ikty,n3h0,BRkt,n3,iktyp)           !Transpose BR to iky-parallelized space 
+! call mpitranspose(BIk,iktx,ikty,n3h0,BIkt,n3,iktyp)           !Transpose BK to iky-parallelized space 
+! call compute_A(ARk,AIK,BRkt,BIkt,sigma)                       !Compute A!
 
  ! ------------------------ !
 
@@ -347,7 +347,7 @@ end if
      time=iter*delt
 
      call convol_waqg(nqk,nBRk,nBIk,nqr,nBRr,nBIr,uk,vk,qk,BRk,BIk,ur,vr,qr,BRr,BIr)
-     call refraction_waqg(rBRk,rBIk,rBRr,rBIr,BRk,BIk,psik,BRr,BIr,psir)
+!     call refraction_waqg(rBRk,rBIk,rBRr,rBIr,BRk,BIk,psik,BRr,BIr,psir)
 
      !Compute the forcing!
      do izh0=1,n3h0
@@ -373,7 +373,7 @@ end if
               kh2=kx*kx+ky*ky
               diss = nuh*delt*(1.*kh2)**(1.*ilap)
               if (L(ikx,iky).eq.1) then
-                 qtempk(ikx,iky,izh1) =  qok(ikx,iky,izh1)*exp(-2*diss) - 2*delt*nqk(ikx,iky,izh0)*exp(-diss) + 2*delt*nqk(ikx,iky,izh0)*exp(-diss) + 2*delt*dqk(ikx,iky,izh0)*exp(-2*diss)
+                 qtempk(ikx,iky,izh1) =  qok(ikx,iky,izh1)*exp(-2*diss) - 2*delt*nqk(ikx,iky,izh0)*exp(-diss) + 2*delt*Ftk(ikx,iky,izh0)*exp(-diss) + 2*delt*dqk(ikx,iky,izh0)*exp(-2*diss)
                 BRtempk(ikx,iky,izh0) = BRok(ikx,iky,izh0)*exp(-2*diss) - 2*delt*(nBRk(ikx,iky,izh0) + (0.5/(Bu*Ro))*kh2*AIk(ikx,iky,izh0) - 0.5*rBIk(ikx,iky,izh0) )*exp(-diss)
                 BItempk(ikx,iky,izh0) = BIok(ikx,iky,izh0)*exp(-2*diss) - 2*delt*(nBIk(ikx,iky,izh0) - (0.5/(Bu*Ro))*kh2*ARk(ikx,iky,izh0) + 0.5*rBRk(ikx,iky,izh0) )*exp(-diss)
               else
@@ -417,14 +417,14 @@ BIk = BItempk
 
  ! --- Recover the streamfunction --- !                                                                                                                   
 
- call compute_qw(qwk,BRk,BIk,qwr,BRr,BIr)           !Compute qw                                                                                          
+! call compute_qw(qwk,BRk,BIk,qwr,BRr,BIr)           !Compute qw                                                                                          
 
  do izh0=1,n3h0                                     ! Compute q* = q - qw                                                                                 
     izh1=izh0+1
     do iky=1,ikty
        do ikx=1,iktx
           if (L(ikx,iky).eq.1) then
-             qwk(ikx,iky,izh0)=  qk(ikx,iky,izh1) - qwk(ikx,iky,izh0)
+             qwk(ikx,iky,izh0)=  qk(ikx,iky,izh1) !- qwk(ikx,iky,izh0)
           endif
        enddo
     enddo
@@ -438,10 +438,10 @@ BIk = BItempk
 
  ! --- Recover A from B --- !                                                                                                                                 
 
- call compute_sigma(sigma,nBRk, nBIk, rBRk, rBIk)              !Compute the sum of A                                                                                    
- call mpitranspose(BRk,iktx,ikty,n3h0,BRkt,n3,iktyp)           !Transpose BR to iky-parallelized space                                                                   
- call mpitranspose(BIk,iktx,ikty,n3h0,BIkt,n3,iktyp)           !Transpose BK to iky-parallelized space                                                                  
- call compute_A(ARk,AIK,BRkt,BIkt,sigma)                       !Compute A!                                                                                  
+! call compute_sigma(sigma,nBRk, nBIk, rBRk, rBIk)              !Compute the sum of A                                                                                    
+! call mpitranspose(BRk,iktx,ikty,n3h0,BRkt,n3,iktyp)           !Transpose BR to iky-parallelized space                                                                   
+! call mpitranspose(BIk,iktx,ikty,n3h0,BIkt,n3,iktyp)           !Transpose BK to iky-parallelized space                                                                  
+! call compute_A(ARk,AIK,BRkt,BIkt,sigma)                       !Compute A!                                                                                  
 
  ! ------------------------ !       
 
@@ -471,7 +471,60 @@ if(out_etot ==1 .and. mod(iter,freq_etot )==0) call diag_zentrum(uk,vk,wk,bk,wak
 
 
  if(time>maxtime) EXIT
+
 end do !End loop
+
+
+
+
+
+!Computing the error!
+!*******************!
+
+
+call fft_c2r(psik,psir,n3h1)
+
+error   =0.
+L1_local=0.
+L2_local=0.
+Li_local=0.
+L1_global=0.
+L2_global=0.
+Li_global=0.
+
+do izh0=1,n3h0
+   izh1=izh0+1
+   do ix=1,n1
+      do iy=1,n2 
+         
+         error = ABS( psitr(ix,iy,izh1)*cos(a_t*time) - psir(ix,iy,izh1) )
+         L1_local = L1_local + error
+         L2_local = L2_local + error**2
+         
+         if(error > Li_local) Li_local = error 
+         
+      end do
+   end do
+end do
+
+
+
+call mpi_reduce(L1_local,L1_global, 1,MPI_DOUBLE,MPI_SUM,0,MPI_COMM_WORLD,ierror)  
+call mpi_reduce(L2_local,L2_global, 1,MPI_DOUBLE,MPI_SUM,0,MPI_COMM_WORLD,ierror)  
+call mpi_reduce(Li_local,Li_global, 1,MPI_DOUBLE,MPI_MAX,0,MPI_COMM_WORLD,ierror)  
+
+!  if(mype==0) write(*,*) "L1=",L1_global/(n1*n2*n3),"L2=",sqrt(L2_global/(n1*n2*n3)),"Linf=",Li_global
+
+if (mype==0) then
+   open (unit = 154673, file = "qg-err.dat")
+   write(154673,"(I6,E12.5,E12.5,E12.5)") n3,L1_global/(n1*n2*n3),sqrt(L2_global/(n1*n2*n3)),Li_global
+end if
+
+
+
+
+
+
 
 !************ Terminating processes **********************!                                                                                                                         
 
