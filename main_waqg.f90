@@ -224,13 +224,16 @@ PROGRAM main
  if(out_etot ==1) call diag_zentrum(uk,vk,wk,bk,wak,psik,u_rot)
 
 
+ !Print slices of the solution!
+ call fft_c2r(psik,psir,n3h1)
  call fft_c2r(qk,qr,n3h1)
  do id_field=8,nfields                                            
 !    if(out_slice ==1)  call slices(uk,vk,wk,bk,wak,u_rot,ur,vr,wr,br,war,u_rotr,psir,psitr,id_field)
     if(out_slice ==1)  call slices(uk,vk,wk,bk,wak,u_rot,ur,vr,wr,br,war,u_rotr,qr,qtr,id_field)
  end do
  call fft_r2c(qr,qk,n3h1)
-
+ call fft_r2c(psir,psik,n3h1)
+     
  
  !************************************************************************!
  !*** 1st time timestep using the projection method with Forward Euler ***!
@@ -326,7 +329,6 @@ PROGRAM main
  call compute_velo(uk,vk,wk,bk,psik)
  call generate_halo(uk,vk,wk,bk)
 
- if(out_slab == 1 .and. mod(iter,freq_slab)==0 .and. mype==slab_mype) call print_slab(uk,vk)
 
 end if
 
@@ -453,20 +455,20 @@ BIk = BItempk
  !*** Diagnostics ***!
  !-------------------!
 
- !Compute w if desired
- if(out_omega==1 .and. (mod(iter,freq_omega) ==0))  then
-    call omega_eqn_rhs(rhs,rhsr,psik)
-    call mpitranspose(rhs,iktx,ikty,n3h0,qt,n3,iktyp)
-    call omega_equation(wak,qt)
-    call generate_halo_q(wak)
- end if
 
 if(out_etot ==1 .and. mod(iter,freq_etot )==0) call diag_zentrum(uk,vk,wk,bk,wak,psik,u_rot)
 
 
+ !Print slices of the solution!
+ call fft_c2r(psik,psir,n3h1)
+ call fft_c2r(qk,qr,n3h1)
  do id_field=8,nfields                                            
-    if(out_slice ==1 .and. mod(iter,freq_slice)==0 .and. count_slice(id_field)<max_slices)  call slices(uk,vk,wk,bk,wak,u_rot,ur,vr,wr,br,war,u_rotr,psir,psitr*cos(a_t*time),id_field)
+!    if(out_slice ==1)  call slices(uk,vk,wk,bk,wak,u_rot,ur,vr,wr,br,war,u_rotr,psir,psitr*cos(a_t*time),id_field)
+    if(out_slice ==1)  call slices(uk,vk,wk,bk,wak,u_rot,ur,vr,wr,br,war,u_rotr,qr,qtr*cos(a_t*time),id_field)
  end do
+ call fft_r2c(qr,qk,n3h1)
+ call fft_r2c(psir,psik,n3h1)
+
 
  if(time>maxtime) EXIT
 end do !End loop
