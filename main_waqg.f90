@@ -192,8 +192,8 @@ PROGRAM main
         do ix=1,n1
            do iy=1,n2 
               
-!              error = ABS( psitr(ix,iy,izh1) - psir(ix,iy,izh1) )
-              error = ABS( qtr(ix,iy,izh1) - qr(ix,iy,izh1) )
+              error = ABS( psitr(ix,iy,izh1) - psir(ix,iy,izh1) )
+!              error = ABS( qtr(ix,iy,izh1) - qr(ix,iy,izh1) )
               L1_local = L1_local + error
               L2_local = L2_local + error**2
               
@@ -228,8 +228,8 @@ PROGRAM main
  call fft_c2r(psik,psir,n3h1)
  call fft_c2r(qk,qr,n3h1)
  do id_field=8,nfields                                            
-!    if(out_slice ==1)  call slices(uk,vk,wk,bk,wak,u_rot,ur,vr,wr,br,war,u_rotr,psir,psitr,id_field)
-    if(out_slice ==1)  call slices(uk,vk,wk,bk,wak,u_rot,ur,vr,wr,br,war,u_rotr,qr,qtr,id_field)
+    if(out_slice ==1)  call slices(uk,vk,wk,bk,wak,u_rot,ur,vr,wr,br,war,u_rotr,psir,psitr,id_field)
+!    if(out_slice ==1)  call slices(uk,vk,wk,bk,wak,u_rot,ur,vr,wr,br,war,u_rotr,qr,qtr,id_field)
  end do
  call fft_r2c(qr,qk,n3h1)
  call fft_r2c(psir,psik,n3h1)
@@ -459,19 +459,67 @@ BIk = BItempk
 if(out_etot ==1 .and. mod(iter,freq_etot )==0) call diag_zentrum(uk,vk,wk,bk,wak,psik,u_rot)
 
 
- !Print slices of the solution!
- call fft_c2r(psik,psir,n3h1)
- call fft_c2r(qk,qr,n3h1)
- do id_field=8,nfields                                            
-!    if(out_slice ==1)  call slices(uk,vk,wk,bk,wak,u_rot,ur,vr,wr,br,war,u_rotr,psir,psitr*cos(a_t*time),id_field)
-    if(out_slice ==1)  call slices(uk,vk,wk,bk,wak,u_rot,ur,vr,wr,br,war,u_rotr,qr,qtr*cos(a_t*time),id_field)
- end do
- call fft_r2c(qr,qk,n3h1)
- call fft_r2c(psir,psik,n3h1)
+if(out_slice ==1 .and. mod(iter,freq_slice)==0) then
+
+   !Print slices of the solution!
+   call fft_c2r(psik,psir,n3h1)
+   call fft_c2r(qk,qr,n3h1)
+   do id_field=8,nfields                                            
+      !call slices(uk,vk,wk,bk,wak,u_rot,ur,vr,wr,br,war,u_rotr,psir,psitr*cos(a_t*time),id_field)
+      call slices(uk,vk,wk,bk,wak,u_rot,ur,vr,wr,br,war,u_rotr,qr,qtr*cos(a_t*time),id_field)
+   end do
+   
+   !Compute the error on psi!
+   
+   error   =0.
+   L1_local=0.
+   L2_local=0.
+   Li_local=0.
+   L1_global=0.
+   L2_global=0.
+   Li_global=0.
+   
+   do izh0=1,n3h0
+      izh1=izh0+1
+      do ix=1,n1
+         do iy=1,n2
+            
+            error = ABS( psitr(ix,iy,izh1)*cos(a_t*time) - psir(ix,iy,izh1) )
+            L1_local = L1_local + error
+            L2_local = L2_local + error**2
+            
+            if(error > Li_local) Li_local = error
+            
+         end do
+      end do
+   end do
+   
+   
+   
+   call mpi_reduce(L1_local,L1_global, 1,MPI_DOUBLE,MPI_SUM,0,MPI_COMM_WORLD,ierror)
+   call mpi_reduce(L2_local,L2_global, 1,MPI_DOUBLE,MPI_SUM,0,MPI_COMM_WORLD,ierror)
+   call mpi_reduce(Li_local,Li_global, 1,MPI_DOUBLE,MPI_MAX,0,MPI_COMM_WORLD,ierror)
+   
+   !  if(mype==0) write(*,*) "L1=",L1_global/(n1*n2*n3),"L2=",sqrt(L2_global/(n1*n2*n3)),"Linf=",Li_global                                                                                  
+
+   if (mype==0) then
+      open (unit = 154673, file = "qg-err.dat")
+      write(154673,"(E12.5,E12.5,E12.5,E12.5)") time,L1_global/(n1*n2*n3),sqrt(L2_global/(n1*n2*n3)),Li_global
+   end if
+   
+
+   call fft_r2c(qr,qk,n3h1)
+   call fft_r2c(psir,psik,n3h1)
+
+   if(mype==0) write(*,"(E12.5,E12.5,E12.5,E12.5)") time,L1_global/(n1*n2*n3),sqrt(L2_global/(n1*n2*n3)),Li_global
+
+end if
 
 
- if(time>maxtime) EXIT
 
+
+if(time>maxtime) EXIT
+ 
 end do !End loop
 
 
@@ -517,9 +565,8 @@ call mpi_reduce(Li_local,Li_global, 1,MPI_DOUBLE,MPI_MAX,0,MPI_COMM_WORLD,ierror
 
 if (mype==0) then
    open (unit = 154673, file = "qg-err.dat")
-   write(154673,"(I6,E12.5,E12.5,E12.5)") n3,L1_global/(n1*n2*n3),sqrt(L2_global/(n1*n2*n3)),Li_global
+   write(154673,"(E12.5,E12.5,E12.5,E12.5)") time,L1_global/(n1*n2*n3),sqrt(L2_global/(n1*n2*n3)),Li_global
 end if
-
 
 
 

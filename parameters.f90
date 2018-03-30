@@ -2,7 +2,7 @@ MODULE parameters
 
    IMPLICIT NONE
 
-    integer, parameter :: n1=32, n2=32, n3=32
+    integer, parameter :: n1=32, n2=32, n3=128
     integer, parameter :: npe=2
 
     integer, parameter :: n1d=n1+2, n2d=n2, n3d=n3
@@ -31,7 +31,7 @@ MODULE parameters
 
     integer, parameter :: init_test = 1
 
-    double precision, parameter :: a_x = 3., a_y = 4., a_z = 5., a_t = 1.
+    double precision, parameter :: a_x = 3., a_y = 4., a_z = 5., a_t = 0.
     double precision, parameter :: b_x = 2., b_y = 3.
 
 
@@ -172,8 +172,8 @@ MODULE parameters
     real :: time=0.
     integer :: iter
     integer :: itermax=1000000000
-    real :: maxtime=0.5                      
-    double precision, parameter :: delt=0.05*U_scale*dz    !0.0005*U_scale*dz                ! T_visc = 0.25D0*dz*dz/nu
+    real :: maxtime=1.                      
+    double precision, parameter :: delt=0.05*U_scale*dz/2    !0.0005*U_scale*dz                ! T_visc = 0.25D0*dz*dz/nu
     double precision, parameter :: gamma=1e-2!4e-3!1e-2!7.e-3            !Robert filter parameter
 
     !Other successful viscosity: 5e-2 * (10./ktrunc_x ) **2. 
@@ -202,7 +202,7 @@ MODULE parameters
     !Output!
     !------!
 
-    integer, parameter :: out_etot   = 1, freq_etot   = INT(0.1/delt)!50!346!n3/64!n3!64!n3!50*n3/64      !Total energy                                                    
+    integer, parameter :: out_etot   = 1, freq_etot   = INT(0.01/delt)!50!346!n3/64!n3!64!n3!50*n3/64      !Total energy                                                    
     integer, parameter :: out_hspec  = 1, freq_hspec  = 5*freq_etot!n3/64!n3!freq_etot*10     !Horizontal energy spectrum at various heights 
     integer, parameter :: out_hg     = 0                 !Output geostrophic horizontal spectrum as well?
     integer, parameter :: out_vspec  = 0, freq_vspec =  freq_hspec
