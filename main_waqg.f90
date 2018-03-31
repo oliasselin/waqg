@@ -248,23 +248,28 @@ PROGRAM main
  call convol_waqg(nqk,nBRk,nBIk,nqr,nBRr,nBIr,uk,vk,qk,BRk,BIk,ur,vr,qr,BRr,BIr)
 ! call refraction_waqg(rBRk,rBIk,rBRr,rBIr,BRk,BIk,psik,BRr,BIr,psir)
 
+ if(linear==1) nqk = (0.D0,0.D0)
+
   qok = qk
  BRok = BRk
  BIok = BIk
 
  !Compute the forcing!
- do izh0=1,n3h0
-    do iky=1,ikty
-       do ikx=1,iktx
-          if (L(ikx,iky).eq.1) then
-             Ftk(ikx,iky,izh0) = Fqk(ikx,iky,izh0)*sin(a_t*(time-delt)) + Fjk(ikx,iky,izh0)*cos(a_t*(time-delt))*cos(a_t*(time-delt)) + Fdk(ikx,iky,izh0)*cos(a_t*(time-delt))
-          else
-             Ftk(ikx,iky,izh0) = (0.D0,0.D0)
-          endif
+ if(forcing==1) then
+    do izh0=1,n3h0
+       do iky=1,ikty
+          do ikx=1,iktx
+             if (L(ikx,iky).eq.1) then
+                Ftk(ikx,iky,izh0) = Fqk(ikx,iky,izh0)*sin(a_t*(time-delt)) + Fjk(ikx,iky,izh0)*cos(a_t*(time-delt))*cos(a_t*(time-delt)) + Fdk(ikx,iky,izh0)*cos(a_t*(time-delt))
+             else
+                Ftk(ikx,iky,izh0) = (0.D0,0.D0)
+             endif
+          enddo
        enddo
     enddo
- enddo
-
+ else
+    Ftk = (0.D0,0.D0)
+ end if
 
  !Compute q^1 and B^1 with Forward Euler  
  do izh0=1,n3h0
@@ -349,20 +354,25 @@ end if
      call convol_waqg(nqk,nBRk,nBIk,nqr,nBRr,nBIr,uk,vk,qk,BRk,BIk,ur,vr,qr,BRr,BIr)
 !     call refraction_waqg(rBRk,rBIk,rBRr,rBIr,BRk,BIk,psik,BRr,BIr,psir)
 
+     if(linear==1) nqk = (0.D0,0.D0)
+
      !Compute the forcing!
-     do izh0=1,n3h0
-        do iky=1,ikty
-           do ikx=1,iktx
-              if (L(ikx,iky).eq.1) then
-                 Ftk(ikx,iky,izh0) = Fqk(ikx,iky,izh0)*sin(a_t*(time-delt)) + Fjk(ikx,iky,izh0)*cos(a_t*(time-delt))*cos(a_t*(time-delt)) + Fdk(ikx,iky,izh0)*cos(a_t*(time-delt))
-              else
-                 Ftk(ikx,iky,izh0) = (0.D0,0.D0)
-              endif
+     if(forcing == 1) then
+        do izh0=1,n3h0
+           do iky=1,ikty
+              do ikx=1,iktx
+                 if (L(ikx,iky).eq.1) then
+                    Ftk(ikx,iky,izh0) = Fqk(ikx,iky,izh0)*sin(a_t*(time-delt)) + Fjk(ikx,iky,izh0)*cos(a_t*(time-delt))*cos(a_t*(time-delt)) + Fdk(ikx,iky,izh0)*cos(a_t*(time-delt))
+                 else
+                    Ftk(ikx,iky,izh0) = (0.D0,0.D0)
+                 endif
+              enddo
            enddo
         enddo
-     enddo
-
-
+     else
+        Ftk = (0.D0,0.D0)
+     end if
+     
      !Compute q^n+1 and B^n+1 using leap-frog
      do izh0=1,n3h0
         izh1=izh0+1
