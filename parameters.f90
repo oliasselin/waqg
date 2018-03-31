@@ -30,9 +30,9 @@ MODULE parameters
     !---------------------------!
 
     integer, parameter :: init_test = 0
-    integer, parameter :: forcing = 0
+    integer, parameter :: forcing = 1
 
-    double precision, parameter :: a_x = 4., a_y = 4., a_z = 5., a_t = 0.
+    double precision, parameter :: a_x = 1., a_y = 2., a_z = 5., a_t = 0.
     double precision, parameter :: b_x = 2., b_y = 3.
 
    
@@ -175,7 +175,7 @@ MODULE parameters
     integer :: iter
     integer :: itermax=1000000000
     real :: maxtime=1.                      
-    double precision, parameter :: delt=0.05*U_scale*dz/2/2.    !0.0005*U_scale*dz                ! T_visc = 0.25D0*dz*dz/nu
+    double precision, parameter :: delt=0.05*U_scale*dz/2/10.    !0.0005*U_scale*dz                ! T_visc = 0.25D0*dz*dz/nu
     double precision, parameter :: gamma=0.!1e-2!4e-3!1e-2!7.e-3            !Robert filter parameter
 
     !Other successful viscosity: 5e-2 * (10./ktrunc_x ) **2. 
