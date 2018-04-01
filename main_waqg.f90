@@ -133,9 +133,11 @@ PROGRAM main
   call generate_fields_stag(psitr,n3h1,qtr,n3h1,war,n3h1) 
   call generate_fields_stag2(Fqr,n3h0,Fjr,n3h0,Fdr,n3h0) 
   psir = psitr
+  qr = qtr
 
   !Move to Fourier space.
   call fft_r2c(psir,psik,n3h1)
+  call fft_r2c(qr,qk,n3h1)
   call fft_r2c(Fqr,Fqk,n3h0)
   call fft_r2c(Fjr,Fjk,n3h0)
   call fft_r2c(Fdr,Fdk,n3h0)
@@ -149,7 +151,7 @@ PROGRAM main
   dqk=(0.D0,0.D0)
 
   !Initialize the other fields
-  call init_q(qk,psik)
+!  call init_q(qk,psik)
   call compute_velo(uk,vk,wk,bk,psik)
 
   call generate_halo(uk,vk,wk,bk)
@@ -192,8 +194,8 @@ PROGRAM main
         do ix=1,n1
            do iy=1,n2 
               
-              error = ABS( psitr(ix,iy,izh1) - psir(ix,iy,izh1) )
-!              error = ABS( qtr(ix,iy,izh1) - qr(ix,iy,izh1) )
+!              error = ABS( psitr(ix,iy,izh1) - psir(ix,iy,izh1) )
+              error = ABS( qtr(ix,iy,izh1) - qr(ix,iy,izh1) )
               L1_local = L1_local + error
               L2_local = L2_local + error**2
               
@@ -494,7 +496,8 @@ if(out_slice ==1 .and. mod(iter,freq_slice)==0) then
       do ix=1,n1
          do iy=1,n2
             
-            error = ABS( psitr(ix,iy,izh1)*cos(a_t*time) - psir(ix,iy,izh1) )
+!            error = ABS( psitr(ix,iy,izh1)*cos(a_t*time) - psir(ix,iy,izh1) )
+            error = ABS( qtr(ix,iy,izh1)*cos(a_t*time) - qr(ix,iy,izh1) )
             L1_local = L1_local + error
             L2_local = L2_local + error**2
             
@@ -541,6 +544,8 @@ end do !End loop
 
 
 call fft_c2r(psik,psir,n3h1)
+call fft_c2r(qk,qr,n3h1)
+
 
 error   =0.
 L1_local=0.
@@ -555,7 +560,8 @@ do izh0=1,n3h0
    do ix=1,n1
       do iy=1,n2 
          
-         error = ABS( psitr(ix,iy,izh1)*cos(a_t*time) - psir(ix,iy,izh1) )
+!         error = ABS( psitr(ix,iy,izh1)*cos(a_t*time) - psir(ix,iy,izh1) )
+         error = ABS( qtr(ix,iy,izh1)*cos(a_t*time) - qr(ix,iy,izh1) )
          L1_local = L1_local + error
          L2_local = L2_local + error**2
          
