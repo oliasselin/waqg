@@ -2,7 +2,7 @@ MODULE parameters
 
    IMPLICIT NONE
 
-    integer, parameter :: n1=32, n2=32, n3=128
+    integer, parameter :: n1=32, n2=32, n3=256
     integer, parameter :: npe=2
 
     integer, parameter :: n1d=n1+2, n2d=n2, n3d=n3
@@ -32,7 +32,7 @@ MODULE parameters
     integer, parameter :: init_test = 1
     integer, parameter :: forcing = 1
 
-    double precision, parameter :: a_x = 1., a_y = 1., a_z = 1., a_t = 1.
+    double precision, parameter :: a_x = 1., a_y = 2., a_z = 1., a_t = 1.
     double precision, parameter :: b_x = 2., b_y = 3.
 
    
@@ -40,7 +40,7 @@ MODULE parameters
     !Tags to specify run!
     !-------------------!
     
-    integer, parameter :: linear=1                      !1: set the nonlinear terms (advection) to 0. 
+    integer, parameter :: linear=0                      !1: set the nonlinear terms (advection) to 0. 
     integer, parameter :: inviscid=0                    !1: No dissipation, otherwise: dissipation
     integer, parameter :: init_wageo=0                  !1: Initialize wk with Ro*wak
 
@@ -96,7 +96,7 @@ MODULE parameters
     double precision, parameter :: gamma_N1=(sqrt(N_2_stra)-sqrt(N_2_trop))/(sqrt(N_2_stra)+sqrt(N_2_trop))       !This is alpha for N~1+alpha tanh(z/h)
 
     !Stratification = exponential!
-    double precision, parameter :: N2_scale = 0.!0.75D0   !N^2 ~ exp(N2_scale*(z-z0) 
+    double precision, parameter :: N2_scale = 0.75D0   !N^2 ~ exp(N2_scale*(z-z0) 
 
    ! USEFUL INDEX !                                                                                                                          
    ! ------------ !                                                                                                                         
@@ -175,7 +175,7 @@ MODULE parameters
     integer :: iter
     integer :: itermax=1000000000
     real :: maxtime=1.                      
-    double precision, parameter :: delt=0.0001!0.05*U_scale*dz/2./2.    !0.0005*U_scale*dz                ! T_visc = 0.25D0*dz*dz/nu
+    double precision, parameter :: delt=0.001!0.05*U_scale*dz/2./2.    !0.0005*U_scale*dz                ! T_visc = 0.25D0*dz*dz/nu
     double precision, parameter :: gamma=1e-4!4e-3!1e-2!7.e-3            !Robert filter parameter
 
     !Other successful viscosity: 5e-2 * (10./ktrunc_x ) **2. 
