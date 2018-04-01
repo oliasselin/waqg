@@ -2,7 +2,7 @@ MODULE parameters
 
    IMPLICIT NONE
 
-    integer, parameter :: n1=32, n2=32, n3=256
+    integer, parameter :: n1=32, n2=32, n3=32
     integer, parameter :: npe=2
 
     integer, parameter :: n1d=n1+2, n2d=n2, n3d=n3
@@ -28,6 +28,11 @@ MODULE parameters
 
     !For comprehensive test only!
     !---------------------------!
+
+    integer, parameter :: num_q   = 0  !Take the analytical solution for psi, and compute q   numerically
+    integer, parameter :: num_psi = 0  !Take the analytical solution for q  , and compute psi numerically
+    integer, parameter :: num_all = 1  !Redefine the true solution as the numerical one.
+
 
     integer, parameter :: init_test = 1
     integer, parameter :: forcing = 1

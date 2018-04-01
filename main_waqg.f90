@@ -150,21 +150,11 @@ PROGRAM main
   !No vertival diffusion
   dqk=(0.D0,0.D0)
 
-  !Initialize the other fields
-!  call init_q(qk,psik)
-  call compute_velo(uk,vk,wk,bk,psik)
+  if(num_q == 1) call init_q(qk,psik)
+  if(num_psi == 1) then
 
-  call generate_halo(uk,vk,wk,bk)
-  call generate_halo_q(qk) 
-
-
-  !Test that the initial conditions are consistent!
-  !***********************************************!
-
-  if(init_test==1) then
-
-     !Computing the initial error (just to make sure)
-     do izh0=1,n3h0                                  
+     !Computing the initial error (just to make sure)                                                         
+     do izh0=1,n3h0
         izh1=izh0+1
         do iky=1,ikty
            do ikx=1,iktx
@@ -174,9 +164,48 @@ PROGRAM main
            enddo
         enddo
      enddo
-     
-     call mpitranspose(qwk,iktx,ikty,n3h0,qt,n3,iktyp)  !Transpose q*                                                          
+
+     call mpitranspose(qwk,iktx,ikty,n3h0,qt,n3,iktyp)  !Transpose q*                                                                                
      call psi_solver(psik,qt)
+
+  end if
+  if(num_all == 1) then
+     !Compute q numerically from psi and define as the true solution
+     call init_q(qk,psik)
+     call generate_halo_q(qk)
+     qtk = qk
+     call fft_c2r(qtk,qtr,n3h1)
+
+     !Compute psi numerically from the numerical q and define as the true solution
+     do izh0=1,n3h0
+        izh1=izh0+1
+        do iky=1,ikty
+           do ikx=1,iktx
+              if (L(ikx,iky).eq.1) then
+                 qwk(ikx,iky,izh0) = qk(ikx,iky,izh1)
+              endif
+           enddo
+        enddo
+     enddo
+
+     call mpitranspose(qwk,iktx,ikty,n3h0,qt,n3,iktyp)  !Transpose q*                                                                                                             
+     call psi_solver(psik,qt)
+     psitk = psik
+     call fft_c2r(psitk,psitr,n3h1)
+
+  end if
+
+  !Initialize the other fields
+  call compute_velo(uk,vk,wk,bk,psik)
+
+  !Set halos
+  call generate_halo(uk,vk,wk,bk)
+  call generate_halo_q(qk) 
+
+  !Test that the initial conditions are consistent!
+  !***********************************************!
+
+  if(init_test==1) then
 
      call fft_c2r(psik,psir,n3h1)
      call fft_c2r(qk,qr,n3h1)
