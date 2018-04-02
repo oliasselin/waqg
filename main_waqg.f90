@@ -113,6 +113,8 @@ PROGRAM main
   equivalence(psitr,psitk)
   equivalence(qtr,qtk)
 
+  character(len = 32) :: fname                !future file name                                                                                                                       
+  real :: start, finish 
 
   !********************** Initializing... *******************************!
 
@@ -248,6 +250,12 @@ PROGRAM main
 
   end if
 
+  !Initialize error file!
+  if(mype==0) then
+     write (fname, "(A3,I1,A1,I1)") "qg_",vres,"_",tres
+     open (unit=154673,file=fname,action="write",status="replace")
+  end if
+
  !Initial diagnostics!
  !*******************!
 
@@ -269,6 +277,8 @@ PROGRAM main
  !************************************************************************!
  
  time=delt
+
+ if(mype==0) call cpu_time(start)
  if(itermax>0) then
 ! if(mype==0) write(*,*) "First time step"
 
@@ -543,7 +553,7 @@ if(out_slice ==1 .and. mod(iter,freq_slice)==0) then
    !  if(mype==0) write(*,*) "L1=",L1_global/(n1*n2*n3),"L2=",sqrt(L2_global/(n1*n2*n3)),"Linf=",Li_global                                                                                  
 
    if (mype==0) then
-      open (unit = 154673, file = "qg-err.dat")
+!      open (unit = 154673, file = "qg-err.dat")
       write(154673,"(E12.5,E12.5,E12.5,E12.5)") time,L1_global/(n1*n2*n3),sqrt(L2_global/(n1*n2*n3)),Li_global
    end if
    
@@ -561,10 +571,12 @@ end if
 if(time>maxtime) EXIT
  
 end do !End loop
-
-
-
-
+if(mype==0) then
+   call cpu_time(finish)
+   open (unit = 154123,status="old", position="append", file = "cputime.dat")
+!   open (unit = 154123, file = "cputime.dat")
+   write(154123,"(E12.5,E12.5)") dz,(finish-start)/iter
+end if
 
 !Computing the error!
 !*******************!
@@ -608,7 +620,7 @@ call mpi_reduce(Li_local,Li_global, 1,MPI_DOUBLE,MPI_MAX,0,MPI_COMM_WORLD,ierror
 
 if (mype==0) then
 !   open (unit = 154673,status="old", position="append", file = "qg-err.dat")
-   open (unit = 154673, file = "qg-err.dat")
+!   open (unit = 154673, file = "qg-err.dat")
    write(154673,"(E12.5,E12.5,E12.5,E12.5)") time,L1_global/(n1*n2*n3),sqrt(L2_global/(n1*n2*n3)),Li_global
 end if
 

@@ -2,7 +2,10 @@ MODULE parameters
 
    IMPLICIT NONE
 
-    integer, parameter :: n1=32, n2=32, n3=32
+    integer, parameter :: vres = 1
+    integer, parameter :: tres = 9
+
+    integer, parameter :: n1=32, n2=32, n3=32*(2**vres)
     integer, parameter :: npe=2
 
     integer, parameter :: n1d=n1+2, n2d=n2, n3d=n3
@@ -180,7 +183,7 @@ MODULE parameters
     integer :: iter
     integer :: itermax=1000000000
     real :: maxtime=1.                      
-    double precision, parameter :: delt=0.1!0.00125!0.05*U_scale*dz/2./2.    !0.0005*U_scale*dz                ! T_visc = 0.25D0*dz*dz/nu
+    double precision, parameter :: delt=0.05/(2**tres) !0.00125!0.05*U_scale*dz/2./2.    !0.0005*U_scale*dz                ! T_visc = 0.25D0*dz*dz/nu
     double precision, parameter :: gamma=1e-4!4e-3!1e-2!7.e-3            !Robert filter parameter
 
     !Other successful viscosity: 5e-2 * (10./ktrunc_x ) **2. 
