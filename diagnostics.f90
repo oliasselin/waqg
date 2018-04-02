@@ -2345,10 +2345,10 @@ end subroutine hspec
 !       stop
     elseif( (normalize==1 .and.   delt >= dz/sqrt(k_init+p_init)) .or. (norm_trop==1) .and. delt >= dz/URMS  ) then   !Approximate CFL depending on the normalization process. Watch out if no normalization!  
        write(*,*) "CFL fails"
-       stop
+!       stop
     elseif( (ilap==1 .and. delt >= dz*dz/nuh) .or. delt >= dz*dz/nuz) then
        write(*,*) "Dissipation unstable"
-       stop
+!       stop
     end if
        
  

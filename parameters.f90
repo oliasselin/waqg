@@ -180,7 +180,7 @@ MODULE parameters
     integer :: iter
     integer :: itermax=1000000000
     real :: maxtime=1.                      
-    double precision, parameter :: delt=0.001!0.05*U_scale*dz/2./2.    !0.0005*U_scale*dz                ! T_visc = 0.25D0*dz*dz/nu
+    double precision, parameter :: delt=0.01!0.00125!0.05*U_scale*dz/2./2.    !0.0005*U_scale*dz                ! T_visc = 0.25D0*dz*dz/nu
     double precision, parameter :: gamma=1e-4!4e-3!1e-2!7.e-3            !Robert filter parameter
 
     !Other successful viscosity: 5e-2 * (10./ktrunc_x ) **2. 
@@ -276,7 +276,7 @@ MODULE parameters
                                               !halo levels (u=2,zz=1...)                                                                                                                                                     
     integer :: id_field                       !dummy index to differenciate fields plotted  
 
-    integer, parameter :: out_slice   = 1, freq_slice =  5* freq_etot
+    integer, parameter :: out_slice   = 1, freq_slice = 1! 5* freq_etot
     integer, parameter :: out_eta     = 0, freq_eta   =  freq_hspec
     integer, parameter :: out_tspec   = 0
 

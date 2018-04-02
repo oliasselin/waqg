@@ -124,7 +124,7 @@ PROGRAM main
   call initialize_fftw(array2dr,array2di,fr_even,fk_even,fr_odd,fk_odd)
   call init_arrays
   call init_base_state
-  if(mype==0)  call validate_run
+!  if(mype==0)  call validate_run
 
   !Initialize the test!
   !*******************!
@@ -248,12 +248,10 @@ PROGRAM main
 
   end if
 
-
  !Initial diagnostics!
  !*******************!
 
  if(out_etot ==1) call diag_zentrum(uk,vk,wk,bk,wak,psik,u_rot)
-
 
  !Print slices of the solution!
  call fft_c2r(psik,psir,n3h1)
@@ -302,6 +300,7 @@ PROGRAM main
     Ftk = (0.D0,0.D0)
  end if
 
+
  !Compute q^1 and B^1 with Forward Euler  
  do izh0=1,n3h0
     izh1=izh0+1
@@ -323,7 +322,6 @@ PROGRAM main
        enddo
     enddo
  enddo
-
 
  !Generate halo for q
  call generate_halo_q(qk)
@@ -377,7 +375,7 @@ end if
 
 !  if(mype==0) write(*,*) "Subsequent time steps"
   do iter=2,itermax
-
+     
 !     if(mype==0)  cputime=etime(tarray1)
      
      time=iter*delt
@@ -507,7 +505,7 @@ if(out_slice ==1 .and. mod(iter,freq_slice)==0) then
    call fft_c2r(qk,qr,n3h1)
    do id_field=8,nfields                                            
       !call slices(uk,vk,wk,bk,wak,u_rot,ur,vr,wr,br,war,u_rotr,psir,psitr*cos(a_t*time),id_field)
-      call slices(uk,vk,wk,bk,wak,u_rot,ur,vr,wr,br,war,u_rotr,qr,qtr*cos(a_t*time),id_field)
+!      call slices(uk,vk,wk,bk,wak,u_rot,ur,vr,wr,br,war,u_rotr,qr,qtr*cos(a_t*time),id_field)
    end do
    
    !Compute the error on psi!
@@ -609,6 +607,7 @@ call mpi_reduce(Li_local,Li_global, 1,MPI_DOUBLE,MPI_MAX,0,MPI_COMM_WORLD,ierror
 !  if(mype==0) write(*,*) "L1=",L1_global/(n1*n2*n3),"L2=",sqrt(L2_global/(n1*n2*n3)),"Linf=",Li_global
 
 if (mype==0) then
+!   open (unit = 154673,status="old", position="append", file = "qg-err.dat")
    open (unit = 154673, file = "qg-err.dat")
    write(154673,"(E12.5,E12.5,E12.5,E12.5)") time,L1_global/(n1*n2*n3),sqrt(L2_global/(n1*n2*n3)),Li_global
 end if
