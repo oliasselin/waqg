@@ -180,7 +180,7 @@ MODULE parameters
     integer :: iter
     integer :: itermax=1000000000
     real :: maxtime=1.                      
-    double precision, parameter :: delt=0.01!0.00125!0.05*U_scale*dz/2./2.    !0.0005*U_scale*dz                ! T_visc = 0.25D0*dz*dz/nu
+    double precision, parameter :: delt=0.1!0.00125!0.05*U_scale*dz/2./2.    !0.0005*U_scale*dz                ! T_visc = 0.25D0*dz*dz/nu
     double precision, parameter :: gamma=1e-4!4e-3!1e-2!7.e-3            !Robert filter parameter
 
     !Other successful viscosity: 5e-2 * (10./ktrunc_x ) **2. 
@@ -209,22 +209,22 @@ MODULE parameters
     !Output!
     !------!
 
-    integer, parameter :: out_etot   = 1, freq_etot   = INT(0.01/delt)!50!346!n3/64!n3!64!n3!50*n3/64      !Total energy                                                    
-    integer, parameter :: out_hspec  = 1, freq_hspec  = 5*freq_etot!n3/64!n3!freq_etot*10     !Horizontal energy spectrum at various heights 
+    integer, parameter :: out_etot   = 0, freq_etot   = 1!INT(0.01/delt)!50!346!n3/64!n3!64!n3!50*n3/64      !Total energy                                                    
+    integer, parameter :: out_hspec  = 0, freq_hspec  = 5*freq_etot!n3/64!n3!freq_etot*10     !Horizontal energy spectrum at various heights 
     integer, parameter :: out_hg     = 0                 !Output geostrophic horizontal spectrum as well?
     integer, parameter :: out_vspec  = 0, freq_vspec =  freq_hspec
-    integer, parameter :: out_vbuoy  = 1, freq_vbuoy =  freq_hspec
+    integer, parameter :: out_vbuoy  = 0, freq_vbuoy =  freq_hspec
     integer, parameter :: out_vbuoyr = 0, freq_vbuoyr=  freq_etot
     integer, parameter :: out_ens    = 0, freq_ens   =  3*n3!freq_etot*10
     integer, parameter :: out_pv     = 0, freq_pv    =  3*n3!freq_etot*10
 
-    integer, parameter :: out_ez     = 1, freq_ez    =  freq_etot        !E(z) (freq has to be a multiple of that of etot) 
+    integer, parameter :: out_ez     = 0, freq_ez    =  freq_etot        !E(z) (freq has to be a multiple of that of etot) 
     integer, parameter :: out_rotz   = 0, freq_rotz  =  freq_etot 
     integer, parameter :: out_ensz   = 0, freq_ensz  =  3*n3!freq_ens
     integer, parameter :: out_pvz    = 0, freq_pvz   =  freq_pv
     integer, parameter :: out_cond   = 0, freq_cond  =  5*freq_etot!*10        !Plot the conditions of integrability of the balance equations.
-    integer, parameter :: out_grow   = 1, freq_grow  =  5*freq_etot!*10        !Plot the conditions of integrability of the balance equations.
-    integer, parameter :: out_omega  = 1, freq_omega =  5*freq_etot!*10        !Compute the QG ageotrophic vertical velocity wak and war
+    integer, parameter :: out_grow   = 0, freq_grow  =  5*freq_etot!*10        !Plot the conditions of integrability of the balance equations.
+    integer, parameter :: out_omega  = 0, freq_omega =  5*freq_etot!*10        !Compute the QG ageotrophic vertical velocity wak and war
     integer, parameter :: out_condwz = 0, freq_condwz=  freq_omega!*10        !Plot the w_z condition (requires out_omega = 1)
     integer, parameter :: out_cont   = 0, freq_cont  =  freq_etot!*10        !Plot the anelastic divergence (should be 0 because of the proj method)
 
