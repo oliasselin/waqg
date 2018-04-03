@@ -575,7 +575,7 @@ if(mype==0) then
    else
       open (unit = 154123,status="old", position="append", file = "cputime.dat")
    end if
-   write(154123,"(E12.5,E12.5)") dz,(finish-start)/iter
+   write(154123,"(E12.5,I6,E12.5)") dz,npe,(finish-start)/iter
 end if
 
 !Computing the error!
