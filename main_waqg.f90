@@ -121,12 +121,19 @@ PROGRAM main
 
   iter=0
 
+  write(*,*) "Before mpi init"
+
   call initialize_mpi
+
+  write(*,*) "After mpi init", mype
+
   call init_files
   call initialize_fftw(array2dr,array2di,fr_even,fk_even,fr_odd,fk_odd)
   call init_arrays
   call init_base_state
 !  if(mype==0)  call validate_run
+
+  write(*,*) "Before generate_fields", mype
 
   !Initialize the test!
   !*******************!
@@ -189,9 +196,17 @@ PROGRAM main
            enddo
         enddo
      enddo
+     
+     write(*,*) "Before mpitranspose", mype
 
      call mpitranspose(qwk,iktx,ikty,n3h0,qt,n3,iktyp)  !Transpose q*                                                                                                             
+
+     write(*,*) "After mpitranspose", mype
+
      call psi_solver(psik,qt)
+
+     write(*,*) "After psi_solver", mype
+
      psitk = psik
      call fft_c2r(psitk,psitr,n3h1)
 
@@ -557,8 +572,6 @@ if(out_slice ==1 .and. mod(iter,freq_slice)==0) then
 
    call fft_r2c(qr,qk,n3h1)
    call fft_r2c(psir,psik,n3h1)
-
-   if(mype==0) write(*,"(E12.5,E12.5,E12.5,E12.5)") time,L1_global/(n1*n2*n3),sqrt(L2_global/(n1*n2*n3)),Li_global
 
 end if
 

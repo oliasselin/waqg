@@ -2,11 +2,11 @@ MODULE parameters
 
    IMPLICIT NONE
 
-    integer, parameter :: vres = 6
-    integer, parameter :: tres = 2
+    integer, parameter :: vres = 5
+    integer, parameter :: tres = 1
 
-    integer, parameter :: n1=8, n2=128, n3=32*(2**vres)
-    integer, parameter :: npe=128
+    integer, parameter :: n1=8, n2=512, n3=32*(2**vres)
+    integer, parameter :: npe=512
 
     integer, parameter :: n1d=n1+2, n2d=n2, n3d=n3
     integer, parameter :: n3h0=n3/npe, n3h1=n3/npe+2, n3h2=n3/npe+4

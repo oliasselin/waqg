@@ -2,8 +2,8 @@ reset
 set term x11
 
 #eps
-#set terminal postscript eps size 5.,5. enhanced color font 'Helvetica,20' lw 1.5
-#set output '../figures/qg_test_cpu_npe.eps'
+set terminal postscript eps size 5.,5. enhanced color font 'Helvetica,20' lw 1.5
+set output '../figures/qg_test_cpu_npe2.eps'
 
 set log
 set mxtics 10
@@ -91,12 +91,12 @@ set ytics nomirror
 
 
 #set xrange[1:10000]
-#set yrange[1e-2:100]
+set yrange[1e-2:1]
 
 #set ylabel rotate by 0 offset 0,2
 set ylabel '{CPU time per time step (seconds)}'
 
-set xlabel '{Number of tasks (fixed n_x = 8, n_y = 128, n_z = 2048)}'
+set xlabel '{Number of tasks}'
 #set xtics 1
 #set ytics 0.2
 set format y "10^{%T}"
@@ -113,8 +113,9 @@ unset mytics
 twopi=6.28318531
 
 #set title "Tropopause-level kinetic energy wavenumber spectra, U = 1"
-plot  "/home1/05518/oasselin/waqg/data/cputime_qg_npe.dat"  u 2:3 w lp ls 24 title 'CPU time (QG part only)', \
-      0.7*x**(-1.)  w l ls 16 title 'O(1/#tasks)'
+plot  "/home1/05518/oasselin/waqg/data/cputime_qg_npe.dat"  u 2:3 w lp ls 24 title 'n_x = 8, n_y = 128, n_z = 4096', \
+      "/home1/05518/oasselin/waqg/data/cputime_qg_npe2.dat" u 2:3 w lp ls 15 title 'n_x = 8, n_y = 512, n_z = 2048', \
+      0.7*x**(-1.)  w l ls 16 title 'O(1/numb. of tasks)'
 
 
 
