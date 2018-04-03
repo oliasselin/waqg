@@ -383,10 +383,7 @@ end if
  !********************************************************************************!
 
 
-!  if(mype==0) write(*,*) "Subsequent time steps"
   do iter=2,itermax
-     
-!     if(mype==0)  cputime=etime(tarray1)
      
      time=iter*delt
 
@@ -573,8 +570,11 @@ if(time>maxtime) EXIT
 end do !End loop
 if(mype==0) then
    call cpu_time(finish)
-   open (unit = 154123,status="old", position="append", file = "cputime.dat")
-!   open (unit = 154123, file = "cputime.dat")
+   if(vres==0 .or. tres==0) then
+      open (unit = 154123, file = "cputime.dat")      
+   else
+      open (unit = 154123,status="old", position="append", file = "cputime.dat")
+   end if
    write(154123,"(E12.5,E12.5)") dz,(finish-start)/iter
 end if
 
