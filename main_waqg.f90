@@ -140,9 +140,9 @@ PROGRAM main
 
   !First generate the exact solution and the associated forcing term
   call generate_fields_stag(ARtr,n3h0,BRtr,n3h0,psitr,n3h1) 
-!  call generate_fields_stag2(AItr,n3h0,BItr,n3h0,war,n3h1) 
-!  call generate_fields_stag3(FbRr,n3h0,FpRr,n3h0,FaRr,n3h0) 
-!  call generate_fields_stag4(FbIr,n3h0,FpIr,n3h0,FaIr,n3h0) 
+  call generate_fields_stag2(AItr,n3h0,BItr,n3h0,war,n3h1) 
+  call generate_fields_stag3(FbRr,n3h0,FpRr,n3h0,FaRr,n3h0) 
+  call generate_fields_stag4(FbIr,n3h0,FpIr,n3h0,FaIr,n3h0) 
 
   psir = psitr
 
