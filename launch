@@ -3,8 +3,8 @@
 number_of_nodes=1
 number_of_tasks=2
 
-sourdir=/scratch/05518/oasselin/test/source/
-datadir=/scratch/05518/oasselin/test/output/
+sourdir=/scratch/05518/oasselin/test_la/source/
+datadir=/scratch/05518/oasselin/test_la/output/
 
 mkdir -p $sourdir
 mkdir -p $datadir
@@ -38,9 +38,9 @@ cat > EXEC_STEP << EXEC
 #
 #----------------------------------------------------
 
-#SBATCH -J test                       # Job name
-#SBATCH -o $HOME/monitor/test.o%j     # Name of stdout output file
-#SBATCH -e $HOME/monitor/test.e%j     # Name of stderr error file
+#SBATCH -J la                       # Job name
+#SBATCH -o $HOME/monitor/la.o%j     # Name of stdout output file
+#SBATCH -e $HOME/monitor/la.e%j     # Name of stderr error file
 #SBATCH -p development                # Queue (partition) name
 #SBATCH -N $number_of_nodes           # Total # of nodes 
 #SBATCH -n $number_of_tasks           # Total # of mpi tasks
@@ -89,5 +89,5 @@ COMPILE
 chmod 755 COMPILE_STEP
 ./COMPILE_STEP
 ##chmod 755 EXEC_STEP                                                                                                                                       
-sbatch EXEC_STEP
+#sbatch EXEC_STEP
 ##./EXEC_STEP                                                                                                                                               

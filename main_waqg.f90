@@ -103,10 +103,15 @@ PROGRAM main
   double complex,   dimension(iktx,ikty,n3h0) :: FbIk, FpIk, FaIk, FtIk    !Forcing terms, imaginary part
   double precision, dimension(n1d,n2d,n3h0)   :: FbIr, FpIr, FaIr
 
-  double complex,   dimension(iktx,ikty,n3h1) :: psitk, qtk       !Exact solution for psi and q
-  double precision, dimension(n1d,n2d,n3h1)   :: psitr, qtr   
+  double precision, dimension(n1d,n2d,n3h0)   :: BRtr, BItr, ARtr, AItr    !True solution
 
-  double precision ::   error,L1_local,L2_local,Li_local,L1_global,L2_global,Li_global
+  double complex,   dimension(iktx,ikty,n3h1) :: psitk       !Exact solution for psi 
+  double precision, dimension(n1d,n2d,n3h1)   :: psitr   
+
+  double precision ::   error_r,L1_local_r,L2_local_r,Li_local_r,L1_global_r,L2_global_r,Li_global_r
+  double precision ::   error_i,L1_local_i,L2_local_i,Li_local_i,L1_global_i,L2_global_i,Li_global_i
+
+  character(len = 32) :: fnamer,fnamei                !future file names                                                                                          
 
   equivalence(FbRr,FbRk)
   equivalence(FpRr,FpRk)
@@ -117,8 +122,6 @@ PROGRAM main
   equivalence(FaIr,FaIk)
 
   equivalence(psitr,psitk)
-  equivalence(qtr,qtk)
-
 
   !********************** Initializing... *******************************!
 
@@ -136,14 +139,26 @@ PROGRAM main
   !*******************!
 
   !First generate the exact solution and the associated forcing term
-  call generate_fields_stag(ARr,n3h0,BRr,n3h0,psitr,n3h1) 
-  call generate_fields_stag2(AIr,n3h0,BIr,n3h0,war,n3h1) 
-  call generate_fields_stag3(FbRr,n3h0,FpRr,n3h0,FaRr,n3h0) 
-  call generate_fields_stag4(FbIr,n3h0,FpIr,n3h0,FaIr,n3h0) 
+  call generate_fields_stag(ARtr,n3h0,BRtr,n3h0,psitr,n3h1) 
+!  call generate_fields_stag2(AItr,n3h0,BItr,n3h0,war,n3h1) 
+!  call generate_fields_stag3(FbRr,n3h0,FpRr,n3h0,FaRr,n3h0) 
+!  call generate_fields_stag4(FbIr,n3h0,FpIr,n3h0,FaIr,n3h0) 
+
   psir = psitr
+
+  BRr = BRtr
+  BIr = BItr
+  ARr = ARtr
+  AIr = AItr
  
   !Move to Fourier space.
   call fft_r2c(psir,psik,n3h1)
+
+  call fft_r2c(ARr,ARk,n3h0)
+  call fft_r2c(AIr,AIk,n3h0)
+
+  call fft_r2c(BRr,BRk,n3h0)
+  call fft_r2c(BIr,BIk,n3h0)
 
   call fft_r2c(FbRr,FbRk,n3h0)
   call fft_r2c(FpRr,FpRk,n3h0)
@@ -160,6 +175,14 @@ PROGRAM main
   !Initialize the other fields
   call compute_velo(uk,vk,wk,bk,psik)
   call generate_halo(uk,vk,wk,bk)
+
+  !Initialize error file!
+  if(mype==0) then
+     write (fnamer, "(A3,I1,A1,I1)") "br_",vres,"_",tres
+     write (fnamei, "(A3,I1,A1,I1)") "bi_",vres,"_",tres
+     open (unit=154673,file=fnamer,action="write",status="replace")
+     open (unit=154674,file=fnamei,action="write",status="replace")
+  end if
 
 
  !************************************************************************!
@@ -212,7 +235,7 @@ PROGRAM main
           if (L(ikx,iky).eq.1) then
              qk(ikx,iky,izh1) = (  qok(ikx,iky,izh1) - delt* nqk(ikx,iky,izh0)  + delt*dqk(ikx,iky,izh0) )*exp(-diss)
    BRk(ikx,iky,izh0) = ( BRok(ikx,iky,izh0) + delt*FtRk(ikx,iky,izh0)  - delt*nBRk(ikx,iky,izh0)  - delt*(0.5/(Bu*Ro))*kh2*AIk(ikx,iky,izh0) + delt*0.5*rBIk(ikx,iky,izh0) )*exp(-diss)
-   BIk(ikx,iky,izh0) = ( BIok(ikx,iky,izh0) + delt*FrIk(ikx,iky,izh0)  - delt*nBIk(ikx,iky,izh0)  + delt*(0.5/(Bu*Ro))*kh2*ARk(ikx,iky,izh0) - delt*0.5*rBRk(ikx,iky,izh0) )*exp(-diss)
+   BIk(ikx,iky,izh0) = ( BIok(ikx,iky,izh0) + delt*FtIk(ikx,iky,izh0)  - delt*nBIk(ikx,iky,izh0)  + delt*(0.5/(Bu*Ro))*kh2*ARk(ikx,iky,izh0) - delt*0.5*rBRk(ikx,iky,izh0) )*exp(-diss)
           else
              qk(ikx,iky,izh1) = (0.D0,0.D0)
             BRk(ikx,iky,izh0) = (0.D0,0.D0)
@@ -329,15 +352,71 @@ BIk = BItempk
 
 
 
- !*** Diagnostics ***!
- !-------------------!
+ !*** Compute the error ***!
+ !-------------------------!
 
- if(out_etot ==1 .and. mod(iter,freq_etot )==0) call diag_zentrum(uk,vk,wk,bk,wak,psik,u_rot)
+ if(out_slice ==1 .and. mod(iter,freq_slice)==0) then
+    
+    !Print slices of the solution!
+    call fft_c2r(BRk,BRr,n3h0)
+    call fft_c2r(BIk,BIr,n3h0)
+!    do id_field=8,nfields                                            
+       !call slices(uk,vk,wk,bk,wak,u_rot,ur,vr,wr,br,war,u_rotr,psir,psitr*cos(a_t*time),id_field)
+       !      call slices(uk,vk,wk,bk,wak,u_rot,ur,vr,wr,br,war,u_rotr,qr,qtr*cos(a_t*time),id_field)
+!    end do
+    
+    !Compute the error on psi!
+    error_r   =0.
+    L1_local_r=0.
+    L2_local_r=0.
+    Li_local_r=0.
+    L1_global_r=0.
+    L2_global_r=0.
+    Li_global_r=0.
 
- do id_field=1,nfields
-    if(out_slice ==1 .and. mod(iter,freq_slice)==0 .and. count_slice(id_field)<max_slices)  call slices(uk,vk,wk,bk,wak,u_rot,ur,vr,wr,br,war,u_rotr,id_field)
- end do
+    error_i   =0.
+    L1_local_i=0.
+    L2_local_i=0.
+    Li_local_i=0.
+    L1_global_i=0.
+    L2_global_i=0.
+    Li_global_i=0.
+    
+    do izh0=1,n3h0
+       izh1=izh0+1
+       do ix=1,n1
+          do iy=1,n2
+             
+             error_r    = ABS( BRtr(ix,iy,izh0)*cos(a_t*time) - BRr(ix,iy,izh0) )
+             L1_local_r = L1_local_r + error_r
+             L2_local_r = L2_local_r + error_r**2
+             if(error_r > Li_local_r) Li_local_r = error_r
 
+             error_i    = ABS( BItr(ix,iy,izh0)*cos(a_t*time) - BIr(ix,iy,izh0) )
+             L1_local_i = L1_local_i + error_i
+             L2_local_i = L2_local_i + error_i**2
+             if(error_i > Li_local_i) Li_local_i = error_i
+             
+          end do
+       end do
+    end do
+    
+    call mpi_reduce(L1_local_r,L1_global_r, 1,MPI_DOUBLE,MPI_SUM,0,MPI_COMM_WORLD,ierror)
+    call mpi_reduce(L2_local_r,L2_global_r, 1,MPI_DOUBLE,MPI_SUM,0,MPI_COMM_WORLD,ierror)
+    call mpi_reduce(Li_local_r,Li_global_r, 1,MPI_DOUBLE,MPI_MAX,0,MPI_COMM_WORLD,ierror)
+   
+    call mpi_reduce(L1_local_i,L1_global_i, 1,MPI_DOUBLE,MPI_SUM,0,MPI_COMM_WORLD,ierror)
+    call mpi_reduce(L2_local_i,L2_global_i, 1,MPI_DOUBLE,MPI_SUM,0,MPI_COMM_WORLD,ierror)
+    call mpi_reduce(Li_local_i,Li_global_i, 1,MPI_DOUBLE,MPI_MAX,0,MPI_COMM_WORLD,ierror)
+
+    if (mype==0) then
+       write(154673,"(E12.5,E12.5,E12.5,E12.5)") time,L1_global_r/(n1*n2*n3),sqrt(L2_global_r/(n1*n2*n3)),Li_global_r
+       write(154674,"(E12.5,E12.5,E12.5,E12.5)") time,L1_global_i/(n1*n2*n3),sqrt(L2_global_i/(n1*n2*n3)),Li_global_i
+    end if
+    
+    call fft_r2c(BRr,BRk,n3h0)
+    call fft_r2c(BIr,BIk,n3h0)    
+ end if
  
  if(time>maxtime) EXIT
 end do !End loop
