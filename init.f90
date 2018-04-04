@@ -809,6 +809,7 @@ end do
       integer :: hlev1,hlev2,hlev3   !What's your halo?
       integer :: iz1,iz2,iz3
 
+      double precision :: Aer,phi
 
       hlev1=(nz1-n3h0)/2
       hlev2=(nz2-n3h0)/2
@@ -864,9 +865,13 @@ do ix=1,n1d
          end if
 
       if(ix<=n1) then
-         if(z1>=0) f1s(ix,iy,iz1)=-(2./3.)*cos(2*z1)*sin(y)*cos(3*y)!sin(x)*cos(x)! cos(x)*cos(y)
-         if(z2>=0) f2s(ix,iy,iz2)=-(4./3.)*cos(3*y)*sin(3*y)!-sin(x)*sin(y)
-         if(z3>=0) f3s(ix,iy,iz3)=0.!sin(z3)*cos(z3)
+
+         phi = a_x*x + a_y*y                 !Horizontal phase of the plane wave 
+         Aer = a_r*cos(phi) - a_i*sin(phi)   !\tilde(A) times the complex exponential
+
+         if(z1>=0) f1s(ix,iy,iz1)=Aer*cos(a_z*z1)                                                                    !AR
+         if(z2>=0) f2s(ix,iy,iz2)=Aer*( N2_scale*a_z*sin(a_z*z2) - a_z*a_z*cos(a_z*z2) )*exp(-N2_scale*(z2-z0))      !BR
+         if(z3>=0) f3s(ix,iy,iz3)=a_p*cos(x)*cos(y)*cos(z3)                                                          !psitr
       else
          if(z1>=0) f1s(ix,iy,iz1)=0.
          if(z2>=0) f2s(ix,iy,iz2)=0.
@@ -883,6 +888,100 @@ end do
 
 
 END SUBROUTINE generate_fields_stag
+
+
+
+
+    SUBROUTINE generate_fields_stag2(f1s,nz1,f2s,nz2,f3s,nz3) !generate_fields for staggered fields (like u,v)
+
+      integer, intent(in) :: nz1,nz2,nz3                  !z-dimension size of the fields
+      double precision, dimension(n1d,n2d,nz1), intent(out) :: f1s
+      double precision, dimension(n1d,n2d,nz2), intent(out) :: f2s
+      double precision, dimension(n1d,n2d,nz3), intent(out) :: f3s
+      
+      double precision :: z1,z2,z3   !Corresponding value of z for each field (depends on halo)
+      integer :: hlev1,hlev2,hlev3   !What's your halo?
+      integer :: iz1,iz2,iz3
+
+      double precision :: Aei,phi
+
+      hlev1=(nz1-n3h0)/2
+      hlev2=(nz2-n3h0)/2
+      hlev3=(nz3-n3h0)/2
+      
+do ix=1,n1d
+   x=xa(ix)
+   do iy=1,n2d
+      y=ya(iy)
+      do izh2=1,n3h2
+         izh1=izh2-1
+         izh0=izh2-2
+
+
+         if(hlev1==2) then 
+            z1=zash2(izh2)
+            iz1=izh2
+         elseif(hlev1==1 .and. izh1>=1 .and. izh1<=n3h1) then
+            z1=zash1(izh1)
+            iz1=izh1
+         elseif(hlev1==0 .and. izh0>=1 .and. izh0<=n3h0) then
+            z1=zash0(izh0)
+            iz1=izh0
+         else 
+            z1=-1.   ! Don't enter the loop
+         end if
+
+         if(hlev2==2) then
+            z2=zash2(izh2)
+            iz2=izh2
+         elseif(hlev2==1 .and. izh1>=1 .and. izh1<=n3h1) then
+            z2=zash1(izh1)
+            iz2=izh1
+         elseif(hlev2==0 .and. izh0>=1 .and. izh0<=n3h0) then
+            z2=zash0(izh0)
+            iz2=izh0
+         else
+            z2=-1.   ! Don't enter the loop   
+         end if
+
+
+         if(hlev3==2) then 
+            z3=zash2(izh2)
+            iz3=izh2
+         elseif(hlev3==1 .and. izh1>=1 .and. izh1<=n3h1) then
+            z3=zash1(izh1)
+            iz3=izh1
+         elseif(hlev3==0 .and. izh0>=1 .and. izh0<=n3h0) then
+            z3=zash0(izh0)
+            iz3=izh0
+         else
+                z3=-1.   ! Don't enter the loop   
+         end if
+
+      if(ix<=n1) then
+
+         phi = a_x*x + a_y*y                 !Horizontal phase of the plane wave 
+         Aei = a_r*sin(phi) + a_i*cos(phi)   !\tilde(A) times the complex exponential (imag part)
+
+         if(z1>=0) f1s(ix,iy,iz1)=Aei*cos(a_z*z1)                                                                    !AR
+         if(z2>=0) f2s(ix,iy,iz2)=Aei*( N2_scale*a_z*sin(a_z*z2) - a_z*a_z*cos(a_z*z2) )*exp(-N2_scale*(z2-z0))      !BR
+         if(z3>=0) f3s(ix,iy,iz3)=0.
+      else
+         if(z1>=0) f1s(ix,iy,iz1)=0.
+         if(z2>=0) f2s(ix,iy,iz2)=0.
+         if(z3>=0) f3s(ix,iy,iz3)=0.
+      end if
+
+      !In this case, the X-marked arrays (on the top and bottom mype will not be initialized at all. Shouldn't cause any problem since we never invoke them.
+
+      end do
+   end do
+end do
+
+
+
+
+END SUBROUTINE generate_fields_stag2
 
 
 
