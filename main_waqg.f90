@@ -141,11 +141,9 @@ PROGRAM main
   call generate_fields_stag3(FbRr,n3h0,FpRr,n3h0,FaRr,n3h0) 
   call generate_fields_stag4(FbIr,n3h0,FpIr,n3h0,FaIr,n3h0) 
   psir = psitr
-  qr = qtr
-
+ 
   !Move to Fourier space.
   call fft_r2c(psir,psik,n3h1)
-  call fft_r2c(qr,qk,n3h1)
 
   call fft_r2c(FbRr,FbRk,n3h0)
   call fft_r2c(FpRr,FpRk,n3h0)
@@ -154,6 +152,14 @@ PROGRAM main
   call fft_r2c(FbIr,FbIk,n3h0)
   call fft_r2c(FpIr,FpIk,n3h0)
   call fft_r2c(FaIr,FaIk,n3h0)
+
+  !Set QG terms to 0.
+   qk = (0.D0,0.D0)
+  dqk=(0.D0,0.D0)
+
+  !Initialize the other fields
+  call compute_velo(uk,vk,wk,bk,psik)
+  call generate_halo(uk,vk,wk,bk)
 
 
  !************************************************************************!
@@ -173,6 +179,27 @@ PROGRAM main
  BRok = BRk
  BIok = BIk
 
+
+ !Compute the forcing!
+ if(forcing==1) then
+    do izh0=1,n3h0
+       do iky=1,ikty
+          do ikx=1,iktx
+             if (L(ikx,iky).eq.1) then
+                FtRk(ikx,iky,izh0) = FbRk(ikx,iky,izh0)*sin(a_t*(time-delt)) + FpRk(ikx,iky,izh0)*cos(a_t*(time-delt)) + FaRk(ikx,iky,izh0)*cos(a_t*(time-delt))
+                FtIk(ikx,iky,izh0) = FbIk(ikx,iky,izh0)*sin(a_t*(time-delt)) + FpIk(ikx,iky,izh0)*cos(a_t*(time-delt)) + FaIk(ikx,iky,izh0)*cos(a_t*(time-delt))
+             else
+                FtRk(ikx,iky,izh0) = (0.D0,0.D0)
+                FtIk(ikx,iky,izh0) = (0.D0,0.D0)
+             endif
+          enddo
+       enddo
+    enddo
+ else
+    FtRk(ikx,iky,izh0) = (0.D0,0.D0)
+    FtIk(ikx,iky,izh0) = (0.D0,0.D0)
+ end if
+
  !Compute q^1 and B^1 with Forward Euler  
  do izh0=1,n3h0
     izh1=izh0+1
@@ -184,8 +211,8 @@ PROGRAM main
           diss = nuh*delt*(1.*kh2)**(1.*ilap)              !This does not work !!!!! diss = nuh*(kh2**ilap)*delt 
           if (L(ikx,iky).eq.1) then
              qk(ikx,iky,izh1) = (  qok(ikx,iky,izh1) - delt* nqk(ikx,iky,izh0)  + delt*dqk(ikx,iky,izh0) )*exp(-diss)
-            BRk(ikx,iky,izh0) = ( BRok(ikx,iky,izh0) - delt*nBRk(ikx,iky,izh0)  - delt*(0.5/(Bu*Ro))*kh2*AIk(ikx,iky,izh0) + delt*0.5*rBIk(ikx,iky,izh0) )*exp(-diss)
-            BIk(ikx,iky,izh0) = ( BIok(ikx,iky,izh0) - delt*nBIk(ikx,iky,izh0)  + delt*(0.5/(Bu*Ro))*kh2*ARk(ikx,iky,izh0) - delt*0.5*rBRk(ikx,iky,izh0) )*exp(-diss)
+   BRk(ikx,iky,izh0) = ( BRok(ikx,iky,izh0) + delt*FtRk(ikx,iky,izh0)  - delt*nBRk(ikx,iky,izh0)  - delt*(0.5/(Bu*Ro))*kh2*AIk(ikx,iky,izh0) + delt*0.5*rBIk(ikx,iky,izh0) )*exp(-diss)
+   BIk(ikx,iky,izh0) = ( BIok(ikx,iky,izh0) + delt*FrIk(ikx,iky,izh0)  - delt*nBIk(ikx,iky,izh0)  + delt*(0.5/(Bu*Ro))*kh2*ARk(ikx,iky,izh0) - delt*0.5*rBRk(ikx,iky,izh0) )*exp(-diss)
           else
              qk(ikx,iky,izh1) = (0.D0,0.D0)
             BRk(ikx,iky,izh0) = (0.D0,0.D0)
@@ -224,6 +251,26 @@ end if
      call convol_waqg(nqk,nBRk,nBIk,nqr,nBRr,nBIr,uk,vk,qk,BRk,BIk,ur,vr,qr,BRr,BIr)
      call refraction_waqg(rBRk,rBIk,rBRr,rBIr,BRk,BIk,psik,BRr,BIr,psir)
 
+     !Compute the forcing!
+     if(forcing==1) then
+        do izh0=1,n3h0
+           do iky=1,ikty
+              do ikx=1,iktx
+                 if (L(ikx,iky).eq.1) then
+                    FtRk(ikx,iky,izh0) = FbRk(ikx,iky,izh0)*sin(a_t*(time-delt)) + FpRk(ikx,iky,izh0)*cos(a_t*(time-delt)) + FaRk(ikx,iky,izh0)*cos(a_t*(time-delt))
+                    FtIk(ikx,iky,izh0) = FbIk(ikx,iky,izh0)*sin(a_t*(time-delt)) + FpIk(ikx,iky,izh0)*cos(a_t*(time-delt)) + FaIk(ikx,iky,izh0)*cos(a_t*(time-delt))
+                 else
+                    FtRk(ikx,iky,izh0) = (0.D0,0.D0)
+                    FtIk(ikx,iky,izh0) = (0.D0,0.D0)
+                 endif
+              enddo
+           enddo
+        enddo
+     else
+        FtRk(ikx,iky,izh0) = (0.D0,0.D0)
+        FtIk(ikx,iky,izh0) = (0.D0,0.D0)
+     end if
+     
      !Compute q^n+1 and B^n+1 using leap-frog
      do izh0=1,n3h0
         izh1=izh0+1
@@ -235,8 +282,8 @@ end if
               diss = nuh*delt*(1.*kh2)**(1.*ilap)
               if (L(ikx,iky).eq.1) then
                  qtempk(ikx,iky,izh1) =  qok(ikx,iky,izh1)*exp(-2*diss) - 2*delt*nqk(ikx,iky,izh0)*exp(-diss)  + 2*delt*dqk(ikx,iky,izh0)*exp(-2*diss)
-                BRtempk(ikx,iky,izh0) = BRok(ikx,iky,izh0)*exp(-2*diss) - 2*delt*(nBRk(ikx,iky,izh0) + (0.5/(Bu*Ro))*kh2*AIk(ikx,iky,izh0) - 0.5*rBIk(ikx,iky,izh0) )*exp(-diss)
-                BItempk(ikx,iky,izh0) = BIok(ikx,iky,izh0)*exp(-2*diss) - 2*delt*(nBIk(ikx,iky,izh0) - (0.5/(Bu*Ro))*kh2*ARk(ikx,iky,izh0) + 0.5*rBRk(ikx,iky,izh0) )*exp(-diss)
+  BRtempk(ikx,iky,izh0) = BRok(ikx,iky,izh0)*exp(-2*diss) - 2*delt*(nBRk(ikx,iky,izh0) - FtRk(ikx,iky,izh0) + (0.5/(Bu*Ro))*kh2*AIk(ikx,iky,izh0) - 0.5*rBIk(ikx,iky,izh0) )*exp(-diss)
+  BItempk(ikx,iky,izh0) = BIok(ikx,iky,izh0)*exp(-2*diss) - 2*delt*(nBIk(ikx,iky,izh0) - FtIk(ikx,iky,izh0) - (0.5/(Bu*Ro))*kh2*ARk(ikx,iky,izh0) + 0.5*rBRk(ikx,iky,izh0) )*exp(-diss)
               else
                  qtempk(ikx,iky,izh1) = (0.D0,0.D0)
                 BRtempk(ikx,iky,izh0) = (0.D0,0.D0)
