@@ -96,7 +96,28 @@ PROGRAM main
 
   equivalence(u_rotr,u_rot)
 
+  !For the comprehensive test only.
+  double complex,   dimension(iktx,ikty,n3h0) :: FbRk, FpRk, FaRk, FtRk    !Forcing terms, real part
+  double precision, dimension(n1d,n2d,n3h0)   :: FbRr, FpRr, FaRr
 
+  double complex,   dimension(iktx,ikty,n3h0) :: FbIk, FpIk, FaIk, FtIk    !Forcing terms, imaginary part
+  double precision, dimension(n1d,n2d,n3h0)   :: FbIr, FpIr, FaIr
+
+  double complex,   dimension(iktx,ikty,n3h1) :: psitk, qtk       !Exact solution for psi and q
+  double precision, dimension(n1d,n2d,n3h1)   :: psitr, qtr   
+
+  double precision ::   error,L1_local,L2_local,Li_local,L1_global,L2_global,Li_global
+
+  equivalence(FbRr,FbRk)
+  equivalence(FpRr,FpRk)
+  equivalence(FaRr,FaRk)
+
+  equivalence(FbIr,FbIk)
+  equivalence(FpIr,FpIk)
+  equivalence(FaIr,FaIk)
+
+  equivalence(psitr,psitk)
+  equivalence(qtr,qtk)
 
 
   !********************** Initializing... *******************************!
@@ -109,65 +130,30 @@ PROGRAM main
   call initialize_fftw(array2dr,array2di,fr_even,fk_even,fr_odd,fk_odd)
   call init_arrays
   call init_base_state
-  if(mype==0)  call validate_run
-
-  if(init_vertical_structure==generic) then 
-     call init_psi_generic(uk,vk,wk,bk,psik,psir)
-     call init_q(qk,psik)
-  elseif(init_vertical_structure==smith_bernard) then
-     call init_psi_generic(uk,vk,wk,bk,psik,psir)   !Init a fully general psi
-     call init_q_sb(rhs,psik)       !Compute the jump-dominated PV as in Smith & Bernard (2013)
-     call mpitranspose(rhs,iktx,ikty,n3h0,qt,n3,iktyp)
-     call psi_solver(psik,qt)
-     call compute_velo(uk,vk,wk,bk,psik)
-
-    !Set q from normalized rhs                                                                                                                                                                                                      
-    do izh0=1,n3h0
-       izh1=izh0+1
-       do iky=1,ikty
-          do ikx=1,iktx
-             if (L(ikx,iky).eq.1) then
-                 qk(ikx,iky,izh1) =  rhs(ikx,iky,izh0)
-              else
-                 qk(ikx,iky,izh1) = (0.D0,0.D0)
-              endif
-           enddo
-        enddo
-     enddo
-  end if
-
- if(norm_trop==1) call normalize_trop(uk,vk,wk,bk,psik,qk,wak)
-
- call generate_halo(uk,vk,wk,bk)
- call generate_halo_q(qk) 
-
- qok=qk
 
 
- !Initial diagnostics!
- !*******************!
+  !Initialize the test!
+  !*******************!
 
- !Compute war/wak if desired                                                                                                                                                     
- if(out_omega==1)  then
-    call omega_eqn_rhs(rhs,rhsr,psik)
-    call mpitranspose(rhs,iktx,ikty,n3h0,qt,n3,iktyp)
-    call omega_equation(wak,qt)
- end if
+  !First generate the exact solution and the associated forcing term
+  call generate_fields_stag(ARr,n3h0,BRr,n3h0,psitr,n3h1) 
+  call generate_fields_stag2(AIr,n3h0,BIr,n3h0,war,n3h1) 
+  call generate_fields_stag3(FbRr,n3h0,FpRr,n3h0,FaRr,n3h0) 
+  call generate_fields_stag4(FbIr,n3h0,FpIr,n3h0,FaIr,n3h0) 
+  psir = psitr
+  qr = qtr
 
- if(out_etot ==1) call diag_zentrum(uk,vk,wk,bk,wak,psik,u_rot)
+  !Move to Fourier space.
+  call fft_r2c(psir,psik,n3h1)
+  call fft_r2c(qr,qk,n3h1)
 
+  call fft_r2c(FbRr,FbRk,n3h0)
+  call fft_r2c(FpRr,FpRk,n3h0)
+  call fft_r2c(FaRr,FaRk,n3h0)
 
- do id_field=1,nfields                                            
-    if(out_slice ==1)  call slices(uk,vk,wk,bk,wak,u_rot,ur,vr,wr,br,war,u_rotr,id_field)
- end do
- 
-! if(out_slab == 1 ) then
-!    if(mype==slab_mype) call print_slab(uk,vk)
-!    if(mype==slab_mype) call slab_klist
-! end if
-
- if(out_eta == 1 ) call tropopause_meanders(uk,vk,wk,bk,ur,vr,wr,br)
-
+  call fft_r2c(FbIr,FbIk,n3h0)
+  call fft_r2c(FpIr,FpIk,n3h0)
+  call fft_r2c(FaIr,FaIk,n3h0)
 
 
  !************************************************************************!
@@ -182,14 +168,6 @@ PROGRAM main
  
  call convol_waqg(nqk,nBRk,nBIk,nqr,nBRr,nBIr,uk,vk,qk,BRk,BIk,ur,vr,qr,BRr,BIr)
  call refraction_waqg(rBRk,rBIk,rBRr,rBIr,BRk,BIk,psik,BRr,BIr,psir)
-
- !Compute dissipation 
- call dissipation_q_nv(dqk,qok)
- 
- if(inviscid==1) then
-    dqk=(0.D0,0.D0)
- end if
-
 
   qok = qk
  BRok = BRk
@@ -218,32 +196,6 @@ PROGRAM main
  enddo
 
 
- !Generate halo for q
- call generate_halo_q(qk)
-
-
- ! --- Recover the streamfunction --- !
-
- call compute_qw(qwk,BRk,BIk,qwr,BRr,BIr)           ! Compute qw
-
- do izh0=1,n3h0                                     ! Compute q* = q - qw
-    izh1=izh0+1
-    do iky=1,ikty
-       do ikx=1,iktx
-          if (L(ikx,iky).eq.1) then
-             qwk(ikx,iky,izh0)=  qk(ikx,iky,izh1) - qwk(ikx,iky,izh0)
-          endif
-       enddo
-    enddo
- enddo
-
- call mpitranspose(qwk,iktx,ikty,n3h0,qt,n3,iktyp)  !Transpose q*                                                                                      
- call psi_solver(psik,qt)                           !Solve the QGPV equation L(phi)=q*, assuming psi_z = 0 at top/bot (homogeneous problem)                    
-
- ! ----------------------------------- !
-
-
-
  ! --- Recover A from B --- !
 
  call compute_sigma(sigma,nBRk, nBIk, rBRk, rBIk)              !Compute the sum of A
@@ -252,13 +204,6 @@ PROGRAM main
  call compute_A(ARk,AIK,BRkt,BIkt,sigma)                       !Compute A!
 
  ! ------------------------ !
-
-
- !Compute the corresponding u,v,w and t (u and v to be used in convol)                                                                                    
- call compute_velo(uk,vk,wk,bk,psik)
- call generate_halo(uk,vk,wk,bk)
-
- if(out_slab == 1 .and. mod(iter,freq_slab)==0 .and. mype==slab_mype) call print_slab(uk,vk)
 
 end if
 
@@ -278,14 +223,6 @@ end if
 
      call convol_waqg(nqk,nBRk,nBIk,nqr,nBRr,nBIr,uk,vk,qk,BRk,BIk,ur,vr,qr,BRr,BIr)
      call refraction_waqg(rBRk,rBIk,rBRr,rBIr,BRk,BIk,psik,BRr,BIr,psir)
-
-     !Compute dissipation from qok
-     call dissipation_q_nv(dqk,qok)
-
-     if(inviscid==1) then
-        dqk=(0.D0,0.D0)
-     end if
-
 
      !Compute q^n+1 and B^n+1 using leap-frog
      do izh0=1,n3h0
@@ -333,32 +270,6 @@ end if
 BRk = BRtempk
 BIk = BItempk
 
- !Generate halo for q
- call generate_halo_q(qk)
- call generate_halo_q(qok)
- 
-
-
- ! --- Recover the streamfunction --- !                                                                                                                   
-
- call compute_qw(qwk,BRk,BIk,qwr,BRr,BIr)           !Compute qw                                                                                          
-
- do izh0=1,n3h0                                     ! Compute q* = q - qw                                                                                 
-    izh1=izh0+1
-    do iky=1,ikty
-       do ikx=1,iktx
-          if (L(ikx,iky).eq.1) then
-             qwk(ikx,iky,izh0)=  qk(ikx,iky,izh1) - qwk(ikx,iky,izh0)
-          endif
-       enddo
-    enddo
- enddo
-
- call mpitranspose(qwk,iktx,ikty,n3h0,qt,n3,iktyp)  !Transpose rhs -> ft                                                                            
- call psi_solver(psik,qt)                           !Solve the pressure equation laplacian(phi)=f                                                              
-
- ! ----------------------------------- !  
-
 
  ! --- Recover A from B --- !                                                                                                                                 
 
@@ -371,41 +282,20 @@ BIk = BItempk
 
 
 
- !Compute the corresponding u,v,w and t 
- call compute_velo(uk,vk,wk,bk,psik)
- call generate_halo(uk,vk,wk,bk) 
-
-
  !*** Diagnostics ***!
  !-------------------!
 
- !Compute w if desired
- if(out_omega==1 .and. (mod(iter,freq_omega) ==0))  then
-    call omega_eqn_rhs(rhs,rhsr,psik)
-    call mpitranspose(rhs,iktx,ikty,n3h0,qt,n3,iktyp)
-    call omega_equation(wak,qt)
-    call generate_halo_q(wak)
- end if
- 
-
-
-if(out_etot ==1 .and. mod(iter,freq_etot )==0) call diag_zentrum(uk,vk,wk,bk,wak,psik,u_rot)
+ if(out_etot ==1 .and. mod(iter,freq_etot )==0) call diag_zentrum(uk,vk,wk,bk,wak,psik,u_rot)
 
  do id_field=1,nfields
     if(out_slice ==1 .and. mod(iter,freq_slice)==0 .and. count_slice(id_field)<max_slices)  call slices(uk,vk,wk,bk,wak,u_rot,ur,vr,wr,br,war,u_rotr,id_field)
  end do
 
- if(out_eta == 1 .and. mod(iter,freq_eta)==0 ) call tropopause_meanders(uk,vk,wk,bk,ur,vr,wr,br)
-
-
-! if(out_slab == 1 .and. mod(iter,freq_slab)==0 .and. mype==slab_mype) call print_slab(uk,vk)
-
-
+ 
  if(time>maxtime) EXIT
 end do !End loop
 
- if(mype==0)  write(*,*) n1,ave_cpu/(1.*itermax-1.)
-
+ 
 !************ Terminating processes **********************!                                                                                                                         
 
   call kill_fftw                                                                                                                                              
