@@ -200,57 +200,62 @@ PROGRAM main
      call fft_c2r(ARk,ARr,n3h0)
      call fft_c2r(AIk,AIr,n3h0)
      
-    !Compute the error on psi!
-    error_r   =0.
-    L1_local_r=0.
-    L2_local_r=0.
-    Li_local_r=0.
-    L1_global_r=0.
-    L2_global_r=0.
-    Li_global_r=0.
-
-    error_i   =0.
-    L1_local_i=0.
-    L2_local_i=0.
-    Li_local_i=0.
-    L1_global_i=0.
-    L2_global_i=0.
-    Li_global_i=0.
-    
-    do izh0=1,n3h0
-       izh1=izh0+1
-       do ix=1,n1
-          do iy=1,n2
-             
-             error_r    = ABS( ARtr(ix,iy,izh0) - ARr(ix,iy,izh0) )
-             L1_local_r = L1_local_r + error_r
-             L2_local_r = L2_local_r + error_r**2
-             if(error_r > Li_local_r) Li_local_r = error_r
-
-             error_i    = ABS( AItr(ix,iy,izh0) - AIr(ix,iy,izh0) )
-             L1_local_i = L1_local_i + error_i
-             L2_local_i = L2_local_i + error_i**2
-             if(error_i > Li_local_i) Li_local_i = error_i
-             
-          end do
-       end do
-    end do
-    
-    call mpi_reduce(L1_local_r,L1_global_r, 1,MPI_DOUBLE,MPI_SUM,0,MPI_COMM_WORLD,ierror)
-    call mpi_reduce(L2_local_r,L2_global_r, 1,MPI_DOUBLE,MPI_SUM,0,MPI_COMM_WORLD,ierror)
-    call mpi_reduce(Li_local_r,Li_global_r, 1,MPI_DOUBLE,MPI_MAX,0,MPI_COMM_WORLD,ierror)
-   
-    call mpi_reduce(L1_local_i,L1_global_i, 1,MPI_DOUBLE,MPI_SUM,0,MPI_COMM_WORLD,ierror)
-    call mpi_reduce(L2_local_i,L2_global_i, 1,MPI_DOUBLE,MPI_SUM,0,MPI_COMM_WORLD,ierror)
-    call mpi_reduce(Li_local_i,Li_global_i, 1,MPI_DOUBLE,MPI_MAX,0,MPI_COMM_WORLD,ierror)
-
-    if (mype==0) then
-       write(*,*) L1_global_r/(n1*n2*n3),sqrt(L2_global_r/(n1*n2*n3)),Li_global_r
-       write(*,*) L1_global_i/(n1*n2*n3),sqrt(L2_global_i/(n1*n2*n3)),Li_global_i
-    end if
-    
-    call fft_r2c(ARr,ARk,n3h0)
-    call fft_r2c(AIr,AIk,n3h0)    
+     !Compute the error on psi!
+     error_r   =0.
+     L1_local_r=0.
+     L2_local_r=0.
+     Li_local_r=0.
+     L1_global_r=0.
+     L2_global_r=0.
+     Li_global_r=0.
+     
+     error_i   =0.
+     L1_local_i=0.
+     L2_local_i=0.
+     Li_local_i=0.
+     L1_global_i=0.
+     L2_global_i=0.
+     Li_global_i=0.
+     
+     do izh0=1,n3h0
+        izh1=izh0+1
+        do ix=1,n1
+           do iy=1,n2
+              
+              error_r    = ABS( ARtr(ix,iy,izh0) - ARr(ix,iy,izh0) )
+              L1_local_r = L1_local_r + error_r
+              L2_local_r = L2_local_r + error_r**2
+              if(error_r > Li_local_r) Li_local_r = error_r
+              
+              error_i    = ABS( AItr(ix,iy,izh0) - AIr(ix,iy,izh0) )
+              L1_local_i = L1_local_i + error_i
+              L2_local_i = L2_local_i + error_i**2
+              if(error_i > Li_local_i) Li_local_i = error_i
+              
+           end do
+        end do
+     end do
+     
+     call mpi_reduce(L1_local_r,L1_global_r, 1,MPI_DOUBLE,MPI_SUM,0,MPI_COMM_WORLD,ierror)
+     call mpi_reduce(L2_local_r,L2_global_r, 1,MPI_DOUBLE,MPI_SUM,0,MPI_COMM_WORLD,ierror)
+     call mpi_reduce(Li_local_r,Li_global_r, 1,MPI_DOUBLE,MPI_MAX,0,MPI_COMM_WORLD,ierror)
+     
+     call mpi_reduce(L1_local_i,L1_global_i, 1,MPI_DOUBLE,MPI_SUM,0,MPI_COMM_WORLD,ierror)
+     call mpi_reduce(L2_local_i,L2_global_i, 1,MPI_DOUBLE,MPI_SUM,0,MPI_COMM_WORLD,ierror)
+     call mpi_reduce(Li_local_i,Li_global_i, 1,MPI_DOUBLE,MPI_MAX,0,MPI_COMM_WORLD,ierror)
+     
+     if (mype==0) then
+        write(*,*) L1_global_r/(n1*n2*n3),sqrt(L2_global_r/(n1*n2*n3)),Li_global_r
+        write(*,*) L1_global_i/(n1*n2*n3),sqrt(L2_global_i/(n1*n2*n3)),Li_global_i
+     end if
+     
+     call fft_r2c(ARr,ARk,n3h0)
+     call fft_r2c(AIr,AIk,n3h0)    
+     
+     nBRr = 0.
+     nBIr = 0.
+     rBRr = 0.
+     rBIr = 0.
 
   end if
 
@@ -486,6 +491,7 @@ BIk = BItempk
     
     call fft_r2c(BRr,BRk,n3h0)
     call fft_r2c(BIr,BIk,n3h0)    
+
  end if
  
  if(time>maxtime) EXIT
