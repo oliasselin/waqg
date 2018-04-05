@@ -3,7 +3,7 @@ MODULE parameters
    IMPLICIT NONE
 
     integer, parameter :: vres = 5
-    integer, parameter :: tres = 5
+    integer, parameter :: tres = 6
 
     integer, parameter :: n1=32, n2=32, n3=32*(2**vres)
     integer, parameter :: npe=2
