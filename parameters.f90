@@ -2,7 +2,7 @@ MODULE parameters
 
    IMPLICIT NONE
 
-    integer, parameter :: vres = 2
+    integer, parameter :: vres = 3
     integer, parameter :: tres = 2
 
     integer, parameter :: n1=32, n2=32, n3=32*(2**vres)
@@ -31,7 +31,8 @@ MODULE parameters
     double precision, parameter :: a_x = 1., a_y = 2., a_z = 1., a_t = 1.
     double precision, parameter :: a_r = 0.75, a_i = 1.25, a_p = 1.
 
-
+    integer, parameter :: forcing   = 1
+    integer, parameter :: init_test = 1
 
     !Tags to specify run!
     !-------------------!
@@ -168,8 +169,8 @@ MODULE parameters
     !------------!
 
     real :: time=0.
-    integer :: iter
-    integer :: itermax=1000000000
+    integer :: iter=0
+    integer :: itermax=0!1000000000
     real :: maxtime=1.                      
     double precision, parameter :: delt=0.05/(2**tres)    ! 0.05*U_scale*dz    !0.0005*U_scale*dz                ! T_visc = 0.25D0*dz*dz/nu
     double precision, parameter :: gamma=1e-4!4e-3!1e-2!7.e-3            !Robert filter parameter

@@ -125,9 +125,6 @@ PROGRAM main
 
   !********************** Initializing... *******************************!
 
-
-  iter=0
-
   call initialize_mpi
   call init_files
   call initialize_fftw(array2dr,array2di,fr_even,fk_even,fr_odd,fk_odd)
@@ -182,6 +179,79 @@ PROGRAM main
      write (fnamei, "(A3,I1,A1,I1)") "bi_",vres,"_",tres
      open (unit=154673,file=fnamer,action="write",status="replace")
      open (unit=154674,file=fnamei,action="write",status="replace")
+  end if
+
+
+  !Make sure B = LA initially
+  if(init_test==1) then
+
+     !Define the refractive terms fraudulously to get the right sigma.
+     call generate_fields_stag5(rBRr,n3h0,rBIr,n3h0,nqr,n3h0) 
+     call fft_r2c(rBRr,rBRk,n3h0)
+     call fft_r2c(rBIr,rBIk,n3h0)
+     nBRr = 0.
+     nBIr = 0.
+     call compute_sigma(sigma,nBRk, nBIk, rBRk, rBIk)     
+     
+     call mpitranspose(BRk,iktx,ikty,n3h0,BRkt,n3,iktyp)           !Transpose BR to iky-parallelized space                                                          
+     call mpitranspose(BIk,iktx,ikty,n3h0,BIkt,n3,iktyp)           !Transpose BK to iky-parallelized space                                                            
+     call compute_A(ARk,AIK,BRkt,BIkt,sigma)                       !Compute A!                                                                                        
+
+     call fft_c2r(ARk,ARr,n3h0)
+     call fft_c2r(AIk,AIr,n3h0)
+     
+    !Compute the error on psi!
+    error_r   =0.
+    L1_local_r=0.
+    L2_local_r=0.
+    Li_local_r=0.
+    L1_global_r=0.
+    L2_global_r=0.
+    Li_global_r=0.
+
+    error_i   =0.
+    L1_local_i=0.
+    L2_local_i=0.
+    Li_local_i=0.
+    L1_global_i=0.
+    L2_global_i=0.
+    Li_global_i=0.
+    
+    do izh0=1,n3h0
+       izh1=izh0+1
+       do ix=1,n1
+          do iy=1,n2
+             
+             error_r    = ABS( ARtr(ix,iy,izh0) - ARr(ix,iy,izh0) )
+             L1_local_r = L1_local_r + error_r
+             L2_local_r = L2_local_r + error_r**2
+             if(error_r > Li_local_r) Li_local_r = error_r
+
+             error_i    = ABS( AItr(ix,iy,izh0) - AIr(ix,iy,izh0) )
+             L1_local_i = L1_local_i + error_i
+             L2_local_i = L2_local_i + error_i**2
+             if(error_i > Li_local_i) Li_local_i = error_i
+             
+          end do
+       end do
+    end do
+    
+    call mpi_reduce(L1_local_r,L1_global_r, 1,MPI_DOUBLE,MPI_SUM,0,MPI_COMM_WORLD,ierror)
+    call mpi_reduce(L2_local_r,L2_global_r, 1,MPI_DOUBLE,MPI_SUM,0,MPI_COMM_WORLD,ierror)
+    call mpi_reduce(Li_local_r,Li_global_r, 1,MPI_DOUBLE,MPI_MAX,0,MPI_COMM_WORLD,ierror)
+   
+    call mpi_reduce(L1_local_i,L1_global_i, 1,MPI_DOUBLE,MPI_SUM,0,MPI_COMM_WORLD,ierror)
+    call mpi_reduce(L2_local_i,L2_global_i, 1,MPI_DOUBLE,MPI_SUM,0,MPI_COMM_WORLD,ierror)
+    call mpi_reduce(Li_local_i,Li_global_i, 1,MPI_DOUBLE,MPI_MAX,0,MPI_COMM_WORLD,ierror)
+
+    if (mype==0) then
+       write(*,*) L1_global_r/(n1*n2*n3),sqrt(L2_global_r/(n1*n2*n3)),Li_global_r
+       write(*,*) L1_global_i/(n1*n2*n3),sqrt(L2_global_i/(n1*n2*n3)),Li_global_i
+    end if
+    
+    call fft_r2c(ARr,ARk,n3h0)
+    call fft_r2c(AIr,AIk,n3h0)    
+
   end if
 
 
