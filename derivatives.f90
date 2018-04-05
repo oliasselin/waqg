@@ -1069,6 +1069,71 @@ MODULE derivatives
     END SUBROUTINE compute_sigma
 
 
+
+    SUBROUTINE  sumB(BRk, BIk)
+      ! this subroutine computes the vertical integral of B at every wavenumber.
+
+      double complex,   dimension(iktx,ikty,n3h0) :: BRk, BIk
+
+      double complex, dimension(iktx,ikty,2) :: sum_to_reduce     !This is the sum local to each processor. Last dimension: 1=real 2=imag
+      double complex, dimension(iktx,ikty,2) :: aveB              !This is the global sum after all processors shared theirs. To be divided by n3 for the average B at each (kx,ky)
+
+      sum_to_reduce = (0.D0,0.D0)
+      aveB          = (0.D0,0.D0)
+
+      !There is the Coriolis parameter missing: figure dimensions out
+      do izh0=1,n3h0 
+         do iky=1,ikty
+            ky = kya(iky)
+            do ikx=1,iktx
+               kx = kxa(ikx)
+               kh2 = kx*kx + ky*ky
+               if ((L(ikx,iky).eq.1) .and. kh2 > 0) then
+                  sum_to_reduce(ikx,iky,1) = sum_to_reduce(ikx,iky,1) + BRk(ikx,iky,izh0)
+                  sum_to_reduce(ikx,iky,2) = sum_to_reduce(ikx,iky,2) + BIk(ikx,iky,izh0)
+               endif
+            enddo
+         enddo
+      enddo
+
+      call mpi_allreduce(sum_to_reduce,aveB,iktx*ikty*2,MPI_DOUBLE_COMPLEX,MPI_SUM,MPI_COMM_WORLD,ierror)
+
+      aveB = aveB/n3
+
+!      if(mype==0) then
+!         do iky=1,ikty
+!            do ikx=1,iktx
+!               if( abs(aveB(ikx,iky,1)) > 1e-14 ) then
+!                  write(*,*) "aveBr=",aveB(ikx,iky,1),"at time=",time,"wavenumber (kx,ky)=",kxa(ikx),ky = kya(iky)
+!               end if
+!               if( abs(aveB(ikx,iky,2)) > 1e-14 ) then
+!                  write(*,*) "aveBi=",aveB(ikx,iky,2),"at time=",time,"wavenumber (kx,ky)=",kxa(ikx),ky = kya(iky)
+!               end if
+!            enddo
+!         enddo
+!      end if
+
+      if(zero_aveB==1) then
+         do izh0=1,n3h0
+            do iky=1,ikty
+               ky = kya(iky)
+               do ikx=1,iktx
+                  kx = kxa(ikx)
+                  kh2 = kx*kx + ky*ky
+                  if ((L(ikx,iky).eq.1) .and. kh2 > 0) then
+                     BRk(ikx,iky,izh0) = BRk(ikx,iky,izh0) - aveB(ikx,iky,1)
+                     BIk(ikx,iky,izh0) = BIk(ikx,iky,izh0) - aveB(ikx,iky,2)
+                  endif
+               enddo
+            enddo
+         enddo
+      end if
+         
+    END SUBROUTINE sumB
+
+
+
+
     SUBROUTINE compute_A(ARk,AIK,BRkt,BIkt,sigma)
 
       double complex, dimension(iktx,ikty,2), intent(in)  :: sigma               !This is the global sum after all processors shared theirs                                    
