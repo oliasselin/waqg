@@ -1100,19 +1100,6 @@ MODULE derivatives
 
       aveB = aveB/n3
 
-!      if(mype==0) then
-!         do iky=1,ikty
-!            do ikx=1,iktx
-!               if( abs(aveB(ikx,iky,1)) > 1e-14 ) then
-!                  write(*,*) "aveBr=",aveB(ikx,iky,1),"at time=",time,"wavenumber (kx,ky)=",kxa(ikx),ky = kya(iky)
-!               end if
-!               if( abs(aveB(ikx,iky,2)) > 1e-14 ) then
-!                  write(*,*) "aveBi=",aveB(ikx,iky,2),"at time=",time,"wavenumber (kx,ky)=",kxa(ikx),ky = kya(iky)
-!               end if
-!            enddo
-!         enddo
-!      end if
-
       if(zero_aveB==1) then
          do izh0=1,n3h0
             do iky=1,ikty
