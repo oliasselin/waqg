@@ -3,7 +3,7 @@ MODULE parameters
    IMPLICIT NONE
 
     integer, parameter :: vres = 0
-    integer, parameter :: tres = 8
+    integer, parameter :: tres = 4
 
     integer, parameter :: n1=32, n2=32, n3=32*(2**vres)
     integer, parameter :: npe=2
@@ -28,14 +28,14 @@ MODULE parameters
     real, parameter :: ktrunc_x = twopi/L1 * float(n1)/3.           ! dimensional truncation wavenumber (x)
     real, parameter :: ktrunc_z = twopi/L3 * float(n3)/3.           ! dimensional truncation wavenumber (x)
 
-    double precision, parameter :: a_x = 1., a_y = 2., a_z = 0., a_t = 1.
+    double precision, parameter :: a_x = 1., a_y = 2., a_z = 0., a_t = 0.
     double precision, parameter :: a_r = 0.75, a_i = 1.25, a_p = 0.
 
 
     integer, parameter :: forcing   = 1
     integer, parameter :: init_test = 1
     integer, parameter :: zero_aveB = 0
-    
+    integer, parameter :: skip_fe = 1      !Reset B = 0 and A = Atrue after the first time step.
 
     !Tags to specify run!
     !-------------------!
@@ -176,7 +176,7 @@ MODULE parameters
     integer :: itermax=1000000000
     real :: maxtime=1.                      
     double precision, parameter :: delt=0.05/(2**tres)    ! 0.05*U_scale*dz    !0.0005*U_scale*dz                ! T_visc = 0.25D0*dz*dz/nu
-    double precision, parameter :: gamma=1e-4!4e-3!1e-2!7.e-3            !Robert filter parameter
+    double precision, parameter :: gamma=0.!1e-4!4e-3!1e-2!7.e-3            !Robert filter parameter
 
     !Other successful viscosity: 5e-2 * (10./ktrunc_x ) **2. 
     !PERFECT VISCOSITY: 0.01 * (64./(1.*n1)) **(4./3.)
