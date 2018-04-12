@@ -137,7 +137,7 @@ PROGRAM main
 
   !First generate the exact solution and the associated forcing term
   call generate_fields_stag(ARtr,n3h0,BRtr,n3h0,psitr,n3h1) 
-  call generate_fields_stag2(AItr,n3h0,BItr,n3h0,war,n3h1) 
+  call generate_fields_stag2(AItr,n3h0,BItr,n3h0,war ,n3h1) 
   call generate_fields_stag3(FbRr,n3h0,FpRr,n3h0,FaRr,n3h0) 
   call generate_fields_stag4(FbIr,n3h0,FpIr,n3h0,FaIr,n3h0) 
 
@@ -166,7 +166,7 @@ PROGRAM main
   call fft_r2c(FaIr,FaIk,n3h0)
 
   !Set QG terms to 0.
-   qk = (0.D0,0.D0)
+   qk=(0.D0,0.D0)
   dqk=(0.D0,0.D0)
 
   !Initialize the other fields
@@ -176,11 +176,21 @@ PROGRAM main
   !Initialize error file!
   if(mype==0) then
      if(zero_aveB==1) then
-        write (fnamer, "(A3,I1,A1,I1,A1)") "br_",vres,"_",tres,"o"
-        write (fnamei, "(A3,I1,A1,I1,A1)") "bi_",vres,"_",tres,"o"
+        if(gamma > 1e-5 ) then
+           write (fnamer, "(A3,I1,A1,I1,A1)") "br_",vres,"_",tres,"o"
+           write (fnamei, "(A3,I1,A1,I1,A1)") "bi_",vres,"_",tres,"o"
+        else
+           write (fnamer, "(A3,I1,A1,I1,A4)") "br_",vres,"_",tres,"o_g0"
+           write (fnamei, "(A3,I1,A1,I1,A4)") "bi_",vres,"_",tres,"o_g0"
+        end if
      else
-        write (fnamer, "(A3,I1,A1,I1)") "br_",vres,"_",tres
-        write (fnamei, "(A3,I1,A1,I1)") "bi_",vres,"_",tres
+        if(gamma > 1e-5 ) then
+           write (fnamer, "(A3,I1,A1,I1)") "br_",vres,"_",tres
+           write (fnamei, "(A3,I1,A1,I1)") "bi_",vres,"_",tres
+        else
+           write (fnamer, "(A3,I1,A1,I1,A2)") "br_",vres,"_",tres,"g0"
+           write (fnamei, "(A3,I1,A1,I1,A2)") "bi_",vres,"_",tres,"g0"
+        end if
      end if
 
      open (unit=154673,file=fnamer,action="write",status="replace")
@@ -346,6 +356,17 @@ PROGRAM main
 
 end if
 
+
+if(skip_fe == 1) then
+   BRok = (0.D0,0.D0)
+   BIok = (0.D0,0.D0)
+   BRk = (0.D0,0.D0)
+   BIk = (0.D0,0.D0)
+   ARr = ARtr
+   AIr = AItr
+   call fft_r2c(ARr,ARk,n3h0)
+   call fft_r2c(AIr,AIk,n3h0)
+end if
 
 
  !********************************************************************************!
