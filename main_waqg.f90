@@ -289,6 +289,17 @@ PROGRAM main
  call convol_waqg(nqk,nBRk,nBIk,nqr,nBRr,nBIr,uk,vk,qk,BRk,BIk,ur,vr,qr,BRr,BIr)
  call refraction_waqg(rBRk,rBIk,rBRr,rBIr,BRk,BIk,psik,BRr,BIr,psir)
 
+ if(linear==1) then
+    nqk = (0.D0,0.D0)
+   nBRk = (0.D0,0.D0)
+   nBIk = (0.D0,0.D0)
+ end if
+
+ if(no_refraction==1) then
+   rBRk = (0.D0,0.D0)
+   rBIk = (0.D0,0.D0)
+ end if
+
   qok = qk
  BRok = BRk
  BIok = BIk
@@ -381,8 +392,22 @@ end if
      
      time=iter*delt
 
+     call compute_velo(uk,vk,wk,bk,psik)
+     call generate_halo(uk,vk,wk,bk)
+  
      call convol_waqg(nqk,nBRk,nBIk,nqr,nBRr,nBIr,uk,vk,qk,BRk,BIk,ur,vr,qr,BRr,BIr)
      call refraction_waqg(rBRk,rBIk,rBRr,rBIr,BRk,BIk,psik,BRr,BIr,psir)
+
+     if(linear==1) then
+         nqk = (0.D0,0.D0)
+        nBRk = (0.D0,0.D0)
+        nBIk = (0.D0,0.D0)
+     end if
+     
+     if(no_refraction==1) then
+        rBRk = (0.D0,0.D0)
+        rBIk = (0.D0,0.D0)
+     end if
 
      !Compute the forcing!
      if(forcing==1) then
