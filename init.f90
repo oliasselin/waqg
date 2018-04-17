@@ -1062,8 +1062,17 @@ do ix=1,n1d
          if(z1>=0) f1s(ix,iy,iz1)=-a_t*Aer*( N2_scale*a_z*sin(a_z*z1) - a_z*a_z*cos(a_z*z1) )*exp(-N2_scale*(z1-z0))      !FbR
          if(z2>=0) then
 
-            f2s(ix,iy,iz2)=-a_p*( a_x*cos(x)*sin(y) - a_y*sin(x)*cos(y) - cos(x)*cos(y) )*cos(z2)                         !FpR (without B) 
+            if(linear == 1 .and. no_refraction == 0) then
+               f2s(ix,iy,iz2)= a_p*( cos(x)*cos(y) )*cos(z2)                         !FpR (without B) 
+            elseif(linear == 0 .and. no_refraction == 1) then
+               f2s(ix,iy,iz2)=-a_p*( a_x*cos(x)*sin(y) - a_y*sin(x)*cos(y)  )*cos(z2)                         !FpR (without B) 
+            elseif(linear == 1 .and. no_refraction == 1) then
+               f2s(ix,iy,iz2)=0.
+            else
+               f2s(ix,iy,iz2)=-a_p*( a_x*cos(x)*sin(y) - a_y*sin(x)*cos(y) - cos(x)*cos(y) )*cos(z2)                         !FpR (without B) 
+            end if
             f2s(ix,iy,iz2)= f2s(ix,iy,iz2)*Aei*( N2_scale*a_z*sin(a_z*z2) - a_z*a_z*cos(a_z*z2) )*exp(-N2_scale*(z2-z0))  !Times the imag part of B
+            
 
          end if
          if(z3>=0) f3s(ix,iy,iz3)= 0.5*(a_x*a_x + a_y*a_y)*Aei*cos(a_z*z3)                                                !FaR
@@ -1162,7 +1171,15 @@ do ix=1,n1d
          if(z1>=0) f1s(ix,iy,iz1)=-a_t*Aei*( N2_scale*a_z*sin(a_z*z1) - a_z*a_z*cos(a_z*z1) )*exp(-N2_scale*(z1-z0))      !FbI                                       
          if(z2>=0) then
 
-            f2s(ix,iy,iz2)= a_p*( a_x*cos(x)*sin(y) - a_y*sin(x)*cos(y) - cos(x)*cos(y) )*cos(z2)                         !FpI (without B) 
+            if(linear == 1 .and. no_refraction == 0) then
+               f2s(ix,iy,iz2)=-a_p*( cos(x)*cos(y) )*cos(z2)                         !FpR (without B) 
+            elseif(linear == 0 .and. no_refraction == 1) then
+               f2s(ix,iy,iz2)= a_p*( a_x*cos(x)*sin(y) - a_y*sin(x)*cos(y)  )*cos(z2)                         !FpR (without B) 
+            elseif(linear == 1 .and. no_refraction == 1) then
+               f2s(ix,iy,iz2)=0.
+            else
+               f2s(ix,iy,iz2)= a_p*( a_x*cos(x)*sin(y) - a_y*sin(x)*cos(y) - cos(x)*cos(y) )*cos(z2)                         !FpR (without B) 
+            end if
             f2s(ix,iy,iz2)= f2s(ix,iy,iz2)*Aer*( N2_scale*a_z*sin(a_z*z2) - a_z*a_z*cos(a_z*z2) )*exp(-N2_scale*(z2-z0))  !Times the real part of B
                                            
          end if

@@ -2,10 +2,10 @@ MODULE parameters
 
    IMPLICIT NONE
 
-    integer, parameter :: vres = 0
-    integer, parameter :: tres = 5
+    integer, parameter :: vres = 7
+    integer, parameter :: tres = 1
 
-    integer, parameter :: n1=32, n2=32, n3=32*(2**vres)
+    integer, parameter :: n1=8, n2=16, n3=32*(2**vres)
     integer, parameter :: npe=2
 
     integer, parameter :: n1d=n1+2, n2d=n2, n3d=n3
@@ -28,7 +28,7 @@ MODULE parameters
     real, parameter :: ktrunc_x = twopi/L1 * float(n1)/3.           ! dimensional truncation wavenumber (x)
     real, parameter :: ktrunc_z = twopi/L3 * float(n3)/3.           ! dimensional truncation wavenumber (x)
 
-    double precision, parameter :: a_x = 1., a_y = 2., a_z = 0., a_t = 0.
+    double precision, parameter :: a_x = 1., a_y = 2., a_z = 1., a_t = 1.
     double precision, parameter :: a_r = 0.75, a_i = 1.25, a_p = 1.
 
 
@@ -36,6 +36,7 @@ MODULE parameters
     integer, parameter :: init_test = 1
     integer, parameter :: zero_aveB = 1
     integer, parameter :: skip_fe   = 0      !Reset B = 0 and A = Atrue after the first time step.
+    integer, parameter :: no_refraction = 0
 
     !Tags to specify run!
     !-------------------!
@@ -86,7 +87,7 @@ MODULE parameters
     !----------!
 
     integer, parameter :: tropopause=1, exponential=2, constant_N=3
-    integer, parameter :: stratification = constant_N!exponential
+    integer, parameter :: stratification = exponential
 
     !Stratification = tropopause!
     integer, parameter :: fraction=128                   !If h#=150m, then fraction=133.333333~128
@@ -96,7 +97,7 @@ MODULE parameters
     double precision, parameter :: gamma_N1=(sqrt(N_2_stra)-sqrt(N_2_trop))/(sqrt(N_2_stra)+sqrt(N_2_trop))       !This is alpha for N~1+alpha tanh(z/h)
 
     !Stratification = exponential!
-    double precision, parameter :: N2_scale = 0.!0.75D0   !N^2 ~ exp(N2_scale*(z-z0) 
+    double precision, parameter :: N2_scale = 0.75D0   !N^2 ~ exp(N2_scale*(z-z0) 
 
    ! USEFUL INDEX !                                                                                                                          
    ! ------------ !                                                                                                                         
