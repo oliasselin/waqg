@@ -113,10 +113,10 @@ unset mytics
 twopi=6.28318531
 
 #set title "Tropopause-level kinetic energy wavenumber spectra, U = 1"
-plot  "/home1/05518/oasselin/waqg/python/vres.dat" u (1/$1):2 w lp ls 5 title 'L_1-error', \
-      "/home1/05518/oasselin/waqg/python/vres.dat" u (1/$1):3 w lp ls 15 title 'L_2-error', \
-      "/home1/05518/oasselin/waqg/python/vres.dat" u (1/$1):4 w lp ls 24 title 'L_i-error', \
-      2*x**(-2.) w l ls 16 title 'O(dt^2)'
+plot  "/home1/05518/oasselin/waqg/python/tres.dat" u (1/$1):2 w lp ls 5 title 'L_1-error', \
+      "/home1/05518/oasselin/waqg/python/tres.dat" u (1/$1):3 w lp ls 15 title 'L_2-error', \
+      "/home1/05518/oasselin/waqg/python/tres.dat" u (1/$1):4 w lp ls 24 title 'L_i-error', \
+      20*x**(-2.) w l ls 16 title 'O(dt^2)'
 
 
 
