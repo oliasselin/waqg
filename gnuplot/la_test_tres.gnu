@@ -67,6 +67,11 @@ set style line 30 lc rgb '#606060' lt 1 lw 0.5 # --- grey
 set style line 3 lc rgb '#AA9D39' lt 1 lw 2 # --- greenish
 set style line 5 lc rgb '#b88608' lt 1 lw 2 pt 7 ps 2. pi -1 # --- darkgold
 
+
+set style line 55 lc rgb '#b88608' lt 1 lw 0.5 pt 7 ps 0.5 pi -1 # --- darkgold
+set style line 1515 lc rgb '#8a0f13' lt 1 lw 0.5 pt 7 ps 0.5 pi -1 # --- red
+set style line 2424 lc rgb '#0060ad' lt 1 lw 0.5 pt 7 ps 0.5 pi -1 # --- blue (regular)
+
 # Line style for axes
 set style line 80 lt 1
 set style line 80 lt rgb "#000000"
@@ -113,7 +118,10 @@ unset mytics
 twopi=6.28318531
 
 #set title "Tropopause-level kinetic energy wavenumber spectra, U = 1"
-plot  "/home1/05518/oasselin/waqg/python/tres.dat" u (1/$1):2 w lp ls 5 title 'L_1-error', \
-      "/home1/05518/oasselin/waqg/python/tres.dat" u (1/$1):3 w lp ls 15 title 'L_2-error', \
-      "/home1/05518/oasselin/waqg/python/tres.dat" u (1/$1):4 w lp ls 24 title 'L_i-error', \
+plot  "/home1/05518/oasselin/waqg/python/tres.dat" u (1/$1):2 w lp ls 55 notitle, \
+      "/home1/05518/oasselin/waqg/python/tres.dat" u (1/$1):3 w lp ls 1515 notitle, \
+      "/home1/05518/oasselin/waqg/python/tres.dat" u (1/$1):4 w lp ls 2424 notitle, \
+      "/home1/05518/oasselin/waqg/python/tres_low_res.dat" u (1/$1):2 w lp ls 5 title 'L_1-error', \
+      "/home1/05518/oasselin/waqg/python/tres_low_res.dat" u (1/$1):3 w lp ls 15 title 'L_2-error', \
+      "/home1/05518/oasselin/waqg/python/tres_low_res.dat" u (1/$1):4 w lp ls 24 title 'L_i-error', \
       50*x**(-2.) w l ls 16 title 'O(dt^2)'
