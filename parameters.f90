@@ -2,8 +2,8 @@ MODULE parameters
 
    IMPLICIT NONE
 
-    integer, parameter :: vres = 7
-    integer, parameter :: tres = 1
+    integer, parameter :: vres = 0
+    integer, parameter :: tres = 7
 
     integer, parameter :: n1=8, n2=16, n3=32*(2**vres)
     integer, parameter :: npe=2
