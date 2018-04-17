@@ -7,8 +7,8 @@ t2=1.1
 twopi = 6.28318530718
 
 
-tres_list = np.arange(7,8)
-vres_list = np.arange(0,8)
+tres_list = np.arange(0,8)
+vres_list = np.arange(9,10)
 
 
 
