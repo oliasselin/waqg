@@ -552,7 +552,7 @@ end subroutine hspec
        
        !Use the concerned mype                                                                                                                                   
  
-       if(height(level)<1 .or. height(level)>n3-1) write(*,*) "Problem with level in horizontal_spectrum"  !don't include n3, otherwise need a special treatment of boundary conditions...
+       if(height(level)<1 .or. height(level)>n3) write(*,*) "Problem with level in horizontal_spectrum"  !don't include n3, otherwise need a special treatment of boundary conditions...
    
        proc  = (height(level)-1)/n3h0             !which processor     
        izh0s = height(level) - proc*n3h0          !position in the processor (valid for n3h0 fields only)  
@@ -1030,7 +1030,7 @@ end subroutine hspec
        Imem = BIk
        call fft_c2r(BRk,BRr,n3h0)
        call fft_c2r(BIk,BIr,n3h0)
-       field = BRr!0.5*(BRr*BRr + BIr*BIr)
+       field = 0.5*(BRr*BRr + BIr*BIr)
     end if
 
 
@@ -1038,7 +1038,7 @@ end subroutine hspec
     if( bot_height > mype*n3h0 .AND. bot_height <= (mype+1)*n3h0 ) then
        
        !          write (fname, "(A9,I1,I1,A4)") "slicehbot",id_field,count_slice(id_field),".dat"
-       write (fname, "(A9,I1,I2,A4)") "slicehbot",id_field,count_slice(id_field),".dat"
+       write (fname, "(A9,I1,I3,A4)") "slicehbot",id_field,count_slice(id_field),".dat"
        open (unit=count_slice(id_field),file=fname,action="write",status="replace")
        
        iz=bot_height - mype*n3h0 + hlvl(id_field)
@@ -1059,7 +1059,7 @@ end subroutine hspec
     if( mid_height > mype*n3h0 .AND. mid_height <= (mype+1)*n3h0 ) then
        
        !          write (fname, "(A9,I1,I1,A4)") "slicehmid",id_field,count_slice(id_field),".dat"
-       write (fname, "(A9,I1,I2,A4)") "slicehmid",id_field,count_slice(id_field),".dat"
+       write (fname, "(A9,I1,I3,A4)") "slicehmid",id_field,count_slice(id_field),".dat"
        open (unit=count_slice(id_field),file=fname,action="write",status="replace")
        
        iz=mid_height - mype*n3h0 + hlvl(id_field)
@@ -1079,7 +1079,7 @@ end subroutine hspec
     if( top_height > mype*n3h0 .AND. top_height <= (mype+1)*n3h0 ) then
        
        !          write (fname, "(A9,I1,I1,A4)") "slicehtop",id_field,count_slice(id_field),".dat"
-       write (fname, "(A9,I1,I2,A4)") "slicehtop",id_field,count_slice(id_field),".dat"
+       write (fname, "(A9,I1,I3,A4)") "slicehtop",id_field,count_slice(id_field),".dat"
        open (unit=count_slice(id_field),file=fname,action="write",status="replace")
        
        iz=top_height - mype*n3h0 + hlvl(id_field)
@@ -1102,7 +1102,7 @@ end subroutine hspec
 
        if(mype==0) then
 !          write (fname, "(A6,I1,I1,A4)") "slicev",id_field,count_slice(id_field),".dat"
-          write (fname, "(A6,I1,I2,A4)") "slicev",id_field,count_slice(id_field),".dat"
+          write (fname, "(A6,I1,I3,A4)") "slicev",id_field,count_slice(id_field),".dat"
           open (unit=count_slice(id_field),file=fname,action="write",status="replace")
 
           !Copy ur slice on XY_slice (NOTICE IT'S NOT ON XY_slice_p)                                                                                                                                                                      
