@@ -171,6 +171,13 @@ PROGRAM main
  BRok = BRk
  BIok = BIk
 
+ if(passive_scalar==1) then
+    ARk = (0.D0,0.D0)
+    AIk = (0.D0,0.D0)
+   rBRk = (0.D0,0.D0)
+   rBIk = (0.D0,0.D0)
+end if
+
  !Compute q^1 and B^1 with Forward Euler  
  do izh0=1,n3h0
     izh1=izh0+1
@@ -219,7 +226,7 @@ if(fixed_flow==0) then
  ! ----------------------------------- !
 end if
 
-
+if(passive_scalar==0) then
  ! --- Recover A from B --- !
 
  call compute_sigma(sigma,nBRk, nBIk, rBRk, rBIk)              !Compute the sum of A
@@ -228,7 +235,7 @@ end if
  call compute_A(ARk,AIK,BRkt,BIkt,sigma)                       !Compute A!
 
  ! ------------------------ !
-
+end if
 
  !Compute the corresponding u,v,w and t (u and v to be used in convol)                                                                                    
  call compute_velo(uk,vk,wk,bk,psik)
@@ -257,6 +264,13 @@ end if
         dqk=(0.D0,0.D0)
      end if
 
+
+     if(passive_scalar==1) then
+        ARk = (0.D0,0.D0)
+        AIk = (0.D0,0.D0)
+       rBRk = (0.D0,0.D0)
+       rBIk = (0.D0,0.D0)
+     end if
 
      !Compute q^n+1 and B^n+1 using leap-frog
      do izh0=1,n3h0
@@ -331,6 +345,8 @@ if(fixed_flow==0) then
  ! ----------------------------------- !  
 end if
 
+
+if(passive_scalar==0) then
  ! --- Recover A from B --- !                                                                                                                                 
 
  call compute_sigma(sigma,nBRk, nBIk, rBRk, rBIk)              !Compute the sum of A                                                                                    
@@ -339,7 +355,7 @@ end if
  call compute_A(ARk,AIK,BRkt,BIkt,sigma)                       !Compute A!                                                                                  
 
  ! ------------------------ !       
-
+end if
 
 
  !Compute the corresponding u,v,w and t 
