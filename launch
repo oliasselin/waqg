@@ -11,8 +11,6 @@ mkdir -p $datadir
 
 cd $sourdir
 
-echo after sourdir
-
 cat > EXEC_STEP << EXEC
 #!/bin/sh 
 #----------------------------------------------------
@@ -80,21 +78,14 @@ DIAG=diagnostics.f90
 ELLI=elliptic.f90
 SPEC=special.f90
 
-echo before compile
-
 #Compile with MPIf90                                                                                                                                       
 mpif90 -mkl parameters.f90 mpi.f90 fft.f90 files.f90 derivatives.f90 elliptic.f90 special.f90 diagnostics.f90 init.f90 main_waqg.f90 -o exec_qg
 
-echo after compile
 
 COMPILE
 
 chmod 755 COMPILE_STEP
-
-echo after first chmod
-
 ./COMPILE_STEP
-
 ##chmod 755 EXEC_STEP                                                                                                                                       
 sbatch EXEC_STEP
 ##./EXEC_STEP                                                                                                                                               
