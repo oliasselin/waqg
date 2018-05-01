@@ -192,7 +192,7 @@ PROGRAM main
  !Generate halo for q
  call generate_halo_q(qk)
 
-
+if(fixed_flow==0) then
  ! --- Recover the streamfunction --- !
 
  call compute_qw(qwk,BRk,BIk,qwr,BRr,BIr)           ! Compute qw
@@ -212,7 +212,7 @@ PROGRAM main
  call psi_solver(psik,qt)                           !Solve the QGPV equation L(phi)=q*, assuming psi_z = 0 at top/bot (homogeneous problem)                    
 
  ! ----------------------------------- !
-
+end if
 
 
  ! --- Recover A from B --- !
@@ -304,7 +304,7 @@ BIk = BItempk
  call generate_halo_q(qok)
  
 
-
+if(fixed_flow==0) then
  ! --- Recover the streamfunction --- !                                                                                                                   
 
  call compute_qw(qwk,BRk,BIk,qwr,BRr,BIr)           !Compute qw                                                                                          
@@ -324,7 +324,7 @@ BIk = BItempk
  call psi_solver(psik,qt)                           !Solve the pressure equation laplacian(phi)=f                                                              
 
  ! ----------------------------------- !  
-
+end if
 
  ! --- Recover A from B --- !                                                                                                                                 
 
