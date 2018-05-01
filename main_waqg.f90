@@ -138,11 +138,16 @@ PROGRAM main
 
  if(out_etot ==1) call diag_zentrum(uk,vk,wk,bk,wak,psik,u_rot)
 
-
  do id_field=1,nfields                                            
     if(out_slice ==1)  call slices(BRk,BIk,BRr,BIr,id_field)
  end do
  
+ do iz=1,num_spec
+    if(out_hspecw ==1) call hspec_waves(BRk,BIk,iz)
+ end do
+
+
+
  !************************************************************************!
  !*** 1st time timestep using the projection method with Forward Euler ***!
  !************************************************************************!
@@ -358,6 +363,12 @@ if(out_etot ==1 .and. mod(iter,freq_etot )==0) call diag_zentrum(uk,vk,wk,bk,wak
  do id_field=1,nfields
     if(out_slice ==1 .and. mod(iter,freq_slice)==0 .and. count_slice(id_field)<max_slices)  call slices(BRk,BIk,BRr,BIr,id_field)
  end do
+
+ do iz=1,num_spec
+    if(out_hspecw ==1  .and. mod(iter,freq_hspecw)==0 ) call hspec_waves(BRk,BIk,iz)
+ end do
+
+
 
  if(time>maxtime) EXIT
 end do !End loop

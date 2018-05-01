@@ -537,6 +537,91 @@ CONTAINS
 end subroutine hspec
 
 
+     subroutine hspec_waves(BRk,BIk,level)
+       
+       double complex, dimension(iktx,ikty,n3h0) :: BRk,BIk
+       
+       integer :: level,proc,izh0s,izh1s,izh2s  
+       
+       real, dimension(0:ktx,2) :: spz        !spectrum for kinetic (1) and potential (2)                                                                            
+       real, dimension(0:ktx)   :: num_modes  !number of modes for a given kh                                                                                            
+       integer :: mode                        !Mode no                                                                                                                      
+       integer :: unit
+       
+       double precision :: kh
+       
+       !Use the concerned mype                                                                                                                                   
+ 
+       if(height(level)<1 .or. height(level)>n3-1) write(*,*) "Problem with level in horizontal_spectrum"  !don't include n3, otherwise need a special treatment of boundary conditions...
+   
+       proc  = (height(level)-1)/n3h0             !which processor     
+       izh0s = height(level) - proc*n3h0          !position in the processor (valid for n3h0 fields only)  
+       izh1s = height(level) - proc*n3h0 + 1      !position in the processor (valid for n3h1 fields only)  
+       izh2s = height(level) - proc*n3h0 + 2      !position in the processor (valid for n3h2 fields only)  
+       
+       if(mype==proc) then   
+     
+          !Which file to write on 
+          if(level==1) then
+             unit   =unit_h0w
+          elseif(level==2) then
+             unit   =unit_h1w
+          elseif(level==3) then
+             unit   =unit_h2w
+          elseif(level==4) then
+             unit   =unit_h3w
+          elseif(level==5) then
+             unit   =unit_h4w
+          elseif(level==6) then
+             unit   =unit_h5w
+          elseif(level==7) then
+             unit   =unit_h6w
+          elseif(level==8) then
+             unit   =unit_h7w
+          elseif(level==9) then
+             unit   =unit_h8w
+          elseif(level==10) then
+             unit   =unit_h9w
+          else
+             write(*,*) "Problem with level... can't find the file..."
+          end if
+
+          spz=0.
+          num_modes=0.
+
+          do iky=1,ikty
+             ky = kya(iky)
+             do ikx=1,iktx
+                kx = kxa(ikx)
+                kh2  = kx*kx+ky*ky
+                kh   = sqrt(1.D0*kh2)
+                
+                mode = ifix(real(kh*L1/twopi+0.5))
+                
+                if (L(ikx,iky).eq.1) then
+                   
+                   spz(mode,1)   = spz(mode,1) + real( (BRk(ikx,iky,izh0s)+i*BIk(ikx,iky,izh0s))  *CONJG(BRk(ikx,iky,izh0s)+i*BIk(ikx,iky,izh0s)) )   !KE = 0.5 |LA|^2     
+                  
+
+                   num_modes(mode) = num_modes(mode) + 2
+                   
+                endif
+             enddo
+          enddo
+
+          spz=0.5*spz
+
+          do mode=0,ktx-1
+             if (num_modes(mode).ne.0) then         !mode, kin energy, pot energy, num of modes                             
+                write(unit,fmt=*) float(mode),spz(mode,1),spz(mode,2),num_modes(mode)    
+             endif
+          enddo
+          write(unit,*) '           '
+          call flush(unit)
+
+       end if
+     end subroutine hspec_waves
+
 
 
  SUBROUTINE enstrophy(zxk,zyk,zzk) 

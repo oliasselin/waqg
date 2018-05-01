@@ -205,7 +205,8 @@ MODULE parameters
     !------!
 
     integer, parameter :: out_etot   = 1, freq_etot   = INT(0.01/delt)!50!346!n3/64!n3!64!n3!50*n3/64      !Total energy                                                    
-    integer, parameter :: out_hspec  = 1, freq_hspec  = 5*freq_etot!n3/64!n3!freq_etot*10     !Horizontal energy spectrum at various heights 
+    integer, parameter :: out_hspec  = 0, freq_hspec  = 5*freq_etot!n3/64!n3!freq_etot*10     !Horizontal energy spectrum at various heights 
+    integer, parameter :: out_hspecw = 1, freq_hspecw = 5*freq_etot!n3/64!n3!freq_etot*10     !Horizontal energy spectrum at various heights 
     integer, parameter :: out_hg     = 0                 !Output geostrophic horizontal spectrum as well?
     integer, parameter :: out_vspec  = 0, freq_vspec =  freq_hspec
     integer, parameter :: out_vbuoy  = 0, freq_vbuoy =  freq_hspec
