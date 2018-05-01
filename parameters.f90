@@ -244,8 +244,8 @@ MODULE parameters
     integer, parameter :: where_bz=unstag
     integer, parameter :: num_spec = 10
 
-    integer, parameter :: height(num_spec)=[1, n3/8,  n3/4,  3*n3/8, n3/2, 5*n3/8, 3*n3/4, 7*n3/8,  n3-2, n3-1 , n3]
-    !                                       0   1      2       3      4      5       6        7      8      9    10 
+    integer, parameter :: height(num_spec)=[1, n3/8,  n3/4,  3*n3/8, n3/2, 5*n3/8, 3*n3/4, 7*n3/8,  n3-1 , n3]
+    !                                       0   1      2       3      4      5       6        7      8      9    
 
     !Slices
     integer, parameter :: max_slices = 99     
