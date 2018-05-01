@@ -920,7 +920,173 @@ end subroutine hspec
   !!!!! SLICES !!!!!
   !****************!
 
-  subroutine slices(uk,vk,wk,bk,wak,u_rot,ur,vr,wr,br,war,u_rotr,id_field)
+  subroutine slices(BRk,BIk,BRr,BIr,id_field)
+
+    double complex, dimension(iktx,ikty,n3h0) :: BRk,BIk
+    double precision,    dimension(n1d,n2d,n3h0) :: BRr, BIr
+
+    double complex, dimension(iktx,ikty,n3h0) :: Rmem, Imem
+    
+    double precision,    dimension(n1d,n2d,n3h0+2*hlvl(id_field)) :: field
+
+    real, dimension(n1,n3h0) :: XZ_slice_p        !Scratch array for xz slices (divided amongst processors)                                                                                                                               
+    real, dimension(n1,n3)   :: XZ_slice          !Scratch array for xz slices                                                                                                                                                            
+
+    integer :: unit
+    integer :: id_field
+    character(len = 32) :: fname                !future file name                                                                                                                                                                         
+
+    integer :: nrec
+    integer :: processor
+
+
+    if(id_field==1)   then
+       Rmem = BRk
+       Imem = BIk
+       call fft_c2r(BRk,BRr,n3h0)
+       call fft_c2r(BIk,BIr,n3h0)
+       field = BRr!0.5*(BRr*BRr + BIr*BIr)
+    end if
+
+
+    !Print bottom slice
+    if( bot_height > mype*n3h0 .AND. bot_height <= (mype+1)*n3h0 ) then
+       
+       !          write (fname, "(A9,I1,I1,A4)") "slicehbot",id_field,count_slice(id_field),".dat"
+       write (fname, "(A9,I1,I2,A4)") "slicehbot",id_field,count_slice(id_field),".dat"
+       open (unit=count_slice(id_field),file=fname,action="write",status="replace")
+       
+       iz=bot_height - mype*n3h0 + hlvl(id_field)
+       
+       
+       do iy=1,n2
+          write(unit=count_slice(id_field),fmt=333) (real(field(ix,iy,iz)),ix=1,n1)
+          write(unit=count_slice(id_field),fmt=*) '           '
+       enddo
+333    format(1x,E12.5,1x)
+       
+       close (unit=count_slice(id_field))
+       
+    end if
+    
+    
+    !Print mid-height slice
+    if( mid_height > mype*n3h0 .AND. mid_height <= (mype+1)*n3h0 ) then
+       
+       !          write (fname, "(A9,I1,I1,A4)") "slicehmid",id_field,count_slice(id_field),".dat"
+       write (fname, "(A9,I1,I2,A4)") "slicehmid",id_field,count_slice(id_field),".dat"
+       open (unit=count_slice(id_field),file=fname,action="write",status="replace")
+       
+       iz=mid_height - mype*n3h0 + hlvl(id_field)
+       
+       
+       do iy=1,n2
+          write(unit=count_slice(id_field),fmt=333) (real(field(ix,iy,iz)),ix=1,n1)
+          write(unit=count_slice(id_field),fmt=*) '           '
+       enddo
+       
+       
+       close (unit=count_slice(id_field))
+       
+    end if
+    
+    !Print top slice
+    if( top_height > mype*n3h0 .AND. top_height <= (mype+1)*n3h0 ) then
+       
+       !          write (fname, "(A9,I1,I1,A4)") "slicehtop",id_field,count_slice(id_field),".dat"
+       write (fname, "(A9,I1,I2,A4)") "slicehtop",id_field,count_slice(id_field),".dat"
+       open (unit=count_slice(id_field),file=fname,action="write",status="replace")
+       
+       iz=top_height - mype*n3h0 + hlvl(id_field)
+       
+       
+       do iy=1,n2
+          write(unit=count_slice(id_field),fmt=333) (real(field(ix,iy,iz)),ix=1,n1)
+          write(unit=count_slice(id_field),fmt=*) '           '
+       enddo
+       
+       
+       close (unit=count_slice(id_field))
+       
+    end if
+
+
+
+
+    !Print vertical slice
+
+       if(mype==0) then
+!          write (fname, "(A6,I1,I1,A4)") "slicev",id_field,count_slice(id_field),".dat"
+          write (fname, "(A6,I1,I2,A4)") "slicev",id_field,count_slice(id_field),".dat"
+          open (unit=count_slice(id_field),file=fname,action="write",status="replace")
+
+          !Copy ur slice on XY_slice (NOTICE IT'S NOT ON XY_slice_p)                                                                                                                                                                      
+          do ix=1,n1
+             do izh0=1,n3h0
+                iz  =izh0+hlvl(id_field)
+                XZ_slice(ix,izh0) = field(ix,yval,iz)
+             end do
+          end do
+
+          !Receive from other processors                                                                                                                                                                                                  
+          do nrec=1,npe-1
+             call mpi_recv(XZ_slice_p,n1*n3h0,MPI_REAL,MPI_ANY_SOURCE,tag_slice_xz(id_field),MPI_COMM_WORLD,status,ierror)
+             processor=status(MPI_SOURCE)
+             !Copy onto scratch array                                                                                                                                                                                                     
+             do ix=1,n1
+                do iz=1,n3h0
+                   XZ_slice(ix,iz+n3h0*processor) = XZ_slice_p(ix,iz)
+                end do
+             end do
+          end do
+
+          !Now print the complete slice onto file                                                                                                                                                                                         
+!          do ix=1,n1
+!            do iz=1,n3
+!               write(unit=count_slice(id_field),fmt=*) real(xa(ix)),real(za(iz)),XZ_slice(ix,iz)
+!             end do
+!          end do
+          do iz=1,n3
+             write(unit=count_slice(id_field),fmt=333) (XZ_slice(ix,iz),ix=1,n1)
+             write(unit=count_slice(id_field),fmt=*) '           '
+          enddo
+          close (unit=count_slice(id_field))
+
+          
+       end if
+
+       !All other processors (mype>0) send their XZ_field_p to mype 0                                                                                                                                                                     
+       if(mype/=0) then
+          do ix=1,n1
+             do izh0=1,n3h0
+                iz  =izh0 + hlvl(id_field)
+                XZ_slice_p(ix,izh0) = field(ix,yval,iz)
+             end do
+          end do
+          
+          !Now send these chunks to mype 0                                                                                                                                                                                                
+          call mpi_send(XZ_slice_p,n1*n3h0,MPI_REAL,0,tag_slice_xz(id_field),MPI_COMM_WORLD,ierror)
+          
+       end if
+
+
+
+
+
+          if(id_field==1)    then 
+
+             BRk=Rmem
+             BIk=Imem
+
+          end if
+
+          count_slice(id_field)=count_slice(id_field)+1
+
+
+     end subroutine slices
+
+
+  subroutine slices5(uk,vk,wk,bk,wak,u_rot,ur,vr,wr,br,war,u_rotr,id_field)
 
     double complex, dimension(iktx,ikty,n3h2) :: uk,vk,wk,bk
     double complex, dimension(iktx,ikty,n3h1) :: zzk,wak,u_rot     !COULD BE OPTIMIZED 
@@ -1196,7 +1362,7 @@ end subroutine hspec
           count_slice(id_field)=count_slice(id_field)+1
 
 
-     end subroutine slices
+     end subroutine slices5
 
 
 
