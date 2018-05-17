@@ -537,6 +537,13 @@ CONTAINS
 end subroutine hspec
 
 
+
+
+
+
+
+
+
      subroutine hspec_waves(BRk,BIk,level)
        
        double complex, dimension(iktx,ikty,n3h0) :: BRk,BIk
@@ -621,6 +628,49 @@ end subroutine hspec
 
        end if
      end subroutine hspec_waves
+
+
+
+
+     subroutine wke(BRk,BIk)
+       
+       !Compute the volume integrated waves kinetic energy: WKE = int( 0.5* |LA|^2 dV )
+       !In the real space, WKE = int( 0.5* |B|^2 dV ) = int( 0.5*( Br^2 + Bi^2 ) dV ) which is analoguous to KE ~ int ( 0.5* (u^2 + v^2) dV)
+       !The integral in real space can be converted to a sum on horizontal wavenumbers at each vertical level:
+       ! 
+       ! KE(z) = sum over all k's such that L=1 of |uk|^2 minus half the kh=0 mode.
+
+
+       double complex, dimension(iktx,ikty,n3h0) :: BRk,BIk
+       real :: k_p, ktot
+
+       k_p = 0.
+
+       do izh0=1,n3h0
+          do iky=1,ikty
+             do ikx=1,iktx
+
+                if(L(ikx,iky)==1) then
+                   k_p = k_p + real( BRk(ikx,iky,izh0)*CONJG( BRk(ikx,iky,izh0) ) + BIk(ikx,iky,izh0)*CONJG( BIk(ikx,iky,izh0) ) )
+                end if
+
+             enddo
+          enddo
+
+          !With dealiasing, sum_k 1/2 |u(kx,ky,z)|^2 = sum_k L |u|^2 - 0.5 |u(0,0,z)|^2     
+          k_p = k_p - 0.5*real( BRk(1,1,izh0)*CONJG( BRk(1,1,izh0) ) + BIk(1,1,izh0)*CONJG( BIk(1,1,izh0) ) )
+
+       end do
+
+       k_p = k_p/n3
+
+       !Sum results from each processor                                                                                                                                                 
+       call mpi_reduce(k_p,ktot,1,MPI_REAL,MPI_SUM,0,MPI_COMM_WORLD,ierror)
+
+       if(mype==0) write(unit=unit_wke ,fmt=*) time,ktot
+
+     end subroutine wke
+
 
 
 

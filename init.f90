@@ -867,7 +867,16 @@ do ix=1,n1d
          end if
 
       if(ix<=n1) then
-         if(z1>=0) f1s(ix,iy,iz1)=(sin(x) + sin(y))*(cosh(z1)/cosh(twopi))
+         if(z1>=0) then
+            
+            if(barotropic == 1) then
+               f1s(ix,iy,iz1)=(sin(x) + sin(y))
+            else
+               f1s(ix,iy,iz1)=(sin(x) + sin(y))*(cosh(z1)/cosh(twopi))
+            end if
+            
+         end if
+
          if(z2>=0) f2s(ix,iy,iz2)=c_one*(cosh(n_one*z2)/cosh(n_one*twopi)) + c_two*(cosh(n_two*z2)/cosh(n_two*twopi))
          if(z3>=0) f3s(ix,iy,iz3)=n_one*n_one*c_one*(cosh(n_one*z3)/cosh(n_one*twopi)) + n_two*n_two*c_two*(cosh(n_two*z3)/cosh(n_two*twopi))
 

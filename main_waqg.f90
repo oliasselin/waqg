@@ -146,7 +146,7 @@ PROGRAM main
     if(out_hspecw ==1) call hspec_waves(BRk,BIk,iz)
  end do
 
-
+ if(out_wke ==1) call wke(BRk,BIk)
 
  !************************************************************************!
  !*** 1st time timestep using the projection method with Forward Euler ***!
@@ -384,7 +384,7 @@ if(out_etot ==1 .and. mod(iter,freq_etot )==0) call diag_zentrum(uk,vk,wk,bk,wak
     if(out_hspecw ==1  .and. mod(iter,freq_hspecw)==0 ) call hspec_waves(BRk,BIk,iz)
  end do
 
-
+ if(out_wke ==1 .and. mod(iter,freq_wke )==0) call wke(BRk,BIk)
 
  if(time>maxtime) EXIT
 end do !End loop
