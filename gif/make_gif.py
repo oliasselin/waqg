@@ -4,7 +4,7 @@ import sys
 
 
 
-run = 'sim1-02-05-2018_U0.125'
+run = 'sim1-17-05-2018'
 sli = 'htop'   #htop,hmid,hbot,v
 field = '1'
 
@@ -14,6 +14,10 @@ vres = 512
 timestep=0.1
 
 L_scale = 80000/(3.14159*2.)
+if run == 'sim1-17-05-2018':
+    U_scale = 0.0625
+if run == 'sim1-17-05-2018-barotropic':
+    U_scale = 0.0625
 if run == 'sim1-02-05-2018_U0.0625':
     U_scale = 0.0625
 if run == 'sim1-02-05-2018_U0.125':
@@ -30,7 +34,7 @@ tau_e = L_scale/(U_scale)/3600 #eddy turnover time in hours
 
 delay = 10 #In cs
 
-fixed_cbrange='min'     #0: free, 1: set min only, 2: set max only, 3: set both max and min 
+fixed_cbrange='minmax'     #0: free, 1: set min only, 2: set max only, 3: set both max and min 
 cbmin = 0
 cbmax = 0.1
 
@@ -87,6 +91,7 @@ for k in range(0,nmax):
 
         p = subprocess.Popen(gnuplot_command, shell = True)
         os.waitpid(p.pid, 0)
+
 
 make_gif = 'convert -delay '+str(delay)+' -loop 0 '+png_dir+'*.png '+run+'_'+sli+field+'.gif'
 
