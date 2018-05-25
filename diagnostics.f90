@@ -1081,6 +1081,14 @@ end subroutine hspec
        call fft_c2r(BRk,BRr,n3h0)
        call fft_c2r(BIk,BIr,n3h0)
        field = 0.5*(BRr*BRr + BIr*BIr)
+    elseif(id_field==2) then
+       Rmem = BRk
+       call fft_c2r(BRk,BRr,n3h0)
+       field = BRr
+    elseif(id_field==3) then
+       Imem = BIk
+       call fft_c2r(BIk,BIr,n3h0)
+       field = BIr
     end if
 
 
@@ -1209,10 +1217,12 @@ end subroutine hspec
 
 
           if(id_field==1)    then 
-
              BRk=Rmem
              BIk=Imem
-
+          elseif(id_field==2)    then 
+             BRk=Rmem
+          elseif(id_field==3)    then 
+             BIk=Imem
           end if
 
           count_slice(id_field)=count_slice(id_field)+1

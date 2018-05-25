@@ -2,8 +2,8 @@ MODULE parameters
 
    IMPLICIT NONE
 
-    integer, parameter :: n1=128, n2=128, n3=512
-    integer, parameter :: npe=64
+    integer, parameter :: n1=32, n2=32, n3=512
+    integer, parameter :: npe=32
 
     integer, parameter :: n1d=n1+2, n2d=n2, n3d=n3
     integer, parameter :: n3h0=n3/npe, n3h1=n3/npe+2, n3h2=n3/npe+4
@@ -39,6 +39,10 @@ MODULE parameters
 
     !Tags to specify run!
     !-------------------!
+
+    !Wavenumbers representing the true solution
+    integer, parameter :: n_a = 1
+    integer, parameter :: k_a = 1
     
     integer, parameter :: linear=0                      !1: set the nonlinear terms (advection) to 0. 
     integer, parameter :: inviscid=0                    !1: No dissipation, otherwise: dissipation
@@ -160,7 +164,7 @@ MODULE parameters
     double precision, parameter :: H_scale=dom_z/L3          !Actual H in m ( z_real = H z' where z' in [0:L3]  is the nondim z.)
     double precision, parameter :: L_scale=dom_x/L1          !Actual L in m ( x_real = L x' where x' in [0:2pi] is the nondim x.)
     double precision, parameter :: cor=0.0001!0.00000000001!0.0005 !0.0001                           !Actual f = 0.0001 s^-1 (real value of planet Earth)
-    double precision, parameter :: U_scale=0.0625                        !Actual U in m/s (u_real = U u' where u' is the nondim velocity ur implemented in the code)
+    double precision, parameter :: U_scale=1.!0.0625                        !Actual U in m/s (u_real = U u' where u' is the nondim velocity ur implemented in the code)
     double precision, parameter :: Uw_scale=1.                       !Characteristic magnitude of wave velocity (wave counterpart to U_scale for flow)
     double precision, parameter :: Ar2 = (H_scale/L_scale)**2                                   !(1./64.)**2!(1./10.)**2 !0.01     !Aspect ratio squared = (H/L)^2     
     double precision, parameter :: Ro  = U_scale/(cor*L_scale)                                  !Rossby number  U/fL
@@ -168,6 +172,9 @@ MODULE parameters
     double precision, parameter :: W2F = (Uw_scale/U_scale)**2                                  ! wave to flow velocity magnitude squared
     double precision, parameter :: Bu  = Fr*Fr/(Ro*Ro)                                          ! (Fr/Ro)^2 = Burger number 
 
+
+    !For the test only:
+    double precision, parameter :: omega_sol = 2*k_a*k_a/(n_a*n_a*Bu*Ro)
 
 
     !Timestepping!
@@ -253,14 +260,14 @@ MODULE parameters
 
     !Slices
     integer, parameter :: max_slices = 999     
-    integer, parameter :: nfields  = 1         !Don't forget to change tag_slice_xz(nfields) accordingly in "mpi.f90"
+    integer, parameter :: nfields  = 3         !Don't forget to change tag_slice_xz(nfields) accordingly in "mpi.f90"
     integer, parameter :: nfields2 = 5         !Don't forget to change tag_slice_xz(nfields) accordingly in "mpi.f90"
     integer :: count_slice(nfields) = 0       !number of slices
     integer :: count_slice2(nfields2) = 0       !number of slices
     integer :: zval=n3/2                      !z-level at which we wish to plo a slice                                                                                                                               
     integer :: yval=n2/2
     integer :: xval=n1/2
-    integer :: hlvl(nfields)=[0]                                   
+    integer :: hlvl(nfields)=[0,0,0]                                   
     integer :: hlvl2(nfields2)=[1,1,1,1,0]                                   
 
     integer, parameter :: bot_height = 1

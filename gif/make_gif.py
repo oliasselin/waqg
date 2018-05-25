@@ -4,16 +4,17 @@ import sys
 
 
 
-run = 'sim1-17-05-2018'
+run = 'noflow2'
 sli = 'htop'   #htop,hmid,hbot,v
-field = '1'
+field = '2'
 
-hres = 128
+hres = 32#128
 vres = 512
 
 timestep=0.1
 
 L_scale = 80000/(3.14159*2.)
+
 if run == 'sim1-17-05-2018':
     U_scale = 0.0625
 if run == 'sim1-17-05-2018-barotropic':
@@ -28,13 +29,24 @@ if run == 'sim1-02-05-2018_U0.5':
     U_scale = 0.5
 if run == 'sim1-02-05-2018':
     U_scale = 1.
+if run == 'sim3-23-05-2018-noadv':
+    U_scale = 0.0625
+if run == 'sim3-23-05-2018-noadv2':
+    U_scale = 0.0625
+if run == 'sim3-23-05-2018-noflow':
+    U_scale = 1.
+if run == 'sim3-23-05-2018-noflow2':
+    U_scale = 1.
+if run == 'noflow2':
+    U_scale = 1.
+
 
 
 tau_e = L_scale/(U_scale)/3600 #eddy turnover time in hours
 
 delay = 10 #In cs
 
-fixed_cbrange='minmax'     #0: free, 1: set min only, 2: set max only, 3: set both max and min 
+fixed_cbrange='min'     #0: free, 1: set min only, 2: set max only, 3: set both max and min 
 cbmin = 0
 cbmax = 0.1
 
@@ -80,6 +92,8 @@ for k in range(0,nmax):
         else:
             cbrange='[*:*]'
 
+
+        xrange = '[0:'+str(hres-1)+']'
         if sli =='v':
             yrange = '[0:'+str(vres-1)+']'
         else:
@@ -87,7 +101,8 @@ for k in range(0,nmax):
 
 
 
-        gnuplot_command = "gnuplot -e \"set output '"+output_file+"'; set yrange "+yrange+"; set cbrange "+cbrange+"; set title '"+tt+"'; set xlabel '"+xlabel+"'; filename = '"+path_file_xy+"'\" slice.gnu"
+
+        gnuplot_command = "gnuplot -e \"set output '"+output_file+"'; set xrange "+xrange+"; set yrange "+yrange+"; set cbrange "+cbrange+"; set title '"+tt+"'; set xlabel '"+xlabel+"'; filename = '"+path_file_xy+"'\" slice.gnu"
 
         p = subprocess.Popen(gnuplot_command, shell = True)
         os.waitpid(p.pid, 0)
