@@ -813,9 +813,6 @@ end do
       hlev1=(nz1-n3h0)/2
       hlev2=(nz2-n3h0)/2
       hlev3=(nz3-n3h0)/2
-
-      write(*,*) "n_one,n_two,c_one,c_two="
-      write(*,*) n_one,n_two,c_one,c_two
       
 do ix=1,n1d
    x=xa(ix)
@@ -866,15 +863,31 @@ do ix=1,n1d
                 z3=-1.   ! Don't enter the loop   
          end if
 
-      if(ix<=n1) then   !f1: psi = 0.  f2: ARr = cos(kx)cos(z/2) f3: AIr = sin(kx)cos(z/2)
-         if(z1>=0) f1s(ix,iy,iz1)=0.
-         if(z2>=0) f2s(ix,iy,iz2)=cos(k_a*x)*cos(n_a*z2/2)
-         if(z3>=0) f3s(ix,iy,iz3)=sin(k_a*x)*cos(n_a*z3/2)
-      else
-         if(z1>=0) f1s(ix,iy,iz1)=0.
-         if(z2>=0) f2s(ix,iy,iz2)=0.
-         if(z3>=0) f3s(ix,iy,iz3)=0.
-      end if
+         if(ix<=n1) then
+            if(z1>=0) then
+               
+               if(barotropic == 1) then
+                  f1s(ix,iy,iz1)=(sin(x) + sin(y))
+               else
+                  f1s(ix,iy,iz1)=(sin(x) + sin(y))*(cosh(z1)/cosh(twopi))
+               end if
+            
+            end if
+
+            if(z2>=0) f2s(ix,iy,iz2)=c_one*(cosh(n_one*z2)/cosh(n_one*twopi)) + c_two*(cosh(n_two*z2)/cosh(n_two*twopi))
+            if(z3>=0) f3s(ix,iy,iz3)=n_one*n_one*c_one*(cosh(n_one*z3)/cosh(n_one*twopi)) + n_two*n_two*c_two*(cosh(n_two*z3)/cosh(n_two*twopi))
+            
+            if(z3>=0 .and. passive_scalar == 1) then
+               
+               f3s(ix,iy,iz3)=f3s(ix,iy,iz3)*(sin(x))
+               
+            end if
+         else
+            if(z1>=0) f1s(ix,iy,iz1)=0.
+            if(z2>=0) f2s(ix,iy,iz2)=0.
+            if(z3>=0) f3s(ix,iy,iz3)=0.
+         end if
+
 
       !In this case, the X-marked arrays (on the top and bottom mype will not be initialized at all. Shouldn't cause any problem since we never invoke them.
 

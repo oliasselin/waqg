@@ -96,12 +96,6 @@ PROGRAM main
 
   equivalence(u_rotr,u_rot)
 
-  double precision ::   error_r,L1_local_r,L2_local_r,Li_local_r,L1_global_r,L2_global_r,Li_global_r
-  double precision ::   error_i,L1_local_i,L2_local_i,Li_local_i,L1_global_i,L2_global_i,Li_global_i
-
-  character(len = 32) :: fnamer,fnamei                !future file names                
-
-
   !********************** Initializing... *******************************!
 
 
@@ -114,28 +108,19 @@ PROGRAM main
 
 
   !Initialize fields
-  call generate_fields_stag(psir,n3h1,ARr,n3h0,AIr,n3h0) 
-  BRr = -n_a*n_a*ARr/4.
-  BIr = -n_a*n_a*AIr/4.
+  call generate_fields_stag(psir,n3h1,ARr,n3h0,BRr,n3h0) 
 
-
+  call fft_r2c(psir,psik,n3h1)
   call fft_r2c(ARr,ARk,n3h0)
-  call fft_r2c(AIr,AIk,n3h0)
   call fft_r2c(BRr,BRk,n3h0)
-  call fft_r2c(BIr,BIk,n3h0)
 
+  AIk = (0.D0,0.D0)
+  BIk = (0.D0,0.D0)
    qk = (0.D0,0.D0)
- psik = (0.D0,0.D0)
 
   call compute_velo(uk,vk,wk,bk,psik) 
   call generate_halo(uk,vk,wk,bk)
   call generate_halo_q(qk) 
-
-  write (fnamer, "(A3,I1,A1,I1)") "br_",n_a,"_",n_a
-  write (fnamei, "(A3,I1,A1,I1)") "bi_",k_a,"_",n_a
-  
-  open (unit=154673,file=fnamer,action="write",status="replace")
-  open (unit=154674,file=fnamei,action="write",status="replace")
 
 
  !Initial diagnostics!
@@ -178,6 +163,16 @@ PROGRAM main
     dqk=(0.D0,0.D0)
  end if
 
+ if(linear==1) then
+    nqk=(0.D0,0.D0)
+   nBRk=(0.D0,0.D0)
+   nBIk=(0.D0,0.D0)
+ end if
+
+ if(no_dispersion==1) then
+    ARk=(0.D0,0.D0)
+    AIk=(0.D0,0.D0)
+ end if
 
   qok = qk
  BRok = BRk
@@ -276,6 +271,16 @@ end if
         dqk=(0.D0,0.D0)
      end if
 
+     if(linear==1) then
+        nqk=(0.D0,0.D0)
+        nBRk=(0.D0,0.D0)
+        nBIk=(0.D0,0.D0)
+     end if
+     
+     if(no_dispersion==1) then
+        ARk=(0.D0,0.D0)
+        AIk=(0.D0,0.D0)
+     end if
 
      if(passive_scalar==1) then
         ARk = (0.D0,0.D0)
@@ -373,71 +378,6 @@ end if
  !Compute the corresponding u,v,w and t 
  call compute_velo(uk,vk,wk,bk,psik)
  call generate_halo(uk,vk,wk,bk) 
-
-
-
-
-
-
- !*** Compute the error on B=LA ***!
- !---------------------------------!
-
- !Print slices of the solution!
- call fft_c2r(BRk,BRr,n3h0)
- call fft_c2r(BIk,BIr,n3h0)
- 
- !Compute the error on psi!
- error_r   =0.
- L1_local_r=0.
- L2_local_r=0.
- Li_local_r=0.
- L1_global_r=0.
- L2_global_r=0.
- Li_global_r=0.
- 
- error_i   =0.
- L1_local_i=0.
- L2_local_i=0.
- Li_local_i=0.
- L1_global_i=0.
- L2_global_i=0.
- Li_global_i=0.
- 
- do izh0=1,n3h0
-    izh1=izh0+1
-    do ix=1,n1
-       do iy=1,n2
-          
-          error_r    = ABS(-0.25*n_a*n_a*cos(k_a*xa(ix)-omega_sol*time)*cos(n_a*zash0(izh0)/2) - BRr(ix,iy,izh0) )
-          L1_local_r = L1_local_r + error_r
-          L2_local_r = L2_local_r + error_r**2
-          if(error_r > Li_local_r) Li_local_r = error_r
-          
-          error_i    = ABS(-0.25*n_a*n_a*sin(k_a*xa(ix)-omega_sol*time)*cos(n_a*zash0(izh0)/2) - BIr(ix,iy,izh0) )
-          L1_local_i = L1_local_i + error_i
-          L2_local_i = L2_local_i + error_i**2
-          if(error_i > Li_local_i) Li_local_i = error_i
-          
-       end do
-    end do
- end do
- 
- call mpi_reduce(L1_local_r,L1_global_r, 1,MPI_DOUBLE,MPI_SUM,0,MPI_COMM_WORLD,ierror)
- call mpi_reduce(L2_local_r,L2_global_r, 1,MPI_DOUBLE,MPI_SUM,0,MPI_COMM_WORLD,ierror)
- call mpi_reduce(Li_local_r,Li_global_r, 1,MPI_DOUBLE,MPI_MAX,0,MPI_COMM_WORLD,ierror)
- 
- call mpi_reduce(L1_local_i,L1_global_i, 1,MPI_DOUBLE,MPI_SUM,0,MPI_COMM_WORLD,ierror)
- call mpi_reduce(L2_local_i,L2_global_i, 1,MPI_DOUBLE,MPI_SUM,0,MPI_COMM_WORLD,ierror)
- call mpi_reduce(Li_local_i,Li_global_i, 1,MPI_DOUBLE,MPI_MAX,0,MPI_COMM_WORLD,ierror)
- 
- if (mype==0) then
-    write(154673,"(E12.5,E12.5,E12.5,E12.5)") time,L1_global_r/(n1*n2*n3),sqrt(L2_global_r/(n1*n2*n3)),Li_global_r
-    write(154674,"(E12.5,E12.5,E12.5,E12.5)") time,L1_global_i/(n1*n2*n3),sqrt(L2_global_i/(n1*n2*n3)),Li_global_i
- end if
- 
- call fft_r2c(BRr,BRk,n3h0)
- call fft_r2c(BIr,BIk,n3h0)    
-
 
 
 

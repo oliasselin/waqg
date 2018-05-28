@@ -3,8 +3,8 @@
 number_of_nodes=1
 number_of_tasks=64
 
-sourdir=/scratch/05518/oasselin/sim1-17-05-2018-barotropic/source/
-datadir=/scratch/05518/oasselin/sim1-17-05-2018-barotropic/output/
+sourdir=/scratch/05518/oasselin/sim5-28-05-2018-linear/source/
+datadir=/scratch/05518/oasselin/sim5-28-05-2018-linear/output/
 
 mkdir -p $sourdir
 mkdir -p $datadir
@@ -37,9 +37,9 @@ cat > EXEC_STEP << EXEC
 #
 #----------------------------------------------------
 
-#SBATCH -J sim1-17-05-2018-U0.0625-bt    # Job name
-#SBATCH -o $HOME/monitor/sim1-17-05-2018-U0.0625-bt.o%j     # Name of stdout output file
-#SBATCH -e $HOME/monitor/sim1-17-05-2018-U0.0625-bt.e%j     # Name of stderr error file
+#SBATCH -J sim5-28-05-2018-linear    # Job name
+#SBATCH -o $HOME/monitor/sim5-28-05-2018-linear.o%j     # Name of stdout output file
+#SBATCH -e $HOME/monitor/sim5-28-05-2018-linear.e%j     # Name of stderr error file
 ##SBATCH -p development                # Queue (partition) name
 #SBATCH -p normal                     # Queue (partition) name
 #SBATCH -N $number_of_nodes           # Total # of nodes 
