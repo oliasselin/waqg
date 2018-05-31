@@ -145,6 +145,9 @@ PROGRAM main
 
  if(out_wke ==1) call wke(BRk,BIk)
 
+ if(out_laz ==1) call plot_laz(BRk,BIk)    
+
+
  !************************************************************************!
  !*** 1st time timestep using the projection method with Forward Euler ***!
  !************************************************************************!
@@ -408,6 +411,8 @@ if(out_etot ==1 .and. mod(iter,freq_etot )==0) call diag_zentrum(uk,vk,wk,bk,wak
  end do
 
  if(out_wke ==1 .and. mod(iter,freq_wke )==0) call wke(BRk,BIk)
+
+ if(out_laz ==1 .and. mod(iter,freq_laz )==0) call plot_laz(BRk,BIk)    
 
  if(time>maxtime) EXIT
 end do !End loop

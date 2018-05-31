@@ -41,7 +41,7 @@ MODULE parameters
     !-------------------!
 
     integer, parameter :: no_dispersion=0
-    integer, parameter :: linear=1                      !1: set the nonlinear terms (advection) to 0. 
+    integer, parameter :: linear=0                      !1: set the nonlinear terms (advection) to 0. 
     integer, parameter :: inviscid=0                    !1: No dissipation, otherwise: dissipation
     integer, parameter :: init_wageo=0                  !1: Initialize wk with Ro*wak
 
@@ -208,7 +208,8 @@ MODULE parameters
     !------!
 
     integer, parameter :: out_etot   = 0, freq_etot   = INT(0.1/delt)!50!346!n3/64!n3!64!n3!50*n3/64      !Total energy                                                    
-    integer, parameter :: out_wke    = 1, freq_wke    = INT(0.1/delt)!50!346!n3/64!n3!64!n3!50*n3/64      !Total energy                                                    
+    integer, parameter :: out_wke    = 1, freq_wke    = INT(0.1/delt)!50!346!n3/64!n3!64!n3!50*n3/64      !Wave kinetic energy                                                    
+    integer, parameter :: out_laz    = 1, freq_laz    = INT(0.1/delt)!50!346!n3/64!n3!64!n3!50*n3/64      !Output vertical profiles of horizontally-averaged LA                 
     integer, parameter :: out_hspec  = 0, freq_hspec  = 5*freq_etot!n3/64!n3!freq_etot*10     !Horizontal energy spectrum at various heights 
     integer, parameter :: out_hspecw = 1, freq_hspecw = 1*freq_etot!n3/64!n3!freq_etot*10     !Horizontal energy spectrum at various heights 
     integer, parameter :: out_hg     = 0                 !Output geostrophic horizontal spectrum as well?

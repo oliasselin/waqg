@@ -878,8 +878,100 @@ end subroutine hspec
    end if
 
 
+
  END SUBROUTINE plot_ez
 
+
+
+
+
+ SUBROUTINE plot_laz(BRk,BIk)    !Outputs vertical profiles of horizontally-averaged LA
+
+   double complex,   dimension(iktx,ikty,n3h0), intent(in) :: BRk, BIk
+
+   real, dimension(n3h0) :: ks,ku            !Real and Imaginary parts of LA (name are a vestige from subroutine  plot_ez)
+   real, dimension(n3h0) :: ks_r,ku_r        !Copies of ku and ks to keep ks and ku valid for energy subroutine.
+
+   real,dimension(n3)   :: kuz,ksz             !LA(z) for entire domain
+   
+   integer :: processor,izp,nrec
+   
+   ksz=0.
+   kuz=0.
+
+   !First copy the real and imag parts of LA onto dummy real fields ks and ku for all processors
+   do izh0=1,n3h0
+      ks(izh0) = real(BRk(1,1,izh0))
+      ku(izh0) = real(BIk(1,1,izh0))
+
+      !Test if done right!
+      if(mype==(npe-1)) then
+         write(*,*) "Full BRk = ",BRk(1,1,izh0)
+         write(*,*) "Real BRk = ",real(BRk(1,1,izh0))
+         write(*,*) "Imag BRk = ",imag(BRk(1,1,izh0))
+         write(*,*) "           "
+      end if
+
+   end do
+
+
+    !Send err_p from other processors to mype = 0                                                                                                                    
+    if(mype>0) call mpi_send(ks,n3h0,MPI_REAL,0,tag_kzs,MPI_COMM_WORLD,ierror)
+    if(mype>0) call mpi_send(ku,n3h0,MPI_REAL,0,tag_kzu,MPI_COMM_WORLD,ierror)
+
+    if(mype==0) then
+
+       !Copy mype==0 part onto err                  
+       do iz=1,n3h0
+             ksz(iz) = ks(iz)
+             kuz(iz) = ku(iz)
+       end do
+
+
+       !Receive other parts from other processors    
+       do nrec=1,npe-1
+
+          call mpi_recv(ks_r,n3h0,MPI_REAL,MPI_ANY_SOURCE,tag_kzs,MPI_COMM_WORLD,status,ierror)
+
+          !Copy received share onto err                                                                                                                                       
+          processor=status(MPI_SOURCE)
+
+          !Add the awaiting half level
+          do iz=1,n3h0
+             izp=processor*n3h0+iz
+
+             ksz(izp) = ksz(izp) + ks_r(iz)
+
+          end do
+
+          !Kinetic unstag energy part
+          call mpi_recv(ku_r,n3h0,MPI_REAL,MPI_ANY_SOURCE,tag_kzu,MPI_COMM_WORLD,status,ierror)
+
+          !Copy received share onto err                                                                                                                                        
+          processor=status(MPI_SOURCE)
+
+          !Add the awaiting half level
+          do iz=1,n3h0
+             izp=processor*n3h0+iz
+
+             kuz(izp) = kuz(izp) + ku_r(iz)
+
+          end do
+
+         
+       end do
+
+       !PLOT!
+     do iz=1,n3
+        write(unit_laz,fmt=*) za(iz),ksz(iz),kuz(iz)      !z, \bar{Re(LA)}, \bar{Im(LA)}
+     enddo
+     write(unit_laz,*) '           '
+     call flush(unit_laz)
+
+   end if
+
+
+ END SUBROUTINE plot_laz
 
 
 

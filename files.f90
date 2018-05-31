@@ -20,6 +20,7 @@ MODULE files
 !  integer, parameter :: unit_hmid   =62
 !  integer, parameter :: unit_htop   =63
   integer, parameter :: unit_ez     =64
+  integer, parameter :: unit_laz     =65
 
   integer, parameter :: unit_rco    =67
   integer, parameter :: unit_bs     =68
@@ -124,6 +125,8 @@ MODULE files
       if(mype==0) open (unit=unit_ez       ,file="ez.dat"       ,action="write",status="replace")
       if(mype==0) open (unit=unit_energyr  ,file="erot.dat"   ,action="write",status="replace")
       if(mype==0) open (unit=unit_wke      ,file="wke.dat"   ,action="write",status="replace")
+
+      if(mype==0) open (unit=unit_laz       ,file="laz.dat"       ,action="write",status="replace")
 
 !      if(mype==0) open (unit=unit_hbot     ,file="hbot.dat"     ,action="write",status="replace")
 !      if(mype==0) open (unit=unit_hmid     ,file="hmid.dat"     ,action="write",status="replace")

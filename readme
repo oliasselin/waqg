@@ -1,0 +1,3 @@
+This is a temporary branch to test the equation (5.10) in YBJ corresponding to the weak-flow (strong dispersive) limit.
+
+A subroutine to compute the L\bar{A} as a function of depth is added as a new (temp) diagnostic.
