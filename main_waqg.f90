@@ -242,7 +242,7 @@ if(passive_scalar==0) then
  call compute_sigma(sigma,nBRk, nBIk, rBRk, rBIk)              !Compute the sum of A
  call mpitranspose(BRk,iktx,ikty,n3h0,BRkt,n3,iktyp)           !Transpose BR to iky-parallelized space 
  call mpitranspose(BIk,iktx,ikty,n3h0,BIkt,n3,iktyp)           !Transpose BK to iky-parallelized space 
- call compute_A(ARk,AIK,BRkt,BIkt,sigma)                       !Compute A!
+ call compute_A(ARk,AIK,BRkt,BIkt,CRk,CIK,sigma)               !Compute A!
 
  ! ------------------------ !
 end if
@@ -372,7 +372,7 @@ if(passive_scalar==0) then
  call compute_sigma(sigma,nBRk, nBIk, rBRk, rBIk)              !Compute the sum of A                                                                                    
  call mpitranspose(BRk,iktx,ikty,n3h0,BRkt,n3,iktyp)           !Transpose BR to iky-parallelized space                                                                   
  call mpitranspose(BIk,iktx,ikty,n3h0,BIkt,n3,iktyp)           !Transpose BK to iky-parallelized space                                                                  
- call compute_A(ARk,AIK,BRkt,BIkt,sigma)                       !Compute A!                                                                                  
+ call compute_A(ARk,AIK,BRkt,BIkt,CRk,CIK,sigma)               !Compute A!                                                                                                               
 
  ! ------------------------ !       
 end if
