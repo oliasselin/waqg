@@ -143,10 +143,10 @@ PROGRAM main
  end do
  
  do iz=1,num_spec
-    if(out_hspecw ==1) call hspec_waves(BRk,BIk,iz)
+    if(out_hspecw ==1) call hspec_waves(BRk,BIk,CRk,CIk,iz)
  end do
 
- if(out_wke ==1) call wke(BRk,BIk)
+ if(out_we ==1) call wave_energy(BRk,BIk,CRk,CIk)
 
  !************************************************************************!
  !*** 1st time timestep using the projection method with Forward Euler ***!
@@ -407,10 +407,10 @@ if(out_etot ==1 .and. mod(iter,freq_etot )==0) call diag_zentrum(uk,vk,wk,bk,wak
  end do
 
  do iz=1,num_spec
-    if(out_hspecw ==1  .and. mod(iter,freq_hspecw)==0 ) call hspec_waves(BRk,BIk,iz)
+    if(out_hspecw ==1  .and. mod(iter,freq_hspecw)==0 ) call hspec_waves(BRk,BIk,CRk,CIk,iz)
  end do
 
- if(out_wke ==1 .and. mod(iter,freq_wke )==0) call wke(BRk,BIk)
+ if(out_we ==1 .and. mod(iter,freq_we )==0) call wave_energy(BRk,BIk,CRk,CIk)
 
  if(time>maxtime) EXIT
 end do !End loop

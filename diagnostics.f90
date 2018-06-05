@@ -632,27 +632,45 @@ end subroutine hspec
 
 
 
-     subroutine wke(BRk,BIk)
+     subroutine wave_energy(BRk,BIk,CRk,CIk)
        
-       !Compute the volume integrated waves kinetic energy: WKE = int( 0.5* |LA|^2 dV )
+       !Computes the volume integrated waves kinetic energy: WKE = int( 0.5* |LA|^2 dV ) = Uw_scale^2 int( 0.5* |LA|^2 dV ) in nondim form.
+       !Computes the volume integrated waves potential energy: WPE = int( 0.25* (f/N)^2 |grad(Az)|^2 dV ). I defined a field C=Az to simplifiy.
+       !Nondim: WPE = int( 0.25* Uw_scalle^2/Bu 1/N'^2(z) |grad(Az)|^2 dV )
+       
+       !Then, WPE = int( 0.25 (f/N)^2 sum_k kh^2 [ |CRk|^2 + |CIk|^2 ] dz
+
+
        !In the real space, WKE = int( 0.5* |B|^2 dV ) = int( 0.5*( Br^2 + Bi^2 ) dV ) which is analoguous to KE ~ int ( 0.5* (u^2 + v^2) dV)
        !The integral in real space can be converted to a sum on horizontal wavenumbers at each vertical level:
        ! 
        ! KE(z) = sum over all k's such that L=1 of |uk|^2 minus half the kh=0 mode.
 
+       
+
 
        double complex, dimension(iktx,ikty,n3h0) :: BRk,BIk
+       double complex, dimension(iktx,ikty,n3h0) :: CRk,CIk
+
        real :: k_p, ktot
+       real :: p_p, ptot
 
        k_p = 0.
+       p_p = 0.
 
        do izh0=1,n3h0
-          do iky=1,ikty
-             do ikx=1,iktx
+          izh2=izh0+2
+          do ikx=1,iktx
+             kx=kxa(ikx)
+             do iky=1,ikty
+                ky=kya(iky)
+                kh2=kx*kx+ky*ky
 
                 if(L(ikx,iky)==1) then
                    k_p = k_p + real( BRk(ikx,iky,izh0)*CONJG( BRk(ikx,iky,izh0) ) + BIk(ikx,iky,izh0)*CONJG( BIk(ikx,iky,izh0) ) )
+                   p_p = p_p + 0.5*(1/(Bu*r_2(izh2)))*kh2*real( CRk(ikx,iky,izh0)*CONJG( CRk(ikx,iky,izh0) ) + CIk(ikx,iky,izh0)*CONJG( CIk(ikx,iky,izh0) ) )
                 end if
+
 
              enddo
           enddo
@@ -662,15 +680,16 @@ end subroutine hspec
 
        end do
 
-       k_p = k_p/n3
+       k_p = Uw_scale*Uw_scale*k_p/n3
+       p_p = Uw_scale*Uw_scale*p_p/n3
 
        !Sum results from each processor                                                                                                                                                 
        call mpi_reduce(k_p,ktot,1,MPI_REAL,MPI_SUM,0,MPI_COMM_WORLD,ierror)
+       call mpi_reduce(p_p,ptot,1,MPI_REAL,MPI_SUM,0,MPI_COMM_WORLD,ierror)
 
-       if(mype==0) write(unit=unit_wke ,fmt=*) time,ktot
+       if(mype==0) write(unit=unit_we ,fmt=*) time,ktot,ptot
 
-     end subroutine wke
-
+     end subroutine wave_energy
 
 
 
