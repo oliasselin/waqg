@@ -544,9 +544,10 @@ end subroutine hspec
 
 
 
-     subroutine hspec_waves(BRk,BIk,level)
+     subroutine hspec_waves(BRk,BIk,CRk,CIk,level)
        
        double complex, dimension(iktx,ikty,n3h0) :: BRk,BIk
+       double complex, dimension(iktx,ikty,n3h0) :: CRk,CIk
        
        integer :: level,proc,izh0s,izh1s,izh2s  
        
@@ -608,7 +609,12 @@ end subroutine hspec
                 if (L(ikx,iky).eq.1) then
                    
                    spz(mode,1)   = spz(mode,1) + real( (BRk(ikx,iky,izh0s)+i*BIk(ikx,iky,izh0s))  *CONJG(BRk(ikx,iky,izh0s)+i*BIk(ikx,iky,izh0s)) )   !KE = 0.5 |LA|^2     
-                  
+
+                   if(height(level) .eq. n3) then   !Az = 0 at the top, so we take 1/2 the value of the grid point below.
+                      spz(mode,2)   = spz(mode,2) + 0.25*(  1/(Bu*r_2(izh2s)))*kh2*real( CRk(ikx,iky,izh0s)*CONJG( CRk(ikx,iky,izh0s) ) + CIk(ikx,iky,izh0s)*CONJG( CIk(ikx,iky,izh0s)) )
+                   else   !We interpolate to get spectra at staggered grid points.
+                      spz(mode,2)   = spz(mode,2) + 0.25*( (1/(Bu*r_2(izh2s)))*kh2*real( CRk(ikx,iky,izh0s)*CONJG( CRk(ikx,iky,izh0s) ) + CIk(ikx,iky,izh0s)*CONJG( CIk(ikx,iky,izh0s) )) + (1/(Bu*r_2(izh2s+1)))*kh2*real( CRk(ikx,iky,izh0s+1)*CONJG( CRk(ikx,iky,izh0s+1) ) + CIk(ikx,iky,izh0s+1)*CONJG( CIk(ikx,iky,izh0s+1) ))   )
+                   end if
 
                    num_modes(mode) = num_modes(mode) + 2
                    
