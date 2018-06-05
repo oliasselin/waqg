@@ -28,6 +28,9 @@ PROGRAM main
   double complex,   dimension(iktx,ikty,n3h0) :: BRok, BIok            !B at the old time step
   double complex,   dimension(iktx,ikty,n3h0) :: BRtempk, BItempk      !B before filering
 
+  !**** C = Az and is decomposed into real and imag parts (ex.: C = CR + iCI) even though in Fourier-space both CRk and CIk are complex
+  double complex,   dimension(iktx,ikty,n3h0) :: CRk, CIk
+
   !**** n = nonlinear advection term J(psi,B) **** r = refractive term ~ B*vort
   double complex,   dimension(iktx,ikty,n3h0) :: nBRk, nBIk, rBRk, rBIk
   double precision, dimension(n1d,n2d,n3h0)   :: nBRr, nBIr, rBRr, rBIr
