@@ -254,14 +254,14 @@ MODULE parameters
 
     !Slices
     integer, parameter :: max_slices = 999     
-    integer, parameter :: nfields  = 3         !Don't forget to change tag_slice_xz(nfields) accordingly in "mpi.f90"
+    integer, parameter :: nfields  = 4         !Don't forget to change tag_slice_xz(nfields) accordingly in "mpi.f90"
     integer, parameter :: nfields2 = 5         !Don't forget to change tag_slice_xz(nfields) accordingly in "mpi.f90"
     integer :: count_slice(nfields) = 0       !number of slices
     integer :: count_slice2(nfields2) = 0       !number of slices
     integer :: zval=n3/2                      !z-level at which we wish to plo a slice                                                                                                                               
     integer :: yval=n2/2
     integer :: xval=n1/2
-    integer :: hlvl(nfields)=[0,0,0]                                   
+    integer :: hlvl(nfields)=[0,0,0,0]                                   
     integer :: hlvl2(nfields2)=[1,1,1,1,0]                                   
 
     integer, parameter :: bot_height = 1

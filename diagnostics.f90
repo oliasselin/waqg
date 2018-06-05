@@ -1080,13 +1080,18 @@ end subroutine hspec
   !!!!! SLICES !!!!!
   !****************!
 
-  subroutine slices(BRk,BIk,BRr,BIr,id_field)
+  subroutine slices(BRk,BIk,BRr,BIr,CRk,CIk,id_field)
 
     double complex, dimension(iktx,ikty,n3h0) :: BRk,BIk
     double precision,    dimension(n1d,n2d,n3h0) :: BRr, BIr
 
-    double complex, dimension(iktx,ikty,n3h0) :: Rmem, Imem
-    
+    double complex, dimension(iktx,ikty,n3h0) :: CRk,CIk
+
+    !Temp arrays for convenience
+    double complex, dimension(iktx,ikty,n3h0) :: Rmemk, Imemk
+    double complex, dimension(iktx,ikty,n3h0) :: Rmemk2, Imemk2
+    double precision,    dimension(n1d,n2d,n3h0) :: Rmem,Imem,Rmem2,Imem2
+
     double precision,    dimension(n1d,n2d,n3h0+2*hlvl(id_field)) :: field
 
     real, dimension(n1,n3h0) :: XZ_slice_p        !Scratch array for xz slices (divided amongst processors)                                                                                                                               
@@ -1099,21 +1104,61 @@ end subroutine hspec
     integer :: nrec
     integer :: processor
 
+    equivalence(Rmem,Rmemk)
+    equivalence(Imem,Imemk)
+    equivalence(Rmem2,Rmemk2)
+    equivalence(Imem2,Imemk2)
 
     if(id_field==1)   then
-       Rmem = BRk
-       Imem = BIk
+       Rmemk = BRk
+       Imemk = BIk
        call fft_c2r(BRk,BRr,n3h0)
        call fft_c2r(BIk,BIr,n3h0)
        field = 0.5*(BRr*BRr + BIr*BIr)
     elseif(id_field==2) then
-       Rmem = BRk
+       Rmemk = BRk
        call fft_c2r(BRk,BRr,n3h0)
        field = BRr
     elseif(id_field==3) then
-       Imem = BIk
+       Imemk = BIk
        call fft_c2r(BIk,BIr,n3h0)
        field = BIr
+    elseif(id_field==4) then
+       
+       do izh0=1,n3h0
+          do ikx=1,iktx
+             kx=kxa(ikx)
+             do iky=1,ikty
+                ky=kya(iky)
+                kh2=kx*kx+ky*ky
+                
+                Rmemk(ikx,iky,izh0)  =  i*kx*CRk(ikx,iky,izh0)
+                Imemk(ikx,iky,izh0)  =  i*kx*CIk(ikx,iky,izh0)
+                
+                Rmemk2(ikx,iky,izh0) =  i*ky*CRk(ikx,iky,izh0)
+                Imemk2(ikx,iky,izh0) =  i*ky*CIk(ikx,iky,izh0)
+                
+             end do
+          end do
+       end do
+
+       call fft_c2r(Rmemk ,Rmem ,n3h0)
+       call fft_c2r(Imemk ,Imem ,n3h0)
+       call fft_c2r(Rmemk2,Rmem2,n3h0)
+       call fft_c2r(Imemk2,Imem2,n3h0)
+       
+
+       do izh0=1,n3h0
+          izh2=izh0+2
+          do ix=1,n1
+             do iy=1,n2
+                
+                field(ix,iy,izh0) = (0.25/(Bu*r_2(izh2)))*( Rmem(ix,iy,izh0)*Rmem(ix,iy,izh0) + Imem(ix,iy,izh0)*Imem(ix,iy,izh0) + Rmem2(ix,iy,izh0)*Rmem2(ix,iy,izh0) + Imem2(ix,iy,izh0)*Imem2(ix,iy,izh0) )
+                
+             end do
+          end do
+       end do
+       
     end if
 
 
@@ -1242,12 +1287,12 @@ end subroutine hspec
 
 
           if(id_field==1)    then 
-             BRk=Rmem
-             BIk=Imem
+             BRk=Rmemk
+             BIk=Imemk
           elseif(id_field==2)    then 
-             BRk=Rmem
+             BRk=Rmemk
           elseif(id_field==3)    then 
-             BIk=Imem
+             BIk=Imemk
           end if
 
           count_slice(id_field)=count_slice(id_field)+1
