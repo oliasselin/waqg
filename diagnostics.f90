@@ -566,6 +566,8 @@ end subroutine hspec
        izh0s = height(level) - proc*n3h0          !position in the processor (valid for n3h0 fields only)  
        izh1s = height(level) - proc*n3h0 + 1      !position in the processor (valid for n3h1 fields only)  
        izh2s = height(level) - proc*n3h0 + 2      !position in the processor (valid for n3h2 fields only)  
+
+       
        
        if(mype==proc) then   
      
@@ -610,10 +612,10 @@ end subroutine hspec
                    
                    spz(mode,1)   = spz(mode,1) + real( (BRk(ikx,iky,izh0s)+i*BIk(ikx,iky,izh0s))  *CONJG(BRk(ikx,iky,izh0s)+i*BIk(ikx,iky,izh0s)) )   !KE = 0.5 |LA|^2     
 
-                   if(height(level) .eq. n3) then   !Az = 0 at the top, so we take 1/2 the value of the grid point below.
+                   if(height(level) .eq. 1) then   !Az = 0 at the bot, so we take 1/2 the value of the grid point below.
                       spz(mode,2)   = spz(mode,2) + 0.25*(  1/(Bu*r_2(izh2s)))*kh2*real( CRk(ikx,iky,izh0s)*CONJG( CRk(ikx,iky,izh0s) ) + CIk(ikx,iky,izh0s)*CONJG( CIk(ikx,iky,izh0s)) )
                    else   !We interpolate to get spectra at staggered grid points.
-                      spz(mode,2)   = spz(mode,2) + 0.25*( (1/(Bu*r_2(izh2s)))*kh2*real( CRk(ikx,iky,izh0s)*CONJG( CRk(ikx,iky,izh0s) ) + CIk(ikx,iky,izh0s)*CONJG( CIk(ikx,iky,izh0s) )) + (1/(Bu*r_2(izh2s+1)))*kh2*real( CRk(ikx,iky,izh0s+1)*CONJG( CRk(ikx,iky,izh0s+1) ) + CIk(ikx,iky,izh0s+1)*CONJG( CIk(ikx,iky,izh0s+1) ))   )
+                      spz(mode,2)   = spz(mode,2) + 0.25*( (1/(Bu*r_2(izh2s-1)))*kh2*real( CRk(ikx,iky,izh0s-1)*CONJG( CRk(ikx,iky,izh0s-1) ) + CIk(ikx,iky,izh0s-1)*CONJG( CIk(ikx,iky,izh0s-1) )) + (1/(Bu*r_2(izh2s)))*kh2*real( CRk(ikx,iky,izh0s)*CONJG( CRk(ikx,iky,izh0s) ) + CIk(ikx,iky,izh0s)*CONJG( CIk(ikx,iky,izh0s) ))   )
                    end if
 
                    num_modes(mode) = num_modes(mode) + 2
@@ -653,8 +655,6 @@ end subroutine hspec
        ! KE(z) = sum over all k's such that L=1 of |uk|^2 minus half the kh=0 mode.
 
        
-
-
        double complex, dimension(iktx,ikty,n3h0) :: BRk,BIk
        double complex, dimension(iktx,ikty,n3h0) :: CRk,CIk
 
@@ -693,7 +693,7 @@ end subroutine hspec
        call mpi_reduce(k_p,ktot,1,MPI_REAL,MPI_SUM,0,MPI_COMM_WORLD,ierror)
        call mpi_reduce(p_p,ptot,1,MPI_REAL,MPI_SUM,0,MPI_COMM_WORLD,ierror)
 
-       if(mype==0) write(unit=unit_we ,fmt=*) time,ktot,ptot
+       if(mype==0) write(unit_we,fmt=*) time,ktot,ptot
 
      end subroutine wave_energy
 

@@ -14,7 +14,7 @@ MODULE files
 !  integer, parameter :: unit_etrop  =51
 !  integer, parameter :: unit_estra  =52
   integer, parameter :: unit_energyr=53
-  integer, parameter :: unit_we=54
+  integer, parameter :: unit_we=544
 
 !  integer, parameter :: unit_hbot   =61
 !  integer, parameter :: unit_hmid   =62
@@ -239,6 +239,7 @@ MODULE files
 
       if(mype==0) close(unit=unit_energy)
       if(mype==0) close(unit=unit_energyr)
+      if(mype==0) close(unit=unit_we)
 
 !      if(mype==0) close(unit=unit_hbot)
 !      if(mype==0) close(unit=unit_hmid)
