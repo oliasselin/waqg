@@ -786,7 +786,7 @@ end subroutine hspec
              do iy=1,n2d
                 if(ix<=n1) then
                    
-                   cr_p = cr_p + nARr(ix,iy,izh0)*rBRr(ix,iy,izh0) + nAIr(ix,iy,izh0)*rBIr(ix,iy,izh0)
+                   cr_p = cr_p + 0.5*( -nARr(ix,iy,izh0)*rBIr(ix,iy,izh0) + nAIr(ix,iy,izh0)*rBRr(ix,iy,izh0) )    !Because I define rB = zeta LA, and refraction = (i/2) zeta LA 
                    
                 end if
              end do
