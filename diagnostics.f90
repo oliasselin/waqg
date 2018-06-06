@@ -698,6 +698,117 @@ end subroutine hspec
      end subroutine wave_energy
 
 
+     subroutine we_conversion(ARk, AIk, nBRk, nBIk, rBRk, rBIk, nBRr, nBIr, rBRr, rBIr)
+
+       !Computes the wave potential energy conversion terms:
+       !\Gamma_a = 0.25 int( nabla^2 A* J(psi,LA) + nabla^2 A J(psi,LA)* )dV = 0.5 int ( DR JR + DI JI ) dV where DR = Re(nabla^2 A) and JI = Im( J(psi,LA)   ) etc.
+       !\Gamma_a = 0.25 int( nabla^2 A* R         + nabla^2 A R*         )dV = 0.5 int ( DR RR + DI RI ) dV where DR = Re(nabla^2 A) and RI = Im( i zeta LA/2 ) etc.
+
+       double complex,   dimension(iktx,ikty,n3h0) :: ARk, AIk
+
+       double complex,   dimension(iktx,ikty,n3h0) :: nBRk, nBIk, rBRk, rBIk
+       double precision, dimension(n1d,n2d,n3h0)   :: nBRr, nBIr, rBRr, rBIr
+
+       !Nabla^2 A --> -kh2
+       double complex,   dimension(iktx,ikty,n3h0) :: nARk, nAIk
+       double precision, dimension(n1d,n2d,n3h0)   :: nARr, nAIr
+
+       !Store REF and ADV terms temporarily (to avoid fft back)
+       double complex,   dimension(iktx,ikty,n3h0) :: tRk, tIk
+
+       !Conversion terms for advection and refraction.
+       real ::  ca_p,cr_p,ca_tot,cr_tot 
+
+       equivalence(nARk,nARr)
+       equivalence(nAIk,nAIr)
+
+       ca_p = 0.
+       cr_p = 0.
+       ca_tot = 0.
+       cr_tot = 0.
+
+       !Start with the advective conversion term
+       tRk = nBRk
+       tIk = nBIk
+
+       !Compute nabla^2 A == nA
+       do izh0=1,n3h0
+         do iky=1,ikty
+            ky = kya(iky)
+            do ikx=1,iktx
+               kx = kxa(ikx)
+               kh2=kx*kx+ky*ky
+               
+               nARk(ikx,iky,izh0) =  - kh2*ARk(ikx,iky,izh0)
+               nAIk(ikx,iky,izh0) =  - kh2*AIk(ikx,iky,izh0)
+               
+            enddo
+         enddo
+      enddo
+      
+      !FFT advection and nA to real-space to compute the conversion term
+      call fft_c2r(nARk,nARr,n3h0)
+      call fft_c2r(nAIk,nAIr,n3h0)
+
+      call fft_c2r(nBRk,nBRr,n3h0)
+      call fft_c2r(nBIk,nBIr,n3h0)
+
+      !Compute the local integral for advection conversion
+      do izh0=1,n3h0
+         do ix=1,n1d
+             do iy=1,n2d
+                if(ix<=n1) then
+
+                   ca_p = ca_p + nARr(ix,iy,izh0)*nBRr(ix,iy,izh0) + nAIr(ix,iy,izh0)*nBIr(ix,iy,izh0)
+
+                end if
+             end do
+          end do
+       end do
+
+       !Recover k-space advective terms
+       nBRk = tRk
+       nBIk = tIk
+   
+
+       !Next: refractive terms
+       tRk = rBRk
+       tIk = rBIk
+
+
+       !FFT refraction to real-space to compute the conversion term
+       call fft_c2r(rBRk,rBRr,n3h0)
+       call fft_c2r(rBIk,rBIr,n3h0)
+
+       !Compute the local integral for refraction conversion
+       do izh0=1,n3h0
+          do ix=1,n1d
+             do iy=1,n2d
+                if(ix<=n1) then
+                   
+                   cr_p = cr_p + nARr(ix,iy,izh0)*rBRr(ix,iy,izh0) + nAIr(ix,iy,izh0)*rBIr(ix,iy,izh0)
+                   
+                end if
+             end do
+          end do
+       end do
+
+       !Recover k-space advective terms
+       rBRk = tRk
+       rBIk = tIk
+
+       !Sum over all processors
+       call mpi_reduce(ca_p,ca_tot, 1,MPI_REAL, MPI_SUM,0,MPI_COMM_WORLD,ierror)
+       call mpi_reduce(cr_p,cr_tot, 1,MPI_REAL, MPI_SUM,0,MPI_COMM_WORLD,ierror)
+
+       !Normalize
+       ca_tot = ca_tot*Uw_scale*Uw_scale/(2.*n1*n2*n3*Bu)
+       cr_tot = cr_tot*Uw_scale*Uw_scale/(2.*n1*n2*n3*Bu)
+
+       if(mype==0) write(unit=unit_conv ,fmt=*) time,ca_tot,cr_tot
+
+     end subroutine we_conversion
+
 
  SUBROUTINE enstrophy(zxk,zyk,zzk) 
 

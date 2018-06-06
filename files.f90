@@ -15,6 +15,7 @@ MODULE files
 !  integer, parameter :: unit_estra  =52
   integer, parameter :: unit_energyr=53
   integer, parameter :: unit_we=544
+  integer, parameter :: unit_conv=545
 
 !  integer, parameter :: unit_hbot   =61
 !  integer, parameter :: unit_hmid   =62
@@ -124,6 +125,7 @@ MODULE files
       if(mype==0) open (unit=unit_ez       ,file="ez.dat"       ,action="write",status="replace")
       if(mype==0) open (unit=unit_energyr  ,file="erot.dat"   ,action="write",status="replace")
       if(mype==0) open (unit=unit_we       ,file="we.dat"   ,action="write",status="replace")
+      if(mype==0) open (unit=unit_conv     ,file="conv.dat"  ,action="write",status="replace")
 
 !      if(mype==0) open (unit=unit_hbot     ,file="hbot.dat"     ,action="write",status="replace")
 !      if(mype==0) open (unit=unit_hmid     ,file="hmid.dat"     ,action="write",status="replace")
