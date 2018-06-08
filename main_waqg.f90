@@ -175,8 +175,14 @@ PROGRAM main
 
   !Initialize error file!
   if(mype==0) then
-     write (fnamer, "(A3,I1,A1,I1)") "br_",vres,"_",tres
-     write (fnamei, "(A3,I1,A1,I1)") "bi_",vres,"_",tres
+     if(zero_aveB==1) then
+        write (fnamer, "(A3,I1,A1,I1,A1)") "br_",vres,"_",tres,"o"
+        write (fnamei, "(A3,I1,A1,I1,A1)") "bi_",vres,"_",tres,"o"
+     else
+        write (fnamer, "(A3,I1,A1,I1)") "br_",vres,"_",tres
+        write (fnamei, "(A3,I1,A1,I1)") "bi_",vres,"_",tres
+     end if
+
      open (unit=154673,file=fnamer,action="write",status="replace")
      open (unit=154674,file=fnamei,action="write",status="replace")
   end if
@@ -329,6 +335,8 @@ PROGRAM main
     nBIk = nBIk - FtIk
  end if
 
+ call sumB(BRk,BIk)
+
  call compute_sigma(sigma,nBRk, nBIk, rBRk, rBIk)              !Compute the sum of A
  call mpitranspose(BRk,iktx,ikty,n3h0,BRkt,n3,iktyp)           !Transpose BR to iky-parallelized space 
  call mpitranspose(BIk,iktx,ikty,n3h0,BIkt,n3,iktyp)           !Transpose BK to iky-parallelized space 
@@ -429,6 +437,8 @@ BIk = BItempk
     nBRk = nBRk - FtRk
     nBIk = nBIk - FtIk
  end if
+
+ call sumB(BRk,BIk)
 
  call compute_sigma(sigma,nBRk, nBIk, rBRk, rBIk)              !Compute the sum of A                                                                                    
  call mpitranspose(BRk,iktx,ikty,n3h0,BRkt,n3,iktyp)           !Transpose BR to iky-parallelized space                                                                   
