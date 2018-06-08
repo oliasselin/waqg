@@ -14,6 +14,8 @@ MODULE files
 !  integer, parameter :: unit_etrop  =51
 !  integer, parameter :: unit_estra  =52
   integer, parameter :: unit_energyr=53
+  integer, parameter :: unit_we=544
+  integer, parameter :: unit_conv=545
 
 !  integer, parameter :: unit_hbot   =61
 !  integer, parameter :: unit_hmid   =62
@@ -50,6 +52,17 @@ MODULE files
   integer, parameter :: unit_h7     =107
   integer, parameter :: unit_h8     =108
   integer, parameter :: unit_h9     =109
+
+  integer, parameter :: unit_h0w     =1001
+  integer, parameter :: unit_h1w     =1011
+  integer, parameter :: unit_h2w     =1012
+  integer, parameter :: unit_h3w     =1013
+  integer, parameter :: unit_h4w     =1014
+  integer, parameter :: unit_h5w     =1015
+  integer, parameter :: unit_h6w     =1016
+  integer, parameter :: unit_h7w     =1017
+  integer, parameter :: unit_h8w     =1018
+  integer, parameter :: unit_h9w     =1019
 
   integer, parameter :: unit_hg0    =110
   integer, parameter :: unit_hg1    =111
@@ -111,6 +124,8 @@ MODULE files
       if(mype==0) open (unit=unit_energy   ,file="energy.dat"   ,action="write",status="replace")
       if(mype==0) open (unit=unit_ez       ,file="ez.dat"       ,action="write",status="replace")
       if(mype==0) open (unit=unit_energyr  ,file="erot.dat"   ,action="write",status="replace")
+      if(mype==0) open (unit=unit_we       ,file="we.dat"   ,action="write",status="replace")
+      if(mype==0) open (unit=unit_conv     ,file="conv.dat"  ,action="write",status="replace")
 
 !      if(mype==0) open (unit=unit_hbot     ,file="hbot.dat"     ,action="write",status="replace")
 !      if(mype==0) open (unit=unit_hmid     ,file="hmid.dat"     ,action="write",status="replace")
@@ -150,6 +165,17 @@ MODULE files
       open (unit=unit_h7       ,file="h7.dat"        ,action="write",status="replace")
       open (unit=unit_h8       ,file="h8.dat"        ,action="write",status="replace")
       open (unit=unit_h9       ,file="h9.dat"        ,action="write",status="replace")
+
+      open (unit=unit_h0w       ,file="h0w.dat"        ,action="write",status="replace")
+      open (unit=unit_h1w       ,file="h1w.dat"        ,action="write",status="replace")
+      open (unit=unit_h2w       ,file="h2w.dat"        ,action="write",status="replace")
+      open (unit=unit_h3w       ,file="h3w.dat"        ,action="write",status="replace")
+      open (unit=unit_h4w       ,file="h4w.dat"        ,action="write",status="replace")
+      open (unit=unit_h5w       ,file="h5w.dat"        ,action="write",status="replace")
+      open (unit=unit_h6w       ,file="h6w.dat"        ,action="write",status="replace")
+      open (unit=unit_h7w       ,file="h7w.dat"        ,action="write",status="replace")
+      open (unit=unit_h8w       ,file="h8w.dat"        ,action="write",status="replace")
+      open (unit=unit_h9w       ,file="h9w.dat"        ,action="write",status="replace")
 
       open (unit=unit_tspec    ,file="tspec.dat"     ,action="write",status="replace")
 
@@ -215,6 +241,7 @@ MODULE files
 
       if(mype==0) close(unit=unit_energy)
       if(mype==0) close(unit=unit_energyr)
+      if(mype==0) close(unit=unit_we)
 
 !      if(mype==0) close(unit=unit_hbot)
 !      if(mype==0) close(unit=unit_hmid)
