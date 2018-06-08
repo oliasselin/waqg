@@ -3,7 +3,7 @@ MODULE parameters
    IMPLICIT NONE
 
     integer, parameter :: n1=32, n2=32, n3=32
-    integer, parameter :: npe=2
+    integer, parameter :: npe=8
 
     integer, parameter :: n1d=n1+2, n2d=n2, n3d=n3
     integer, parameter :: n3h0=n3/npe, n3h1=n3/npe+2, n3h2=n3/npe+4
@@ -19,16 +19,28 @@ MODULE parameters
     double complex :: i = (0.,1.)
     double precision, parameter :: twopi=4.D0*asin(1.D0)
 
+    double precision, parameter :: dom_x = 80000                              !Horizontal domain size (in m)
+    double precision, parameter :: dom_z = 4000                               !Vertical   domain size (in m)
     double precision, parameter :: L1=twopi, L2=twopi, L3=twopi               !Domain size
     double precision, parameter :: dx=L1/n1,dy=L2/n2,dz=L3/n3                 !Cell dimensions  
 
     real, parameter :: ktrunc_x = twopi/L1 * float(n1)/3.           ! dimensional truncation wavenumber (x)
     real, parameter :: ktrunc_z = twopi/L3 * float(n3)/3.           ! dimensional truncation wavenumber (x)
 
+    !C's and N's
+    integer, parameter :: n_one = 1, n_two = 2
+    integer, parameter :: barotropic = 1         !if = 1, then the streamfunction is barotropic.
+    double precision, parameter :: c_one = 1./( n_one*n_one - n_one*n_two*tanh(twopi*n_one)/tanh(twopi*n_two) )
+    double precision, parameter :: c_two = 1./( n_two*n_two - n_one*n_two*tanh(twopi*n_two)/tanh(twopi*n_one) )
+
+    integer, parameter :: fixed_flow = 1        !1: Skip the psi-inversion steps
+    integer, parameter :: passive_scalar = 0    !1: Set A and refraction to 0 and skip the LA -> A inversion. BR and BI become two (independent) passive scalars.
+    
 
     !Tags to specify run!
     !-------------------!
-    
+
+    integer, parameter :: no_dispersion=0
     integer, parameter :: linear=0                      !1: set the nonlinear terms (advection) to 0. 
     integer, parameter :: inviscid=0                    !1: No dissipation, otherwise: dissipation
     integer, parameter :: init_wageo=0                  !1: Initialize wk with Ro*wak
@@ -77,7 +89,7 @@ MODULE parameters
     !----------!
 
     integer, parameter :: tropopause=1, exponential=2, constant_N=3
-    integer, parameter :: stratification = exponential
+    integer, parameter :: stratification = constant_N
 
     !Stratification = tropopause!
     integer, parameter :: fraction=128                   !If h#=150m, then fraction=133.333333~128
@@ -88,6 +100,9 @@ MODULE parameters
 
     !Stratification = exponential!
     double precision, parameter :: N2_scale = 0.75D0   !N^2 ~ exp(N2_scale*(z-z0) 
+
+    !Stratification = constant_N!
+    double precision, parameter :: N0  =  0.002          !Actual N is s^-1, not squared.    
 
    ! USEFUL INDEX !                                                                                                                          
    ! ------------ !                                                                                                                         
@@ -145,15 +160,14 @@ MODULE parameters
     !Primary parameters!
     !------------------!
 
-    double precision, parameter :: H_scale=20000./L3                 !Actual H in m ( z_real = H z' where z' in [0:L3]  is the nondim z.)
+    double precision, parameter :: H_scale=dom_z/L3          !Actual H in m ( z_real = H z' where z' in [0:L3]  is the nondim z.)
+    double precision, parameter :: L_scale=dom_x/L1          !Actual L in m ( x_real = L x' where x' in [0:2pi] is the nondim x.)
     double precision, parameter :: cor=0.0001!0.00000000001!0.0005 !0.0001                           !Actual f = 0.0001 s^-1 (real value of planet Earth)
-    double precision, parameter :: L_scale=5.*(0.5*(sqrt(N_2_trop)+sqrt(N_2_stra))*H_scale/cor)  !200*H_scale                 !Actual L in m ( x_real = L x' where x' in [0:2pi] is the nondim x.)
-    double precision, parameter :: U_scale=1.                        !Actual U in m/s (u_real = U u' where u' is the nondim velocity ur implemented in the code)
+    double precision, parameter :: U_scale=0.25                        !Actual U in m/s (u_real = U u' where u' is the nondim velocity ur implemented in the code)
     double precision, parameter :: Uw_scale=1.                       !Characteristic magnitude of wave velocity (wave counterpart to U_scale for flow)
-   
     double precision, parameter :: Ar2 = (H_scale/L_scale)**2                                   !(1./64.)**2!(1./10.)**2 !0.01     !Aspect ratio squared = (H/L)^2     
     double precision, parameter :: Ro  = U_scale/(cor*L_scale)                                  !Rossby number  U/fL
-    double precision, parameter :: Fr  = U_scale/(0.5*(sqrt(N_2_trop)+sqrt(N_2_stra))*H_scale)  !Froude number  U/N(z0)H
+    double precision, parameter :: Fr  = U_scale/(N0*H_scale)                                   !Froude number  U/N(z0)H
     double precision, parameter :: W2F = (Uw_scale/U_scale)**2                                  ! wave to flow velocity magnitude squared
     double precision, parameter :: Bu  = Fr*Fr/(Ro*Ro)                                          ! (Fr/Ro)^2 = Burger number 
 
@@ -163,20 +177,20 @@ MODULE parameters
     !------------!
 
     real :: time=0.
-    integer :: iter
+    integer :: iter=0
     integer :: itermax=1000000000
     real :: maxtime=40                      
-    double precision, parameter :: delt=0.05*U_scale*dz    !0.0005*U_scale*dz                ! T_visc = 0.25D0*dz*dz/nu
-    double precision, parameter :: gamma=1e-2!4e-3!1e-2!7.e-3            !Robert filter parameter
+    double precision, parameter :: delt=0.5*Bu*Ro/(2.*ktrunc_x*ktrunc_x) !0.25/ktrunc_x !0.5*Bu*Ro/(2.*ktrunc_x*ktrunc_x) 
+    double precision, parameter :: gamma=1e-3                                  !Robert filter parameter
 
     !Other successful viscosity: 5e-2 * (10./ktrunc_x ) **2. 
     !PERFECT VISCOSITY: 0.01 * (64./(1.*n1)) **(4./3.)
     !In reality, nuh is 1/Re and nuz is 1/(Ar2*Re) with 1/Re = UL/nu
 
-    double precision, parameter :: coeff =0.4!0.4!0.1!0.075
+    double precision, parameter :: coeff =0.1!0.4!0.4!0.1!0.075
     double precision, parameter :: coeffz=0.!coeff!/10.!/1000!/10.
 
-    integer, parameter :: ilap = 8                   !horizontal viscosity = nuh nabla^(2*ilap). So ilap =1 is regular viscosity. ilap>1 is hyperviscosity
+    integer, parameter :: ilap = 4                   !horizontal viscosity = nuh nabla^(2*ilap). So ilap =1 is regular viscosity. ilap>1 is hyperviscosity
 
     !General dissipation! (test for hyperviscosity: see Oct 10 2014 toread)
     double precision, parameter :: nuh  =  coeff * (64./(1.*n1)) **(4./3.) * (3./n1)**(2*(ilap-1))             !6e-2 * (10./ktrunc_x ) **2. ! horizontal visc coeff (regular viscosity)
@@ -195,22 +209,25 @@ MODULE parameters
     !Output!
     !------!
 
-    integer, parameter :: out_etot   = 1, freq_etot   = INT(0.01/delt)!50!346!n3/64!n3!64!n3!50*n3/64      !Total energy                                                    
-    integer, parameter :: out_hspec  = 1, freq_hspec  = 5*freq_etot!n3/64!n3!freq_etot*10     !Horizontal energy spectrum at various heights 
+    integer, parameter :: out_etot   = 0, freq_etot   = INT(0.1/delt)!50!346!n3/64!n3!64!n3!50*n3/64      !Total energy                                                    
+    integer, parameter :: out_we     = 1, freq_we     = INT(0.1/delt)!50!346!n3/64!n3!64!n3!50*n3/64      !Total energy                                                    
+    integer, parameter :: out_conv   = 1, freq_conv   = freq_we      !Conversion terms in the potential energy equation.
+    integer, parameter :: out_hspec  = 0, freq_hspec  = 5*freq_etot!n3/64!n3!freq_etot*10     !Horizontal energy spectrum at various heights 
+    integer, parameter :: out_hspecw = 1, freq_hspecw = 1*freq_etot!n3/64!n3!freq_etot*10     !Horizontal energy spectrum at various heights 
     integer, parameter :: out_hg     = 0                 !Output geostrophic horizontal spectrum as well?
     integer, parameter :: out_vspec  = 0, freq_vspec =  freq_hspec
-    integer, parameter :: out_vbuoy  = 1, freq_vbuoy =  freq_hspec
+    integer, parameter :: out_vbuoy  = 0, freq_vbuoy =  freq_hspec
     integer, parameter :: out_vbuoyr = 0, freq_vbuoyr=  freq_etot
     integer, parameter :: out_ens    = 0, freq_ens   =  3*n3!freq_etot*10
     integer, parameter :: out_pv     = 0, freq_pv    =  3*n3!freq_etot*10
 
-    integer, parameter :: out_ez     = 1, freq_ez    =  freq_etot        !E(z) (freq has to be a multiple of that of etot) 
+    integer, parameter :: out_ez     = 0, freq_ez    =  freq_etot        !E(z) (freq has to be a multiple of that of etot) 
     integer, parameter :: out_rotz   = 0, freq_rotz  =  freq_etot 
     integer, parameter :: out_ensz   = 0, freq_ensz  =  3*n3!freq_ens
     integer, parameter :: out_pvz    = 0, freq_pvz   =  freq_pv
     integer, parameter :: out_cond   = 0, freq_cond  =  5*freq_etot!*10        !Plot the conditions of integrability of the balance equations.
-    integer, parameter :: out_grow   = 1, freq_grow  =  5*freq_etot!*10        !Plot the conditions of integrability of the balance equations.
-    integer, parameter :: out_omega  = 1, freq_omega =  5*freq_etot!*10        !Compute the QG ageotrophic vertical velocity wak and war
+    integer, parameter :: out_grow   = 0, freq_grow  =  5*freq_etot!*10        !Plot the conditions of integrability of the balance equations.
+    integer, parameter :: out_omega  = 0, freq_omega =  5*freq_etot!*10        !Compute the QG ageotrophic vertical velocity wak and war
     integer, parameter :: out_condwz = 0, freq_condwz=  freq_omega!*10        !Plot the w_z condition (requires out_omega = 1)
     integer, parameter :: out_cont   = 0, freq_cont  =  freq_etot!*10        !Plot the anelastic divergence (should be 0 because of the proj method)
 
@@ -235,25 +252,24 @@ MODULE parameters
     integer, parameter :: where_bz=unstag
     integer, parameter :: num_spec = 10
 
-    integer, parameter :: height(num_spec)=[n3/4, n3/2-25*n3/fraction, n3/2-10*n3/fraction, n3/2-5*n3/fraction, n3/2-2*n3/fraction, n3/2-1,  n3/2+2*n3/fraction, n3/2+5*n3/fraction, n3/2+10*n3/fraction, 3*n3/4]
-!HERE MAX IS H5!                              0              1                  2                    3                     4           5             6                   7                   8               9
-
+    integer, parameter :: height(num_spec)=[1, n3/8,  n3/4,  3*n3/8, n3/2, 5*n3/8, 3*n3/4, 7*n3/8,  n3-2 , n3]
+    !                                       0   1      2       3      4      5       6        7      8      9    
 
     !Slices
-    integer, parameter :: max_slices = 99     
-    integer, parameter :: nfields  = 7         !Don't forget to change tag_slice_xz(nfields) accordingly in "mpi.f90"
+    integer, parameter :: max_slices = 999     
+    integer, parameter :: nfields  = 4         !Don't forget to change tag_slice_xz(nfields) accordingly in "mpi.f90"
     integer, parameter :: nfields2 = 5         !Don't forget to change tag_slice_xz(nfields) accordingly in "mpi.f90"
     integer :: count_slice(nfields) = 0       !number of slices
     integer :: count_slice2(nfields2) = 0       !number of slices
     integer :: zval=n3/2                      !z-level at which we wish to plo a slice                                                                                                                               
     integer :: yval=n2/2
     integer :: xval=n1/2
-    integer :: hlvl(nfields)=[2,1,2,1,2,1,1]                                   
+    integer :: hlvl(nfields)=[0,0,0,0]                                   
     integer :: hlvl2(nfields2)=[1,1,1,1,0]                                   
 
-    integer, parameter :: bot_height = n3/2+5*n3/fraction
-    integer, parameter :: mid_height = n3/2+n3/fraction
-    integer, parameter :: top_height = n3/2
+    integer, parameter :: bot_height = 1
+    integer, parameter :: mid_height = n3/2
+    integer, parameter :: top_height = n3-1
 
     integer, parameter :: out_slab = 0, freq_slab = 1
     integer, parameter :: slab_mype   = npe/2-1 
@@ -262,7 +278,7 @@ MODULE parameters
                                               !halo levels (u=2,zz=1...)                                                                                                                                                     
     integer :: id_field                       !dummy index to differenciate fields plotted  
 
-    integer, parameter :: out_slice   = 0, freq_slice =  5* freq_etot
+    integer, parameter :: out_slice   = 1, freq_slice =  1* freq_etot
     integer, parameter :: out_eta     = 0, freq_eta   =  freq_hspec
     integer, parameter :: out_tspec   = 0
 
