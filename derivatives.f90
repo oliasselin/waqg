@@ -1121,15 +1121,36 @@ MODULE derivatives
 
 
 
-    SUBROUTINE compute_A(ARk,AIK,BRkt,BIkt,sigma)
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    SUBROUTINE compute_A(ARk,AIK,BRkt,BIkt,CRk,CIk,sigma)
+ 
       double complex, dimension(iktx,ikty,2), intent(in)  :: sigma               !This is the global sum after all processors shared theirs                                    
       double complex,   dimension(iktx,ikty,n3h0), intent(out) :: ARk, AIk
+      double complex,   dimension(iktx,ikty,n3h0), intent(out) :: CRk, CIk       !C=A_z on the unstaggered grid
+ 
+       double complex, dimension(iktx,n3, iktyp), intent(in) :: BRkt          !Transposed (ky-parallelization) BRk
+       double complex, dimension(iktx,n3, iktyp), intent(in) :: BIkt          !Transposed (ky-parallelization) BIk 
+ 
+      !This transposed field exists only inside this subroutine. (Temporary solution for non-haloed A: compute while parallelized in ky)
+      double complex, dimension(iktx,n3, iktyp) :: CRkt          !Transposed (ky-parallelization) BRk
+      double complex, dimension(iktx,n3, iktyp) :: CIkt          !Transposed (ky-parallelization) BIk 
 
-      double complex, dimension(iktx,n3, iktyp), intent(in) :: BRkt          !Transposed (ky-parallelization) BRk
-      double complex, dimension(iktx,n3, iktyp), intent(in) :: BIkt          !Transposed (ky-parallelization) BIk 
-
-      !Just for internal usage: A to-be-transposed version.
+       !Just for internal usage: A to-be-transposed version.
       double complex, dimension(iktx,n3, iktyp) :: ARkt          !Transposed (ky-parallelization) BIk                                                            
       double complex, dimension(iktx,n3, iktyp) :: AIkt          !Transposed (ky-parallelization) BIk                                                               
  
@@ -1142,6 +1163,11 @@ MODULE derivatives
       sumAI = (0.D0,0.D0)
       sumBR = (0.D0,0.D0)
       sumBI = (0.D0,0.D0)
+
+      CRkt  = (0.D0,0.D0)
+      CIkt  = (0.D0,0.D0)
+
+
 
       DO ikx=1,iktx
          DO ikyp=1,iktyp
@@ -1204,11 +1230,34 @@ MODULE derivatives
          end DO
       end DO
 
+
+      !Temporary solution for potential energy: compute C=A_z while in ky-parallelized space.
+      DO ikx=1,iktx
+         DO ikyp=1,iktyp
+
+               do iz=1,n3-1
+
+                  CRkt(ikx,iz,ikyp) = ( ARkt(ikx,iz+1,ikyp) - ARkt(ikx,iz,ikyp) )/dz 
+                  CIkt(ikx,iz,ikyp) = ( AIkt(ikx,iz+1,ikyp) - AIkt(ikx,iz,ikyp) )/dz 
+
+               end do
+
+               !Top: C = A_z = 0
+
+               CRkt(ikx,n3,ikyp) = (0.D0,0.D0)
+               CIkt(ikx,n3,ikyp) = (0.D0,0.D0)
+
+         end DO
+      end DO
+
+
       !Transpose A back to the regular z-parallelized world
       call mpitranspose(ARkt,iktx,n3,iktyp,ARk,ikty,n3h0)
       call mpitranspose(AIkt,iktx,n3,iktyp,AIk,ikty,n3h0)
 
-
+      !Transpose C to the regular z-parallelized world
+      call mpitranspose(CRkt,iktx,n3,iktyp,CRk,ikty,n3h0)
+      call mpitranspose(CIkt,iktx,n3,iktyp,CIk,ikty,n3h0)
 
     END SUBROUTINE compute_A
       
