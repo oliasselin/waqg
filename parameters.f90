@@ -33,6 +33,8 @@ MODULE parameters
     integer, parameter :: inviscid=0                    !1: No dissipation, otherwise: dissipation
     integer, parameter :: init_wageo=0                  !1: Initialize wk with Ro*wak
 
+    integer, parameter :: zero_aveB=1                   !1: Set B=LA vertical average to zero
+
     integer :: dealiasing=1         ! 1: Dealias, 0: don't. May not work though...
 
     !Should eventually plot both energies

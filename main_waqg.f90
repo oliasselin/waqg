@@ -246,7 +246,7 @@ PROGRAM main
 
  ! --- Recover A from B --- !
 
- call sumB(BRk,BIk) !Resets the vertical sum of B to zero
+ if(zero_aveB==1) call sumB(BRk,BIk)                           !Resets the vertical sum of B to zero
 
  call compute_sigma(sigma,nBRk, nBIk, rBRk, rBIk)              !Compute the sum of A
  call mpitranspose(BRk,iktx,ikty,n3h0,BRkt,n3,iktyp)           !Transpose BR to iky-parallelized space 
@@ -364,7 +364,7 @@ BIk = BItempk
 
  ! --- Recover A from B --- !                                                                                                                                 
 
- call sumB(BRk,BIk) !Resets the vertical sum of B to zero
+ if(zero_aveB==1) call sumB(BRk,BIk)                           !Resets the vertical sum of B to zero
 
  call compute_sigma(sigma,nBRk, nBIk, rBRk, rBIk)              !Compute the sum of A                                                                                    
  call mpitranspose(BRk,iktx,ikty,n3h0,BRkt,n3,iktyp)           !Transpose BR to iky-parallelized space                                                                   
