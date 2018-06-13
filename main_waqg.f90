@@ -99,6 +99,15 @@ PROGRAM main
 
   equivalence(u_rotr,u_rot)
 
+  !Wave-launcher fields
+  double complex, dimension(iktx,ikty,n3h0) :: gck, gsk    !Spatial Gaussians (with cos and cin parts of the exp[i k_wl x] )
+  double precision, dimension(n1d,n2d,n3h0) :: gcr, gsr
+  double precision :: env_c, env_s                         !Time envelope (with cos and cin parts of the exp[-i omega_e t] )
+
+  equivalence(gcr,gck)
+  equivalence(gsr,gsk)
+
+
   !********************** Initializing... *******************************!
 
 
@@ -107,23 +116,24 @@ PROGRAM main
   call initialize_fftw(array2dr,array2di,fr_even,fk_even,fr_odd,fk_odd)
   call init_arrays
   call init_base_state
-  if(mype==0)  call validate_run
-
 
   !Initialize fields
-  call generate_fields_stag(psir,n3h1,ARr,n3h0,BRr,n3h0) 
+  call generate_fields_stag(gcr,n3h0,gsr,n3h0,ur,n3h2) 
 
-  call fft_r2c(psir,psik,n3h1)
-  call fft_r2c(ARr,ARk,n3h0)
-  call fft_r2c(BRr,BRk,n3h0)
-
+  ARk = (0.D0,0.D0)
   AIk = (0.D0,0.D0)
+  BRk = (0.D0,0.D0)
   BIk = (0.D0,0.D0)
    qk = (0.D0,0.D0)
+   vk = (0.D0,0.D0)
+   wk = (0.D0,0.D0)
+ psik = (0.D0,0.D0)
 
-  call compute_velo(uk,vk,wk,bk,psik) 
+  call fft_r2c(ur,uk,n3h2)
+  call fft_r2c(gcr,gck,n3h0)
+  call fft_r2c(gsr,gsk,n3h0)
+
   call generate_halo(uk,vk,wk,bk)
-  call generate_halo_q(qk) 
 
 
  !Initial diagnostics!
