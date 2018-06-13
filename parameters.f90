@@ -172,6 +172,26 @@ MODULE parameters
     double precision, parameter :: Bu  = Fr*Fr/(Ro*Ro)                                          ! (Fr/Ro)^2 = Burger number 
 
 
+    !(Nondimensional) wave-launcher parameters!
+    !-----------------------------------------!
+
+    !Spatial Gaussian: G(x,z) = exp[ - g_x^2 (x-x0g)^2 - g_z^2 (z-z0g)^2 ]
+
+    double precision, parameter :: g_x = 0.7, g_z = 5.    
+    double precision, parameter :: x0g = L1/2, z0g = L3
+
+    !Time envelope: E(t) = 0.5*amplitude_e*(tanh(omega_e*(time-tei))-tanh(omega_e*(time-tef)))
+
+    double precision, parameter :: tei = 3. , tef = 7.   !Time-envelope initial/final kicks in/out
+    double precision, parameter :: omega_e = 1.          !Envelope speed
+    double precision, parameter :: amplitude_e = 1.      !Envelope amplitude
+
+    !Wave part: exp[i(k_wl x - omega_wl*time)]. These are the characteristics we want the wave launched to possess
+
+    double precision, parameter :: k_wl = 6. , m_wl = 20.                                      !x- and z-direction wavenumbers
+    double precision, parameter :: omega_wl = twopi*k_wl + 0.5*(k_wl*k_wl)/(Bu*Ro*m_wl*m_wl)   !Frequency excited
+
+
 
     !Timestepping!
     !------------!
