@@ -260,10 +260,6 @@ if(passive_scalar==0) then
  ! ------------------------ !
 end if
 
- !Compute the corresponding u,v,w and t (u and v to be used in convol)                                                                                    
- call compute_velo(uk,vk,wk,bk,psik)
- call generate_halo(uk,vk,wk,bk)
-
 end if
 
 
@@ -392,10 +388,6 @@ if(passive_scalar==0) then
  ! ------------------------ !       
 end if
 
-
- !Compute the corresponding u,v,w and t 
- call compute_velo(uk,vk,wk,bk,psik)
- call generate_halo(uk,vk,wk,bk) 
 
 
  !*** Diagnostics ***!
