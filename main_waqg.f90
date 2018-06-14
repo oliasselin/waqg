@@ -165,7 +165,7 @@ PROGRAM main
  end do
 
  if(out_we   ==1) call wave_energy(BRk,BIk,CRk,CIk)
- if(out_conv ==1) call we_conversion(ARk, AIk, nBRk, nBIk, rBRk, rBIk, nBRr, nBIr, rBRr, rBIr)
+ if(out_conv ==1) call we_conversion(ARk, AIk, BRk, BIk, nBRk, nBIk, rBRk, rBIk, FRk, FIk, nBRr, nBIr, rBRr, rBIr, FRr, FIr)
 
  !************************************************************************!
  !*** 1st time timestep using the projection method with Forward Euler ***!
@@ -445,7 +445,7 @@ if(out_etot ==1 .and. mod(iter,freq_etot )==0) call diag_zentrum(uk,vk,wk,bk,wak
  end do
 
  if(out_we ==1   .and. mod(iter,freq_we   )==0)  call wave_energy(BRk,BIk,CRk,CIk)
- if(out_conv ==1 .and. mod(iter,freq_conv )==0)  call we_conversion(ARk, AIk, nBRk, nBIk, rBRk, rBIk, nBRr, nBIr, rBRr, rBIr)
+ if(out_conv ==1 .and. mod(iter,freq_conv )==0)  call we_conversion(ARk, AIk, BRk, BIk, nBRk, nBIk, rBRk, rBIk, FRk, FIk, nBRr, nBIr, rBRr, rBIr, FRr, FIr)
 
 
  if(time>maxtime) EXIT
