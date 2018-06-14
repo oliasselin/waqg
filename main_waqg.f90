@@ -143,6 +143,10 @@ PROGRAM main
 
   call generate_halo(uk,vk,wk,bk)
 
+  !For envelope file!
+  open (unit=15467311,file="et.dat",action="write",status="replace")
+
+
 
  !Initial diagnostics!
  !*******************!
@@ -216,6 +220,9 @@ env_s = 0.5*amplitude_e*(tanh(omega_e*(time_forcing-tei))-tanh(omega_e*(time_for
 
 FRK = env_c*gck + env_s*gsk
 FIK = env_c*gsk - env_s*gck
+
+!Print envelope
+write(15467311,*) time_forcing, 0.5*amplitude_e*(tanh(omega_e*(time_forcing-tei))-tanh(omega_e*(time_forcing-tef))), env_c
 
 !---------------------------!
 
@@ -331,6 +338,9 @@ env_s = 0.5*amplitude_e*(tanh(omega_e*(time_forcing-tei))-tanh(omega_e*(time_for
 
 FRK = env_c*gck + env_s*gsk
 FIK = env_c*gsk - env_s*gck
+
+!Print envelope
+write(15467311,*) time_forcing, 0.5*amplitude_e*(tanh(omega_e*(time_forcing-tei))-tanh(omega_e*(time_forcing-tef))), env_c
 
 !---------------------------!
 
