@@ -294,6 +294,13 @@ end if
 if(passive_scalar==0) then
  ! --- Recover A from B --- !
 
+ !Add forcing to the RHS of the equation!
+ if(forcing == 1) then
+    nBRk = nBRk - FRk
+    nBIk = nBIk - FIk
+ end if
+
+
  if(zero_aveB==1) call sumB(BRk,BIk)                           !Resets the vertical sum of B to zero
 
  call compute_sigma(sigma,nBRk, nBIk, rBRk, rBIk)              !Compute the sum of A
@@ -447,6 +454,13 @@ end if
 
 if(passive_scalar==0) then
  ! --- Recover A from B --- !                                                                                                                                 
+
+ !Add forcing to the RHS of the equation!                                                                                                                                                
+ if(forcing == 1) then
+    nBRk = nBRk - FRk
+    nBIk = nBIk - FIk
+ end if
+
 
  if(zero_aveB==1) call sumB(BRk,BIk)                           !Resets the vertical sum of B to zero
 
