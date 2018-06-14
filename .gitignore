@@ -2,3 +2,4 @@ gnuplot/conversion/data/*
 gnuplot/conversion/plots/*
 gnuplot/conversion/pulse/*.dat
 *.dat
+*~
