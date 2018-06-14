@@ -102,11 +102,19 @@ PROGRAM main
   !Wave-launcher fields
   double complex, dimension(iktx,ikty,n3h0) :: gck, gsk    !Spatial Gaussians (with cos and cin parts of the exp[i k_wl x] )
   double precision, dimension(n1d,n2d,n3h0) :: gcr, gsr
+
   double precision :: env_c, env_s                         !Time envelope (with cos and cin parts of the exp[-i omega_e t] )
+  double precision :: time_forcing                         !Time at which forcing is applied (t^n or time-delt)
+
+
+  double complex, dimension(iktx,ikty,n3h0) :: FRk, FIk    !Forcing real (R) / imag (I) parts in Fourier (k) / real-space (r)
+  double precision, dimension(n1d,n2d,n3h0) :: FRr, FIr
 
   equivalence(gcr,gck)
   equivalence(gsr,gsk)
 
+  equivalence(FRr,FRk)
+  equivalence(FIr,FIk)
 
   !********************** Initializing... *******************************!
 
@@ -198,6 +206,19 @@ PROGRAM main
    rBRk = (0.D0,0.D0)
    rBIk = (0.D0,0.D0)
 end if
+
+!----- Compute forcing -----!
+!---------------------------!
+
+time_forcing=time-delt
+env_c = 0.5*amplitude_e*(tanh(omega_e*(time_forcing-tei))-tanh(omega_e*(time_forcing-tef)))*cos(omega_wl*time_forcing)
+env_s = 0.5*amplitude_e*(tanh(omega_e*(time_forcing-tei))-tanh(omega_e*(time_forcing-tef)))*sin(omega_wl*time_forcing)
+
+FRK = env_c*gck + env_s*gsk
+FIK = env_c*gsk - env_s*gck
+
+!---------------------------!
+
 
  !Compute q^1 and B^1 with Forward Euler  
  do izh0=1,n3h0
@@ -300,6 +321,18 @@ end if
        rBRk = (0.D0,0.D0)
        rBIk = (0.D0,0.D0)
      end if
+
+!----- Compute forcing -----!
+!---------------------------!
+
+time_forcing=time-delt
+env_c = 0.5*amplitude_e*(tanh(omega_e*(time_forcing-tei))-tanh(omega_e*(time_forcing-tef)))*cos(omega_wl*time_forcing)
+env_s = 0.5*amplitude_e*(tanh(omega_e*(time_forcing-tei))-tanh(omega_e*(time_forcing-tef)))*sin(omega_wl*time_forcing)
+
+FRK = env_c*gck + env_s*gsk
+FIK = env_c*gsk - env_s*gck
+
+!---------------------------!
 
      !Compute q^n+1 and B^n+1 using leap-frog
      do izh0=1,n3h0
