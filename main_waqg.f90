@@ -166,6 +166,12 @@ PROGRAM main
     if(out_slice ==1)  call slices(BRk,BIk,BRr,BIr,CRk,CIk,id_field)
  end do
  
+ !One time call to print the mean flow and gaussian
+ do id_field=1,nfields2
+    call slices_wl(uk,gck,gsk,ur,gcr,gsr,id_field)
+ end do
+
+
  do iz=1,num_spec
     if(out_hspecw ==1) call hspec_waves(BRk,BIk,CRk,CIk,iz)
  end do
