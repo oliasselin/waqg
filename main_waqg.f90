@@ -132,9 +132,13 @@ PROGRAM main
   AIk = (0.D0,0.D0)
   BRk = (0.D0,0.D0)
   BIk = (0.D0,0.D0)
+
    qk = (0.D0,0.D0)
+
    vk = (0.D0,0.D0)
    wk = (0.D0,0.D0)
+   bk = (0.D0,0.D0)
+
  psik = (0.D0,0.D0)
 
   call fft_r2c(ur,uk,n3h2)
@@ -145,8 +149,6 @@ PROGRAM main
 
   !For envelope file!
   open (unit=15467311,file="et.dat",action="write",status="replace")
-
-
 
  !Initial diagnostics!
  !*******************!
