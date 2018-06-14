@@ -3,8 +3,8 @@
 number_of_nodes=1
 number_of_tasks=64
 
-sourdir=/scratch/05518/oasselin/shakespeare/U0.25-coeff1/source/
-datadir=/scratch/05518/oasselin/shakespeare/U0.25-coeff1/output/
+sourdir=/scratch/05518/oasselin/shakespeare/U0.25-amp1-coeff0.4/source/
+datadir=/scratch/05518/oasselin/shakespeare/U0.25-amp1-coeff0.4/output/
 
 mkdir -p $sourdir
 mkdir -p $datadir

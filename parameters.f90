@@ -46,7 +46,7 @@ MODULE parameters
     integer, parameter :: inviscid=0                    !1: No dissipation, otherwise: dissipation
     integer, parameter :: init_wageo=0                  !1: Initialize wk with Ro*wak
 
-    integer, parameter :: zero_aveB=0                   !1: Set B=LA vertical average to zero
+    integer, parameter :: zero_aveB=1                   !1: Set B=LA vertical average to zero
 
     integer :: dealiasing=1         ! 1: Dealias, 0: don't. May not work though...
 
@@ -208,7 +208,7 @@ MODULE parameters
     !PERFECT VISCOSITY: 0.01 * (64./(1.*n1)) **(4./3.)
     !In reality, nuh is 1/Re and nuz is 1/(Ar2*Re) with 1/Re = UL/nu
 
-    double precision, parameter :: coeff =1.!0.4!0.4!0.1!0.075
+    double precision, parameter :: coeff =0.4!0.4!0.4!0.1!0.075
     double precision, parameter :: coeffz=0.!coeff!/10.!/1000!/10.
 
     integer, parameter :: ilap = 4                   !horizontal viscosity = nuh nabla^(2*ilap). So ilap =1 is regular viscosity. ilap>1 is hyperviscosity
