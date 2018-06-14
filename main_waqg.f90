@@ -211,21 +211,29 @@ PROGRAM main
    rBIk = (0.D0,0.D0)
 end if
 
-!----- Compute forcing -----!
-!---------------------------!
+if(forcing==1) then
 
-time_forcing=time-delt
-env_c = 0.5*amplitude_e*(tanh(omega_e*(time_forcing-tei))-tanh(omega_e*(time_forcing-tef)))*cos(omega_wl*time_forcing)
-env_s = 0.5*amplitude_e*(tanh(omega_e*(time_forcing-tei))-tanh(omega_e*(time_forcing-tef)))*sin(omega_wl*time_forcing)
+   !----- Compute forcing -----!
+   !---------------------------!
+   
+   time_forcing=time-delt
+   env_c = 0.5*amplitude_e*(tanh(omega_e*(time_forcing-tei))-tanh(omega_e*(time_forcing-tef)))*cos(omega_wl*time_forcing)
+   env_s = 0.5*amplitude_e*(tanh(omega_e*(time_forcing-tei))-tanh(omega_e*(time_forcing-tef)))*sin(omega_wl*time_forcing)
+   
+   FRK = env_c*gck + env_s*gsk
+   FIK = env_c*gsk - env_s*gck
+   
+   !Print envelope
+   write(15467311,*) time_forcing, 0.5*amplitude_e*(tanh(omega_e*(time_forcing-tei))-tanh(omega_e*(time_forcing-tef))), env_c
+   
+   !---------------------------!
 
-FRK = env_c*gck + env_s*gsk
-FIK = env_c*gsk - env_s*gck
+else
+   
+   FRK = (0.D0,0.D0)
+   FIK = (0.D0,0.D0)
 
-!Print envelope
-write(15467311,*) time_forcing, 0.5*amplitude_e*(tanh(omega_e*(time_forcing-tei))-tanh(omega_e*(time_forcing-tef))), env_c
-
-!---------------------------!
-
+end if
 
  !Compute q^1 and B^1 with Forward Euler  
  do izh0=1,n3h0
@@ -329,20 +337,31 @@ end if
        rBIk = (0.D0,0.D0)
      end if
 
-!----- Compute forcing -----!
-!---------------------------!
 
-time_forcing=time-delt
-env_c = 0.5*amplitude_e*(tanh(omega_e*(time_forcing-tei))-tanh(omega_e*(time_forcing-tef)))*cos(omega_wl*time_forcing)
-env_s = 0.5*amplitude_e*(tanh(omega_e*(time_forcing-tei))-tanh(omega_e*(time_forcing-tef)))*sin(omega_wl*time_forcing)
+if(forcing==1) then
 
-FRK = env_c*gck + env_s*gsk
-FIK = env_c*gsk - env_s*gck
+   !----- Compute forcing -----!
+   !---------------------------!
+   
+   time_forcing=time-delt
+   env_c = 0.5*amplitude_e*(tanh(omega_e*(time_forcing-tei))-tanh(omega_e*(time_forcing-tef)))*cos(omega_wl*time_forcing)
+   env_s = 0.5*amplitude_e*(tanh(omega_e*(time_forcing-tei))-tanh(omega_e*(time_forcing-tef)))*sin(omega_wl*time_forcing)
+   
+   FRK = env_c*gck + env_s*gsk
+   FIK = env_c*gsk - env_s*gck
+   
+   !Print envelope
+   write(15467311,*) time_forcing, 0.5*amplitude_e*(tanh(omega_e*(time_forcing-tei))-tanh(omega_e*(time_forcing-tef))), env_c
+   
+   !---------------------------!
 
-!Print envelope
-write(15467311,*) time_forcing, 0.5*amplitude_e*(tanh(omega_e*(time_forcing-tei))-tanh(omega_e*(time_forcing-tef))), env_c
+else
+   
+   FRK = (0.D0,0.D0)
+   FIK = (0.D0,0.D0)
 
-!---------------------------!
+end if
+
 
      !Compute q^n+1 and B^n+1 using leap-frog
      do izh0=1,n3h0
