@@ -59,7 +59,7 @@ twopi=6.28318530718
 set title "Time-integrated contributions to wave potential energy"
 plot "data/p.dat" u 1:2     w l ls 1 title 'WPE', \
      "data/p.dat" u 1:(-$3) w l ls 3  title 'Advection', \
-     "data/p.dat" u 1:(-$4) w l ls 2 title 'Refraction', \
-     "data/p.dat" u 1:(-$5) w l ls 4 title 'Dissipation', \
+     "data/p.dat" u 1:($5) w l ls 2 title 'Forcing', \
+     "data/p.dat" u 1:($6) w l ls 4 title 'Dissipation', \
      0 w l ls 9 notitle
      
