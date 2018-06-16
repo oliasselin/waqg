@@ -936,13 +936,21 @@ end subroutine hspec
        double precision, dimension(n1d,n2d,n3h0)   :: dBRr, dBIr
 
        !Conversion terms for advection, refraction, forcing and dissipation
-       real ::    k_p=0.,   k_tot=0.
-       real ::  ckf_p=0., ckf_tot=0.
-       real ::  ckd_p=0., ckd_tot=0.
+       real ::    k_p,   k_tot
+       real ::  ckf_p, ckf_tot
+       real ::  ckd_p, ckd_tot
 
        equivalence(dBRk,dBRr)
        equivalence(dBIk,dBIr)
 
+       !Initialize to zero
+         k_p = 0.
+       ckf_p = 0.
+       ckd_p = 0.
+
+         k_tot = 0.
+       ckf_tot = 0.
+       ckd_tot = 0.
 
        !Store LA = B to avoid fft-ing back
        BRmem = BRk
