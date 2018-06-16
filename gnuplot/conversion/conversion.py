@@ -7,8 +7,8 @@ import numpy as np
 #p[:,i]    is... i=0 time in turnover times, i=1  WPE,      i=2: A,        i=3: R,        i=4: F         i=5: D 
 #dpdt[:,i] is... i=0 time in turnover times, i=1  d/dt WPE, i=2: \Gamma_a, i=3: \Gamma_r, i=4: \Gamma_d  i=4: \Gamma_f
 
-run = 'shakespeare/U0.25-amp1-coeff0.4-n3-512'
-#run = 'shakespeare/U0.25-amp1-coeff0.4'
+run = 'shakespeare/test'
+
 
 timestep=0.1
 
