@@ -1052,9 +1052,9 @@ end subroutine hspec
        call mpi_reduce(ckd_p,ckd_tot, 1,MPI_REAL, MPI_SUM,0,MPI_COMM_WORLD,ierror)
 
        !Normalize
-        k_tot =  k_tot*Uw_scale*Uw_scale/(n1*n2*n3)
-       cf_tot = cf_tot*Uw_scale*Uw_scale/(n1*n2*n3)
-       cd_tot = cd_tot*Uw_scale*Uw_scale/(n1*n2*n3)
+         k_tot =   k_tot*Uw_scale*Uw_scale/(n1*n2*n3)
+       ckf_tot = ckf_tot*Uw_scale*Uw_scale/(n1*n2*n3)
+       ckd_tot = ckd_tot*Uw_scale*Uw_scale/(n1*n2*n3)
 
        if(mype==0) write(unit=unit_conv3 ,fmt=*) time,k_tot,ckf_tot,ckd_tot
 
