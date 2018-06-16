@@ -55,9 +55,9 @@ set xlabel '{/Helvetica-Oblique Eddy turnover times}'
 
 
 set title "Wave potential energy variation budget"
-plot "data/dpdt.dat" u 1:2     w l ls 1 title 'd/dt WPE', \
-     "data/dpdt.dat" u 1:(-$3) w l ls 2  title 'Advection', \
-     "data/dpdt.dat" u 1:($5) w l ls 3  title 'Forcing', \
-     "data/dpdt.dat" u 1:($6) w l ls 4 title 'Dissipation', \
+plot "data/dpdt.dat" u 1:2     w lp ls 1 title 'd/dt WPE', \
+     "data/dpdt.dat" u 1:(-$3) w lp ls 2  title 'Advection', \
+     "data/dpdt.dat" u 1:($5)  w lp ls 3  title 'Forcing', \
+     "data/dpdt.dat" u 1:($6)  w lp ls 4 title 'Dissipation', \
      0 w l ls 9 notitle
      

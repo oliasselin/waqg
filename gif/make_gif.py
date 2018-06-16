@@ -4,7 +4,7 @@ import sys
 
 
 
-run = 'shakespeare/U0.25-coeff1'
+run = 'shakespeare/U0.25-amp1-coeff0.1'
 sli = 'v'   #htop,hmid,hbot,v
 field = '4'
 
@@ -25,9 +25,9 @@ tau_e = L_scale/(U_scale)/3600 #eddy turnover time in hours
 
 delay = 10 #In cs
 
-fixed_cbrange='min'     #0: free, 1: set min only, 2: set max only, 3: set both max and min 
+fixed_cbrange='minmax'     #0: free, 1: set min only, 2: set max only, 3: set both max and min 
 cbmin = 0
-cbmax = 0.1
+cbmax = 0.005
 
 nmax = 100 #Maximum number of slices
 
