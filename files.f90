@@ -131,7 +131,7 @@ MODULE files
       if(mype==0) open (unit=unit_conv1     ,file="conv1.dat"  ,action="write",status="replace")
       if(mype==0) open (unit=unit_conv2     ,file="conv2.dat"  ,action="write",status="replace")
       if(mype==0) open (unit=unit_conv3     ,file="conv3.dat"  ,action="write",status="replace")
-      if(mype==0) open (unit=unit_conv4     ,file="conv3.dat"  ,action="write",status="replace")
+      if(mype==0) open (unit=unit_conv4     ,file="conv4.dat"  ,action="write",status="replace")
 
 !      if(mype==0) open (unit=unit_hbot     ,file="hbot.dat"     ,action="write",status="replace")
 !      if(mype==0) open (unit=unit_hmid     ,file="hmid.dat"     ,action="write",status="replace")
