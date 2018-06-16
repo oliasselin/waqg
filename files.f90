@@ -17,7 +17,7 @@ MODULE files
   integer, parameter :: unit_we=544
   integer, parameter :: unit_conv1=545
   integer, parameter :: unit_conv2=546
-  integer, parameter :: unit_conv3=546
+  integer, parameter :: unit_conv3=547
 
 !  integer, parameter :: unit_hbot   =61
 !  integer, parameter :: unit_hmid   =62
