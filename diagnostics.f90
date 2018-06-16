@@ -698,7 +698,7 @@ end subroutine hspec
      end subroutine wave_energy
 
 
-     subroutine we_conversion(ARk, AIk, BRk, BIk, nBRk, nBIk, rBRk, rBIk, FRk, FIk, nBRr, nBIr, rBRr, rBIr, FRr, FIr)
+     subroutine we_conversion(ARk, AIk, BRk, BIk, CRk, CIk, nBRk, nBIk, rBRk, rBIk, FRk, FIk, nBRr, nBIr, rBRr, rBIr, FRr, FIr)
 
        !Computes the wave potential energy conversion terms:
        !\Gamma_a = 0.25 int( nabla^2 A* J(psi,LA) + nabla^2 A J(psi,LA)* )dV = 0.5 int ( DR JR + DI JI ) dV where DR = Re(nabla^2 A) and JI = Im( J(psi,LA)   ) etc.
@@ -707,6 +707,7 @@ end subroutine hspec
 
        double complex,   dimension(iktx,ikty,n3h0) :: ARk, AIk
        double complex,   dimension(iktx,ikty,n3h0) :: BRk, BIk
+       double complex,   dimension(iktx,ikty,n3h0) :: CRk, CIk
 
        double complex,   dimension(iktx,ikty,n3h0) :: nBRk, nBIk, rBRk, rBIk, FRk, FIk
        double precision, dimension(n1d,n2d,n3h0)   :: nBRr, nBIr, rBRr, rBIr, FRr, FIr
@@ -730,6 +731,20 @@ end subroutine hspec
 
        equivalence(tRk,tRr)
        equivalence(tIk,tIr)
+
+       !Verification: compute potential energy in real-space from C = Az. Here are all the horizontal derivatives of C
+       double complex,   dimension(iktx,ikty,n3h0) :: CXRk, CXIk, CYRk, CYIk
+       double precision, dimension(n1d,n2d,n3h0)   :: CXRr, CXIr, CYRr, CYIr
+
+       equivalence(CXRk,CXRr)
+       equivalence(CXIk,CXIr)
+       equivalence(CYRk,CYRr)
+       equivalence(CYIk,CYIr)
+
+       real :: p_p,p_tot
+
+       p_p   = 0.
+       p_tot = 0.
 
        ca_p = 0.
        cr_p = 0.
@@ -888,6 +903,52 @@ end subroutine hspec
           end do
        end do
 
+       !------------------------------!
+       !--- Total potential energy ---!
+       !------------------------------!
+
+       !Compute the horizontal derivatives of C=Az
+       do izh0=1,n3h0
+         do iky=1,ikty
+            ky = kya(iky)
+            do ikx=1,iktx
+               kx = kxa(ikx)
+               kh2=kx*kx+ky*ky
+
+               CXRk(ikx,iky,izh0) =  i*kx*CRk(ikx,iky,izh0)
+               CXIk(ikx,iky,izh0) =  i*kx*CIk(ikx,iky,izh0)
+               CYRk(ikx,iky,izh0) =  i*ky*CRk(ikx,iky,izh0)
+               CYIk(ikx,iky,izh0) =  i*ky*CIk(ikx,iky,izh0)
+
+            enddo
+         enddo
+      enddo
+
+      !FFT them to real-space to compute potential energy
+      call fft_c2r(CXRk,CXRr,n3h0)
+      call fft_c2r(CXIk,CXIr,n3h0)
+      call fft_c2r(CYRk,CYRr,n3h0)
+      call fft_c2r(CYIk,CYIr,n3h0)
+
+      do izh0=1,n3h0
+         izh2=izh0+2
+         do ix=1,n1d
+             do iy=1,n2d
+                if(ix<=n1) then
+
+        p_p = p_p + 0.25*r_2(izh2)*( CXRr(ix,iy,izh0)*CXRr(ix,iy,izh0) + CXIr(ix,iy,izh0)*CXIr(ix,iy,izh0) + CYRr(ix,iy,izh0)*CYRr(ix,iy,izh0) + CYIr(ix,iy,izh0)*CYIr(ix,iy,izh0)  )
+
+                end if
+             end do
+          end do
+       end do
+
+       call mpi_reduce(p_p,p_tot, 1,MPI_REAL, MPI_SUM,0,MPI_COMM_WORLD,ierror)
+
+       !Normalize
+       p_tot = p_tot*Uw_scale*Uw_scale/(n1*n2*n3*Bu)
+
+       if(mype==0) write(unit=unit_conv4 ,fmt=*) time,p_tot
 
 
        !-------------------!
