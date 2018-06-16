@@ -912,6 +912,156 @@ end subroutine hspec
      end subroutine we_conversion
 
 
+
+
+
+
+
+
+     subroutine wke_conversion(BRk, BIk, BRr, BIr, FRk, FIk, FRr, FIr)
+
+       !Computes the wave kinetic energy conversion terms:
+       !     WKE = 0.5 int( LA* LA )dV    = 0.5 int ( BR BR + BI BI ) dV 
+       !\Gamma_d = 0.5 int( LA* D + LA D* )dV = int ( BR DR + BI DI ) dV 
+       !\Gamma_f = 0.5 int( LA* F + LA F* )dV = int ( BR FR + BI FI ) dV 
+
+       double complex,   dimension(iktx,ikty,n3h0) :: BRk, BIk, FRk, FIk
+       double precision, dimension(n1d,n2d,n3h0)   :: BRr, BIr, FRr, FIr
+
+       !Store B temporarily (to avoid fft back)                                                                                                         
+       double complex,   dimension(iktx,ikty,n3h0) :: BRmem, BImem
+
+       !Dissipation + use temporarily store forcing terms
+       double complex,   dimension(iktx,ikty,n3h0) :: dBRk, dBIk
+       double precision, dimension(n1d,n2d,n3h0)   :: dBRr, dBIr
+
+       !Conversion terms for advection, refraction, forcing and dissipation
+       real ::    k_p=0.,   k_tot=0.
+       real ::  ckf_p=0., ckf_tot=0.
+       real ::  ckd_p=0., ckd_tot=0.
+
+       equivalence(dBRk,dBRr)
+       equivalence(dBIk,dBIr)
+
+
+       !Store LA = B to avoid fft-ing back
+       BRmem = BRk
+       BImem = BIk
+
+
+       !-------------------!
+       !--- Dissipation ---!
+       !-------------------!
+
+       !Compute dissipation of LA  == dB
+       do izh0=1,n3h0
+         do iky=1,ikty
+            ky = kya(iky)
+            do ikx=1,iktx
+               kx = kxa(ikx)
+               kh2=kx*kx+ky*ky
+               
+               dBRk(ikx,iky,izh0) = - nuh*((1.*kh2)**(1.*ilap))*BRk(ikx,iky,izh0)
+               dBIk(ikx,iky,izh0) = - nuh*((1.*kh2)**(1.*ilap))*BIk(ikx,iky,izh0)
+               
+            enddo
+         enddo
+      enddo
+      
+      !FFT dB to real-space to compute the conversion terms
+      call fft_c2r(dBRk,dBRr,n3h0)
+      call fft_c2r(dBIk,dBIr,n3h0)
+
+      !FFT B to real-space to compute the conversion terms
+      call fft_c2r(BRk,BRr,n3h0)
+      call fft_c2r(BIk,BIr,n3h0)
+
+
+      !Compute the local integral for dissipation conversion
+      do izh0=1,n3h0
+         do ix=1,n1d
+             do iy=1,n2d
+                if(ix<=n1) then
+
+                   ckd_p = ckd_p + BRr(ix,iy,izh0)*dBRr(ix,iy,izh0) + BIr(ix,iy,izh0)*dBIr(ix,iy,izh0)
+
+                end if
+             end do
+          end do
+       end do
+
+
+
+       !---------------!
+       !--- Forcing ---!
+       !---------------!
+
+       !Temporarily store in ancient dissipation terms 
+       dBRk = FRk
+       dBIk = FIk
+
+      !FFT advection to real-space to compute the conversion term
+      call fft_c2r(FRk,FRr,n3h0)
+      call fft_c2r(FIk,FIr,n3h0)
+
+      !Compute the local integral for forcing conversion
+      do izh0=1,n3h0
+         do ix=1,n1d
+             do iy=1,n2d
+                if(ix<=n1) then
+
+                   ckf_p = ckf_p + BRr(ix,iy,izh0)*FRr(ix,iy,izh0) + BIr(ix,iy,izh0)*FIr(ix,iy,izh0)
+
+                end if
+             end do
+          end do
+       end do
+
+       !Recover k-space advective terms
+       FRk = dBRk
+       FIk = dBIk
+
+
+       !----------------------------!
+       !--- Total Kinetic energy ---!
+       !----------------------------!
+
+      !Compute the local integral of kinetic energy
+      do izh0=1,n3h0
+         do ix=1,n1d
+             do iy=1,n2d
+                if(ix<=n1) then
+
+                   k_p = k_p + 0.5*( BRr(ix,iy,izh0)*BRr(ix,iy,izh0) + BIr(ix,iy,izh0)*BIr(ix,iy,izh0) )
+
+                end if
+             end do
+          end do
+       end do
+
+       BRk = BRmem
+       BIk = BImem
+
+       !-------------------!
+       !--- Write files ---!
+       !-------------------!
+
+       !Sum over all processors
+       call mpi_reduce(k_p  ,  k_tot, 1,MPI_REAL, MPI_SUM,0,MPI_COMM_WORLD,ierror)
+       call mpi_reduce(ckf_p,ckf_tot, 1,MPI_REAL, MPI_SUM,0,MPI_COMM_WORLD,ierror)
+       call mpi_reduce(ckd_p,ckd_tot, 1,MPI_REAL, MPI_SUM,0,MPI_COMM_WORLD,ierror)
+
+       !Normalize
+       ck_tot = ck_tot*Uw_scale*Uw_scale/(n1*n2*n3)
+       cf_tot = cf_tot*Uw_scale*Uw_scale/(n1*n2*n3)
+       cd_tot = cd_tot*Uw_scale*Uw_scale/(n1*n2*n3)
+
+       if(mype==0) write(unit=unit_conv3 ,fmt=*) time,k_tot,ckf_tot,ckd_tot
+
+
+     end subroutine wke_conversion
+
+
  SUBROUTINE enstrophy(zxk,zyk,zzk) 
 
    !This subroutine computes enstrophy cheaply without any form of interpolation.                                                                                    
