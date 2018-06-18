@@ -116,6 +116,13 @@ PROGRAM main
   equivalence(FRr,FRk)
   equivalence(FIr,FIk)
 
+  !Test the potential energy balance by directly diagnosing d/dt B.
+  double complex,   dimension(iktx,ikty,n3h0) :: dBRk, dBIk
+  double precision, dimension(n1d,n2d,n3h0)   :: dBRr, dBIr
+
+  equivalence(dBRr,dBRk)
+  equivalence(dBIr,dBIk)
+
   !********************** Initializing... *******************************!
 
 
@@ -176,9 +183,13 @@ PROGRAM main
     if(out_hspecw ==1) call hspec_waves(BRk,BIk,CRk,CIk,iz)
  end do
 
+ !Just for test: we shall set d/dt B = 0 initially although it isn't the case
+ dBRk = (0.D0,0.D0)
+ dBIk = (0.D0,0.D0)
+
  if(out_we   ==1) call wave_energy(BRk,BIk,CRk,CIk)
  if(out_conv ==1) then
-    call we_conversion(ARk, AIk, BRk, BIk, CRk, CIk, nBRk, nBIk, rBRk, rBIk, FRk, FIk, nBRr, nBIr, rBRr, rBIr, FRr, FIr)
+    call we_conversion(ARk, AIk, BRk, BIk, CRk, CIk,  dBRk, dBIk, nBRk, nBIk, rBRk, rBIk, FRk, FIk, dBRr, dBIr, nBRr, nBIr, rBRr, rBIr, FRr, FIr)
     call wke_conversion(BRk, BIk, BRr, BIr, FRk, FIk, FRr, FIr)
  end if
 
@@ -409,6 +420,10 @@ end if
      enddo
 
 
+     !Compute d/dt B at the same time that the right-hand side is computed (prior to filtering)
+     dBRk = (BRtempk - BRok)/(2.*delt)
+     dBIk = (BItempk - BIok)/(2.*delt)
+
      !Apply Robert-Asselin filter to damp the leap-frog computational mode
      do izh0=1,n3h0
         izh1=izh0+1
@@ -511,7 +526,7 @@ if(out_etot ==1 .and. mod(iter,freq_etot )==0) call diag_zentrum(uk,vk,wk,bk,wak
 
  if(out_we ==1   .and. mod(iter,freq_we   )==0)  call wave_energy(BRk,BIk,CRk,CIk)
  if(out_conv ==1 .and. mod(iter,freq_conv )==0)  then
-    call we_conversion(ARk, AIk, BRk, BIk, CRk, CIk, nBRk, nBIk, rBRk, rBIk, FRk, FIk, nBRr, nBIr, rBRr, rBIr, FRr, FIr)
+    call we_conversion(ARk, AIk, BRk, BIk, CRk, CIk,  dBRk, dBIk, nBRk, nBIk, rBRk, rBIk, FRk, FIk, dBRr, dBIr, nBRr, nBIr, rBRr, rBIr, FRr, FIr)
     call wke_conversion(BRk, BIk, BRr, BIr, FRk, FIk, FRr, FIr)
  end if
 
