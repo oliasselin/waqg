@@ -55,9 +55,9 @@ set xlabel '{/Helvetica-Oblique Eddy turnover times}'
 
 
 set title "Wave potential energy variation budget"
-plot "data/dkdt.dat"        u 1:($2-$3-$4)     w l ls 2 title 'd/dt WKE - Conversions', \
-     "data/dkdt_direct.dat" u 1:($2-$3-$4)     w l ls 1 title 'd/dt WKE - Conversions (Direct)', \
-     "data/dpdt.dat"        u 1:($2+$3+$4-$5-$6) w lp ls 3 title 'd/dt WPE - Conversions', \
-     "data/dpdt_direct.dat" u 1:($2+$3+$4-$5-$6) w lp ls 4 title 'd/dt WPE - Conversions (Direct)', \
+plot "data/dpdt_direct.dat" u 1:2     w lp ls 1 title 'd/dt WPE', \
+     "data/dpdt_direct.dat" u 1:(-$3) w lp ls 2  title 'Advection', \
+     "data/dpdt_direct.dat" u 1:($5)  w lp ls 3  title 'Forcing', \
+     "data/dpdt_direct.dat" u 1:($6)  w lp ls 4 title 'Dissipation', \
      0 w l ls 9 notitle
      
