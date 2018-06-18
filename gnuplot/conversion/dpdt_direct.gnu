@@ -54,7 +54,7 @@ set ylabel '{/Helvetica-Oblique Energy density (m^2 s^{-2}) per eddy turnover ti
 set xlabel '{/Helvetica-Oblique Eddy turnover times}'
 
 
-set title "Wave potential energy variation budget"
+set title "Wave potential energy variation budget (DIRECT)"
 plot "data/dpdt_direct.dat" u 1:2     w lp ls 1 title 'd/dt WPE', \
      "data/dpdt_direct.dat" u 1:(-$3) w lp ls 2  title 'Advection', \
      "data/dpdt_direct.dat" u 1:($5)  w lp ls 3  title 'Forcing', \

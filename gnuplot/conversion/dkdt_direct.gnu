@@ -54,7 +54,7 @@ set ylabel '{/Helvetica-Oblique Energy density (m^2 s^{-2}) per eddy turnover ti
 set xlabel '{/Helvetica-Oblique Eddy turnover times}'
 
 
-set title "Wave kinetic energy variation budget"
+set title "Wave kinetic energy variation budget (direct)"
 plot "data/dkdt_direct.dat" u 1:2     w lp ls 1 title 'd/dt WKE', \
      "data/dkdt_direct.dat" u 1:($3)  w lp ls 2  title 'Forcing', \
      "data/dkdt_direct.dat" u 1:($4)  w lp ls 4 title 'Dissipation', \

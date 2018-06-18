@@ -54,7 +54,7 @@ set ylabel '{/Helvetica-Oblique Energy density (m^2 s^{-2}) per eddy turnover ti
 set xlabel '{/Helvetica-Oblique Eddy turnover times}'
 
 
-set title "Wave potential energy variation budget"
+set title "Departures from balanced budget"
 plot "data/dkdt.dat"        u 1:($2-$3-$4)     w l ls 2 title 'd/dt WKE - Conversions', \
      "data/dkdt_direct.dat" u 1:($2-$3-$4)     w l ls 1 title 'd/dt WKE - Conversions (Direct)', \
      "data/dpdt.dat"        u 1:($2+$3+$4-$5-$6) w lp ls 3 title 'd/dt WPE - Conversions', \
