@@ -2,8 +2,8 @@ MODULE parameters
 
    IMPLICIT NONE
 
-    integer, parameter :: n1=64, n2=64, n3=128
-    integer, parameter :: npe=64
+    integer, parameter :: n1=32, n2=32, n3=64
+    integer, parameter :: npe=32
 
     integer, parameter :: n1d=n1+2, n2d=n2, n3d=n3
     integer, parameter :: n3h0=n3/npe, n3h1=n3/npe+2, n3h2=n3/npe+4
@@ -208,7 +208,7 @@ MODULE parameters
     !PERFECT VISCOSITY: 0.01 * (64./(1.*n1)) **(4./3.)
     !In reality, nuh is 1/Re and nuz is 1/(Ar2*Re) with 1/Re = UL/nu
 
-    double precision, parameter :: coeff =0.4!0.4!0.4!0.1!0.075
+    double precision, parameter :: coeff =0.4!0.4!0.1!0.075
     double precision, parameter :: coeffz=0.!coeff!/10.!/1000!/10.
 
     integer, parameter :: ilap = 4                   !horizontal viscosity = nuh nabla^(2*ilap). So ilap =1 is regular viscosity. ilap>1 is hyperviscosity
