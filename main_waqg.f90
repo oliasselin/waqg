@@ -189,8 +189,8 @@ PROGRAM main
 
  if(out_we   ==1) call wave_energy(BRk,BIk,CRk,CIk)
  if(out_conv ==1) then
+    call wke_conversion(BRk, BIk, BRr, BIr, FRk, FIk, FRr, FIr, dBRk, dBIk, dBRr, dBIr)
     call we_conversion(ARk, AIk, BRk, BIk, CRk, CIk,  dBRk, dBIk, nBRk, nBIk, rBRk, rBIk, FRk, FIk, dBRr, dBIr, nBRr, nBIr, rBRr, rBIr, FRr, FIr)
-    call wke_conversion(BRk, BIk, BRr, BIr, FRk, FIk, FRr, FIr)
  end if
 
  !************************************************************************!
@@ -526,8 +526,8 @@ if(out_etot ==1 .and. mod(iter,freq_etot )==0) call diag_zentrum(uk,vk,wk,bk,wak
 
  if(out_we ==1   .and. mod(iter,freq_we   )==0)  call wave_energy(BRk,BIk,CRk,CIk)
  if(out_conv ==1 .and. mod(iter,freq_conv )==0)  then
+    call wke_conversion(BRk, BIk, BRr, BIr, FRk, FIk, FRr, FIr, dBRk, dBIk, dBRr, dBIr)
     call we_conversion(ARk, AIk, BRk, BIk, CRk, CIk,  dBRk, dBIk, nBRk, nBIk, rBRk, rBIk, FRk, FIk, dBRr, dBIr, nBRr, nBIr, rBRr, rBIr, FRr, FIr)
-    call wke_conversion(BRk, BIk, BRr, BIr, FRk, FIk, FRr, FIr)
  end if
 
  if(time>maxtime) EXIT

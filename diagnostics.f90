@@ -1014,7 +1014,7 @@ end subroutine hspec
 
 
 
-     subroutine wke_conversion(BRk, BIk, BRr, BIr, FRk, FIk, FRr, FIr)
+     subroutine wke_conversion(BRk, BIk, BRr, BIr, FRk, FIk, FRr, FIr, dBRk, dBIk, dBRr, dBIr)
 
        !Computes the wave kinetic energy conversion terms:
        !     WKE = 0.5 int( LA* LA )dV    = 0.5 int ( BR BR + BI BI ) dV 
@@ -1028,6 +1028,10 @@ end subroutine hspec
        double complex,   dimension(iktx,ikty,n3h0) :: BRmem, BImem
 
        !Dissipation + use temporarily store forcing terms
+       double complex,   dimension(iktx,ikty,n3h0) :: dissBRk, dissBIk
+       double precision, dimension(n1d,n2d,n3h0)   :: dissBRr, dissBIr
+
+       !Test: calculate the integral directly with dBdt                                                                                                                                 
        double complex,   dimension(iktx,ikty,n3h0) :: dBRk, dBIk
        double precision, dimension(n1d,n2d,n3h0)   :: dBRr, dBIr
 
@@ -1035,18 +1039,21 @@ end subroutine hspec
        real ::    k_p,   k_tot
        real ::  ckf_p, ckf_tot
        real ::  ckd_p, ckd_tot
+       real ::   cb_p, cb_tot
 
-       equivalence(dBRk,dBRr)
-       equivalence(dBIk,dBIr)
+       equivalence(dissBRk,dissBRr)
+       equivalence(dissBIk,dissBIr)
 
        !Initialize to zero
          k_p = 0.
        ckf_p = 0.
        ckd_p = 0.
+        cb_p = 0.
 
          k_tot = 0.
        ckf_tot = 0.
        ckd_tot = 0.
+        cb_tot = 0.
 
        !Store LA = B to avoid fft-ing back
        BRmem = BRk
@@ -1057,7 +1064,7 @@ end subroutine hspec
        !--- Dissipation ---!
        !-------------------!
 
-       !Compute dissipation of LA  == dB
+       !Compute dissipation of LA  == dissB
        do izh0=1,n3h0
          do iky=1,ikty
             ky = kya(iky)
@@ -1065,16 +1072,16 @@ end subroutine hspec
                kx = kxa(ikx)
                kh2=kx*kx+ky*ky
                
-               dBRk(ikx,iky,izh0) = - nuh*((1.*kh2)**(1.*ilap))*BRk(ikx,iky,izh0)
-               dBIk(ikx,iky,izh0) = - nuh*((1.*kh2)**(1.*ilap))*BIk(ikx,iky,izh0)
+               dissBRk(ikx,iky,izh0) = - nuh*((1.*kh2)**(1.*ilap))*BRk(ikx,iky,izh0)
+               dissBIk(ikx,iky,izh0) = - nuh*((1.*kh2)**(1.*ilap))*BIk(ikx,iky,izh0)
                
             enddo
          enddo
       enddo
       
       !FFT dB to real-space to compute the conversion terms
-      call fft_c2r(dBRk,dBRr,n3h0)
-      call fft_c2r(dBIk,dBIr,n3h0)
+      call fft_c2r(dissBRk,dissBRr,n3h0)
+      call fft_c2r(dissBIk,dissBIr,n3h0)
 
       !FFT B to real-space to compute the conversion terms
       call fft_c2r(BRk,BRr,n3h0)
@@ -1087,7 +1094,7 @@ end subroutine hspec
              do iy=1,n2d
                 if(ix<=n1) then
 
-                   ckd_p = ckd_p + BRr(ix,iy,izh0)*dBRr(ix,iy,izh0) + BIr(ix,iy,izh0)*dBIr(ix,iy,izh0)
+                   ckd_p = ckd_p + BRr(ix,iy,izh0)*dissBRr(ix,iy,izh0) + BIr(ix,iy,izh0)*dissBIr(ix,iy,izh0)
 
                 end if
              end do
@@ -1101,8 +1108,8 @@ end subroutine hspec
        !---------------!
 
        !Temporarily store in ancient dissipation terms 
-       dBRk = FRk
-       dBIk = FIk
+       dissBRk = FRk
+       dissBIk = FIk
 
       !FFT advection to real-space to compute the conversion term
       call fft_c2r(FRk,FRr,n3h0)
@@ -1122,8 +1129,38 @@ end subroutine hspec
        end do
 
        !Recover k-space advective terms
-       FRk = dBRk
-       FIk = dBIk
+       FRk = dissBRk
+       FIk = dissBIk
+
+
+       !--------------------------------------!
+       !--- Direct integral of 0.5 LA*LA_t ---!
+       !--------------------------------------!
+
+       !Temporarily store in ancient dissipation terms 
+       dissBRk = dBRk
+       dissBIk = dBIk
+
+      !FFT advection to real-space to compute the conversion term
+      call fft_c2r(dBRk,dBRr,n3h0)
+      call fft_c2r(dBIk,dBIr,n3h0)
+
+      !Compute the local integral for forcing conversion
+      do izh0=1,n3h0
+         do ix=1,n1d
+             do iy=1,n2d
+                if(ix<=n1) then
+
+                   cb_p = cb_p + BRr(ix,iy,izh0)*dBRr(ix,iy,izh0) + BIr(ix,iy,izh0)*dBIr(ix,iy,izh0)
+
+                end if
+             end do
+          end do
+       end do
+
+       !Recover k-space advective terms
+       dBRk = dissBRk
+       dBIk = dissBIk
 
 
        !----------------------------!
@@ -1159,8 +1196,9 @@ end subroutine hspec
          k_tot =   k_tot*Uw_scale*Uw_scale/(n1*n2*n3)
        ckf_tot = ckf_tot*Uw_scale*Uw_scale/(n1*n2*n3)
        ckd_tot = ckd_tot*Uw_scale*Uw_scale/(n1*n2*n3)
+        cb_tot = ckd_tot*Uw_scale*Uw_scale/(n1*n2*n3)
 
-       if(mype==0) write(unit=unit_conv3 ,fmt=*) time,k_tot,ckf_tot,ckd_tot
+       if(mype==0) write(unit=unit_conv3 ,fmt=*) time,k_tot,ckf_tot,ckd_tot,cb_tot
 
 
      end subroutine wke_conversion
