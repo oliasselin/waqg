@@ -4,7 +4,6 @@ import numpy as np
 #This script compares d/dt WPE to the conversion terms:
 #d/dt [WKE] = \Gamma_f + \Gamma_d   (f:forcing, d: dissipation)                                      
 
-#k[:,i]    is... i=0 time in turnover times, i=1  WKE,      i=2: F,        i=3: D
 #dkdt[:,i] is... i=0 time in turnover times, i=1  d/dt WkE, i=2: \Gamma_f  i=3: \Gamma_d
 
 run = 'shakespeare/test'
