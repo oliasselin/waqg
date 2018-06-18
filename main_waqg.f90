@@ -133,29 +133,19 @@ PROGRAM main
   call init_base_state
 
   !Initialize fields
-  call generate_fields_stag(gcr,n3h0,gsr,n3h0,ur,n3h2) 
+  call generate_fields_stag(psir,n3h1,ARr,n3h0,BRr,n3h0) 
 
-  ARk = (0.D0,0.D0)
+  call fft_r2c(psir,psik,n3h1)
+  call fft_r2c(ARr,ARk,n3h0)
+  call fft_r2c(BRr,BRk,n3h0)
+
   AIk = (0.D0,0.D0)
-  BRk = (0.D0,0.D0)
   BIk = (0.D0,0.D0)
-
    qk = (0.D0,0.D0)
 
-   vk = (0.D0,0.D0)
-   wk = (0.D0,0.D0)
-   bk = (0.D0,0.D0)
-
- psik = (0.D0,0.D0)
-
-  call fft_r2c(ur,uk,n3h2)
-  call fft_r2c(gcr,gck,n3h0)
-  call fft_r2c(gsr,gsk,n3h0)
-
+  call compute_velo(uk,vk,wk,bk,psik) 
   call generate_halo(uk,vk,wk,bk)
-
-  !For envelope file!
-  open (unit=15467311,file="et.dat",action="write",status="replace")
+  call generate_halo_q(qk) 
 
  !Initial diagnostics!
  !*******************!
@@ -173,12 +163,6 @@ PROGRAM main
     if(out_slice ==1)  call slices(BRk,BIk,BRr,BIr,CRk,CIk,id_field)
  end do
  
- !One time call to print the mean flow and gaussian
- do id_field=1,nfields2
-    call slices_wl(uk,gck,gsk,ur,gcr,gsr,id_field)
- end do
-
-
  do iz=1,num_spec
     if(out_hspecw ==1) call hspec_waves(BRk,BIk,CRk,CIk,iz)
  end do
@@ -244,9 +228,6 @@ if(forcing==1) then
    
    FRK = env_c*gck + env_s*gsk
    FIK = env_c*gsk - env_s*gck
-   
-   !Print envelope
-   write(15467311,*) time_forcing, 0.5*amplitude_e*(tanh(omega_e*(time_forcing-tei))-tanh(omega_e*(time_forcing-tef))), env_c
    
    !---------------------------!
 
@@ -383,9 +364,6 @@ if(forcing==1) then
    
    FRK = env_c*gck + env_s*gsk
    FIK = env_c*gsk - env_s*gck
-   
-   !Print envelope
-   write(15467311,*) time_forcing, 0.5*amplitude_e*(tanh(omega_e*(time_forcing-tei))-tanh(omega_e*(time_forcing-tef))), env_c
    
    !---------------------------!
 

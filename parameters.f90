@@ -40,9 +40,9 @@ MODULE parameters
     !Tags to specify run!
     !-------------------!
 
-    integer, parameter :: forcing=1                     !1: Forcing launches wave
-    integer, parameter :: no_dispersion=1
-    integer, parameter :: linear=1                      !1: set the nonlinear terms (advection) to 0. 
+    integer, parameter :: forcing=0                     !1: Forcing launches wave
+    integer, parameter :: no_dispersion=0
+    integer, parameter :: linear=0                      !1: set the nonlinear terms (advection) to 0. 
     integer, parameter :: inviscid=0                    !1: No dissipation, otherwise: dissipation
     integer, parameter :: init_wageo=0                  !1: Initialize wk with Ro*wak
 
