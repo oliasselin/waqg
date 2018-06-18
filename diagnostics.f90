@@ -698,7 +698,7 @@ end subroutine hspec
      end subroutine wave_energy
 
 
-     subroutine we_conversion(ARk, AIk, BRk, BIk, CRk, CIk, nBRk, nBIk, rBRk, rBIk, FRk, FIk, nBRr, nBIr, rBRr, rBIr, FRr, FIr)
+     subroutine we_conversion(ARk, AIk, BRk, BIk, CRk, CIk,  dBRk, dBIk, nBRk, nBIk, rBRk, rBIk, FRk, FIk, dBRr, dBIr, nBRr, nBIr, rBRr, rBIr, FRr, FIr)
 
        !Computes the wave potential energy conversion terms:
        !\Gamma_a = 0.25 int( nabla^2 A* J(psi,LA) + nabla^2 A J(psi,LA)* )dV = 0.5 int ( DR JR + DI JI ) dV where DR = Re(nabla^2 A) and JI = Im( J(psi,LA)   ) etc.
@@ -711,6 +711,10 @@ end subroutine hspec
 
        double complex,   dimension(iktx,ikty,n3h0) :: nBRk, nBIk, rBRk, rBIk, FRk, FIk
        double precision, dimension(n1d,n2d,n3h0)   :: nBRr, nBIr, rBRr, rBIr, FRr, FIr
+
+       !Test: calculate the integral directly with dBdt
+       double complex,   dimension(iktx,ikty,n3h0) :: dBRk, dBIk
+       double precision, dimension(n1d,n2d,n3h0)   :: dBRr, dBIr
 
        !Nabla^2 A --> -kh2
        double complex,   dimension(iktx,ikty,n3h0) :: nARk, nAIk
@@ -742,9 +746,13 @@ end subroutine hspec
        equivalence(CYIk,CYIr)
 
        real :: p_p,p_tot
+       real :: cb_p,cb_tot
 
        p_p   = 0.
        p_tot = 0.
+
+       cb_p   = 0.
+       cb_tot = 0.
 
        ca_p = 0.
        cr_p = 0.
@@ -903,6 +911,33 @@ end subroutine hspec
           end do
        end do
 
+
+       !----------------!
+       !--- d/dt WPE ---!
+       !----------------!
+
+      !FFT LA_t to real-space to compute the conversion term
+      call fft_c2r(dBRk,dBRr,n3h0)
+      call fft_c2r(dBIk,dBIr,n3h0)
+
+      !Compute the local integral for advection conversion
+      do izh0=1,n3h0
+         do ix=1,n1d
+             do iy=1,n2d
+                if(ix<=n1) then
+
+                   cb_p = cb_p + nARr(ix,iy,izh0)*dBRr(ix,iy,izh0) + nAIr(ix,iy,izh0)*dBIr(ix,iy,izh0)
+
+                end if
+             end do
+          end do
+       end do
+
+       call mpi_reduce(cb_p,cb_tot, 1,MPI_REAL, MPI_SUM,0,MPI_COMM_WORLD,ierror)
+
+       !Normalize
+       cb_tot = cb_tot*Uw_scale*Uw_scale/(2.*n1*n2*n3*Bu)
+
        !------------------------------!
        !--- Total potential energy ---!
        !------------------------------!
@@ -948,7 +983,7 @@ end subroutine hspec
        !Normalize
        p_tot = p_tot*Uw_scale*Uw_scale/(n1*n2*n3*Bu)
 
-       if(mype==0) write(unit=unit_conv4 ,fmt=*) time,p_tot
+       if(mype==0) write(unit=unit_conv4 ,fmt=*) time,p_tot,cb_tot
 
 
        !-------------------!
