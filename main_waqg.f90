@@ -99,6 +99,25 @@ PROGRAM main
 
   equivalence(u_rotr,u_rot)
 
+  !For the comprehensive test only.
+  double complex,   dimension(iktx,ikty,n3h0) :: Fqk, Fjk, Fdk, Ftk    !Forcing terms
+  double precision, dimension(n1d,n2d,n3h0)   :: Fqr, Fjr, Fdr
+
+  double complex,   dimension(iktx,ikty,n3h1) :: psitk, qtk       !Exact solution for psi and q
+  double precision, dimension(n1d,n2d,n3h1)   :: psitr, qtr   
+
+  double precision ::   error,L1_local,L2_local,Li_local,L1_global,L2_global,Li_global
+
+  equivalence(Fqr,Fqk)
+  equivalence(Fjr,Fjk)
+  equivalence(Fdr,Fdk)
+
+  equivalence(psitr,psitk)
+  equivalence(qtr,qtk)
+
+  character(len = 32) :: fname                !future file name                                                                                                                       
+  real :: start, finish 
+
   !********************** Initializing... *******************************!
 
 
@@ -107,21 +126,144 @@ PROGRAM main
   call initialize_fftw(array2dr,array2di,fr_even,fk_even,fr_odd,fk_odd)
   call init_arrays
   call init_base_state
-  if(mype==0)  call validate_run
+!  if(mype==0)  call validate_run
 
 
-  !Initialize fields
-  if(init_vertical_structure==generic) then 
-     call init_psi_generic(uk,vk,wk,bk,psik,psir)
+!Initialize the test!
+  !*******************!
+
+  !First generate the exact solution and the associated forcing term
+  call generate_fields_stag(psitr,n3h1,qtr,n3h1,war,n3h1) 
+  call generate_fields_stag2(Fqr,n3h0,Fjr,n3h0,Fdr,n3h0) 
+  psir = psitr
+  qr = qtr
+
+  !Move to Fourier space.
+  call fft_r2c(psir,psik,n3h1)
+  call fft_r2c(qr,qk,n3h1)
+  call fft_r2c(Fqr,Fqk,n3h0)
+  call fft_r2c(Fjr,Fjk,n3h0)
+  call fft_r2c(Fdr,Fdk,n3h0)
+
+  !Set wave terms to 0.
+  BRk = (0.D0,0.D0)
+  BIk = (0.D0,0.D0)
+  ARk = (0.D0,0.D0)
+  AIk = (0.D0,0.D0)
+  !No vertival diffusion
+  dqk=(0.D0,0.D0)
+
+  if(num_q == 1) call init_q(qk,psik)
+  if(num_psi == 1) then
+
+     !Computing the initial error (just to make sure)                                                         
+     do izh0=1,n3h0
+        izh1=izh0+1
+        do iky=1,ikty
+           do ikx=1,iktx
+              if (L(ikx,iky).eq.1) then
+                 qwk(ikx,iky,izh0) = qk(ikx,iky,izh1)
+              endif
+           enddo
+        enddo
+     enddo
+
+     call mpitranspose(qwk,iktx,ikty,n3h0,qt,n3,iktyp)  !Transpose q*                                                                                
+     call psi_solver(psik,qt)
+
+  end if
+  if(num_all == 1) then
+     !Compute q numerically from psi and define as the true solution
      call init_q(qk,psik)
+     call generate_halo_q(qk)
+     qtk = qk
+     call fft_c2r(qtk,qtr,n3h1)
+
+     !Compute psi numerically from the numerical q and define as the true solution
+     do izh0=1,n3h0
+        izh1=izh0+1
+        do iky=1,ikty
+           do ikx=1,iktx
+              if (L(ikx,iky).eq.1) then
+                 qwk(ikx,iky,izh0) = qk(ikx,iky,izh1)
+              endif
+           enddo
+        enddo
+     enddo
+     
+     write(*,*) "Before mpitranspose", mype
+
+     call mpitranspose(qwk,iktx,ikty,n3h0,qt,n3,iktyp)  !Transpose q*                                                                                                             
+
+     write(*,*) "After mpitranspose", mype
+
+     call psi_solver(psik,qt)
+
+     write(*,*) "After psi_solver", mype
+
+     psitk = psik
+     call fft_c2r(psitk,psitr,n3h1)
+
   end if
 
- if(norm_trop==1) call normalize_trop(uk,vk,wk,bk,psik,qk,wak)
+  !Initialize the other fields
+  call compute_velo(uk,vk,wk,bk,psik)
 
- call generate_halo(uk,vk,wk,bk)
- call generate_halo_q(qk) 
+  !Set halos
+  call generate_halo(uk,vk,wk,bk)
+  call generate_halo_q(qk) 
 
- qok=qk 
+  !Test that the initial conditions are consistent!
+  !***********************************************!
+
+  if(init_test==1) then
+
+     call fft_c2r(psik,psir,n3h1)
+     call fft_c2r(qk,qr,n3h1)
+
+     error   =0.
+     L1_local=0.
+     L2_local=0.
+     Li_local=0.
+     L1_global=0.
+     L2_global=0.
+     Li_global=0.
+
+     do izh0=1,n3h0
+        izh1=izh0+1
+        do ix=1,n1
+           do iy=1,n2 
+              
+!              error = ABS( psitr(ix,iy,izh1) - psir(ix,iy,izh1) )
+              error = ABS( qtr(ix,iy,izh1) - qr(ix,iy,izh1) )
+              L1_local = L1_local + error
+              L2_local = L2_local + error**2
+              
+              if(error > Li_local) Li_local = error 
+              
+           end do
+        end do
+     end do
+     
+     call mpi_reduce(L1_local,L1_global, 1,MPI_DOUBLE,MPI_SUM,0,MPI_COMM_WORLD,ierror)  
+     call mpi_reduce(L2_local,L2_global, 1,MPI_DOUBLE,MPI_SUM,0,MPI_COMM_WORLD,ierror)  
+     call mpi_reduce(Li_local,Li_global, 1,MPI_DOUBLE,MPI_MAX,0,MPI_COMM_WORLD,ierror)  
+     
+     if (mype==0) then
+        open (unit = 15467, file = "init-err.dat")
+        write(15467,"(I6,E12.5,E12.5,E12.5)") n3,L1_global/(n1*n2*n3),sqrt(L2_global/(n1*n2*n3)),Li_global
+     end if
+
+     call fft_r2c(psir,psik,n3h1)
+     call fft_r2c(qr,qk,n3h1)
+
+  end if
+
+  !Initialize error file!
+  if(mype==0) then
+     write (fname, "(A3,I1,A1,I1)") "qg_",vres,"_",tres
+     open (unit=154673,file=fname,action="write",status="replace")
+  end if
 
  !Initial diagnostics!
  !*******************!
@@ -190,6 +332,26 @@ PROGRAM main
    rBIk = (0.D0,0.D0)
 end if
 
+
+ !Compute the forcing!
+ if(forcing==1) then
+    do izh0=1,n3h0
+       do iky=1,ikty
+          do ikx=1,iktx
+             if (L(ikx,iky).eq.1) then
+                Ftk(ikx,iky,izh0) = Fqk(ikx,iky,izh0)*sin(a_t*(time-delt)) + Fjk(ikx,iky,izh0)*cos(a_t*(time-delt))*cos(a_t*(time-delt)) + Fdk(ikx,iky,izh0)*cos(a_t*(time-delt))
+             else
+                Ftk(ikx,iky,izh0) = (0.D0,0.D0)
+             endif
+          enddo
+       enddo
+    enddo
+ else
+    Ftk = (0.D0,0.D0)
+ end if
+
+
+
  !Compute q^1 and B^1 with Forward Euler  
  do izh0=1,n3h0
     izh1=izh0+1
@@ -200,7 +362,7 @@ end if
           kh2=kx*kx+ky*ky
           diss = nuh*delt*(1.*kh2)**(1.*ilap)              !This does not work !!!!! diss = nuh*(kh2**ilap)*delt 
           if (L(ikx,iky).eq.1) then
-             qk(ikx,iky,izh1) = (  qok(ikx,iky,izh1) - delt* nqk(ikx,iky,izh0)  + delt*dqk(ikx,iky,izh0) )*exp(-diss)
+             qk(ikx,iky,izh1) = (  qok(ikx,iky,izh1) - delt* nqk(ikx,iky,izh0)  + delt*Ftk(ikx,iky,izh0) + delt*dqk(ikx,iky,izh0) )*exp(-diss)
             BRk(ikx,iky,izh0) = ( BRok(ikx,iky,izh0) - delt*nBRk(ikx,iky,izh0)  - delt*(0.5/(Bu*Ro))*kh2*AIk(ikx,iky,izh0) + delt*0.5*rBIk(ikx,iky,izh0) )*exp(-diss)
             BIk(ikx,iky,izh0) = ( BIok(ikx,iky,izh0) - delt*nBIk(ikx,iky,izh0)  + delt*(0.5/(Bu*Ro))*kh2*ARk(ikx,iky,izh0) - delt*0.5*rBRk(ikx,iky,izh0) )*exp(-diss)
           else
@@ -310,6 +472,25 @@ end if
        rBIk = (0.D0,0.D0)
      end if
 
+
+     !Compute the forcing!
+     if(forcing == 1) then
+        do izh0=1,n3h0
+           do iky=1,ikty
+              do ikx=1,iktx
+                 if (L(ikx,iky).eq.1) then
+                    Ftk(ikx,iky,izh0) = Fqk(ikx,iky,izh0)*sin(a_t*(time-delt)) + Fjk(ikx,iky,izh0)*cos(a_t*(time-delt))*cos(a_t*(time-delt)) + Fdk(ikx,iky,izh0)*cos(a_t*(time-delt))
+                 else
+                    Ftk(ikx,iky,izh0) = (0.D0,0.D0)
+                 endif
+              enddo
+           enddo
+        enddo
+     else
+        Ftk = (0.D0,0.D0)
+     end if
+     
+
      !Compute q^n+1 and B^n+1 using leap-frog
      do izh0=1,n3h0
         izh1=izh0+1
@@ -320,7 +501,7 @@ end if
               kh2=kx*kx+ky*ky
               diss = nuh*delt*(1.*kh2)**(1.*ilap)
               if (L(ikx,iky).eq.1) then
-                 qtempk(ikx,iky,izh1) =  qok(ikx,iky,izh1)*exp(-2*diss) - 2*delt*nqk(ikx,iky,izh0)*exp(-diss)  + 2*delt*dqk(ikx,iky,izh0)*exp(-2*diss)
+                 qtempk(ikx,iky,izh1) =  qok(ikx,iky,izh1)*exp(-2*diss) - 2*delt*nqk(ikx,iky,izh0)*exp(-diss) + 2*delt*Ftk(ikx,iky,izh0)*exp(-diss) + 2*delt*dqk(ikx,iky,izh0)*exp(-2*diss)
                 BRtempk(ikx,iky,izh0) = BRok(ikx,iky,izh0)*exp(-2*diss) - 2*delt*(nBRk(ikx,iky,izh0) + (0.5/(Bu*Ro))*kh2*AIk(ikx,iky,izh0) - 0.5*rBIk(ikx,iky,izh0) )*exp(-diss)
                 BItempk(ikx,iky,izh0) = BIok(ikx,iky,izh0)*exp(-2*diss) - 2*delt*(nBIk(ikx,iky,izh0) - (0.5/(Bu*Ro))*kh2*ARk(ikx,iky,izh0) + 0.5*rBRk(ikx,iky,izh0) )*exp(-diss)
               else
@@ -424,9 +605,115 @@ if(out_etot ==1 .and. mod(iter,freq_etot )==0) call diag_zentrum(uk,vk,wk,bk,wak
     if(out_slice ==1 .and. mod(iter,freq_slice)==0 .and. count_slice(id_field)<max_slices) call slices(uk,vk,wk,bk,wak,u_rot,ur,vr,wr,br,war,u_rotr,id_field)
  end do
 
+if(out_slice ==1 .and. mod(iter,freq_slice)==0) then
+
+   !Print slices of the solution!
+   call fft_c2r(psik,psir,n3h1)
+   call fft_c2r(qk,qr,n3h1)
+   do id_field=8,nfields                                            
+      !call slices(uk,vk,wk,bk,wak,u_rot,ur,vr,wr,br,war,u_rotr,psir,psitr*cos(a_t*time),id_field)
+!      call slices(uk,vk,wk,bk,wak,u_rot,ur,vr,wr,br,war,u_rotr,qr,qtr*cos(a_t*time),id_field)
+   end do
+   
+   !Compute the error on psi!
+   
+   error   =0.
+   L1_local=0.
+   L2_local=0.
+   Li_local=0.
+   L1_global=0.
+   L2_global=0.
+   Li_global=0.
+   
+   do izh0=1,n3h0
+      izh1=izh0+1
+      do ix=1,n1
+         do iy=1,n2
+            
+!            error = ABS( psitr(ix,iy,izh1)*cos(a_t*time) - psir(ix,iy,izh1) )
+            error = ABS( qtr(ix,iy,izh1)*cos(a_t*time) - qr(ix,iy,izh1) )
+            L1_local = L1_local + error
+            L2_local = L2_local + error**2
+            
+            if(error > Li_local) Li_local = error
+            
+         end do
+      end do
+   end do
+   
+   
+   
+   call mpi_reduce(L1_local,L1_global, 1,MPI_DOUBLE,MPI_SUM,0,MPI_COMM_WORLD,ierror)
+   call mpi_reduce(L2_local,L2_global, 1,MPI_DOUBLE,MPI_SUM,0,MPI_COMM_WORLD,ierror)
+   call mpi_reduce(Li_local,Li_global, 1,MPI_DOUBLE,MPI_MAX,0,MPI_COMM_WORLD,ierror)
+   
+   !  if(mype==0) write(*,*) "L1=",L1_global/(n1*n2*n3),"L2=",sqrt(L2_global/(n1*n2*n3)),"Linf=",Li_global                                                                                  
+
+   if (mype==0) then
+!      open (unit = 154673, file = "qg-err.dat")
+      write(154673,"(E12.5,E12.5,E12.5,E12.5)") time,L1_global/(n1*n2*n3),sqrt(L2_global/(n1*n2*n3)),Li_global
+   end if
+   
+
+   call fft_r2c(qr,qk,n3h1)
+   call fft_r2c(psir,psik,n3h1)
+
+end if
+
+
 
  if(time>maxtime) EXIT
 end do !End loop
+
+
+
+!Computing the error!
+!*******************!
+
+
+call fft_c2r(psik,psir,n3h1)
+call fft_c2r(qk,qr,n3h1)
+
+
+error   =0.
+L1_local=0.
+L2_local=0.
+Li_local=0.
+L1_global=0.
+L2_global=0.
+Li_global=0.
+
+do izh0=1,n3h0
+   izh1=izh0+1
+   do ix=1,n1
+      do iy=1,n2 
+         
+!         error = ABS( psitr(ix,iy,izh1)*cos(a_t*time) - psir(ix,iy,izh1) )
+         error = ABS( qtr(ix,iy,izh1)*cos(a_t*time) - qr(ix,iy,izh1) )
+         L1_local = L1_local + error
+         L2_local = L2_local + error**2
+         
+         if(error > Li_local) Li_local = error 
+         
+      end do
+   end do
+end do
+
+
+
+call mpi_reduce(L1_local,L1_global, 1,MPI_DOUBLE,MPI_SUM,0,MPI_COMM_WORLD,ierror)  
+call mpi_reduce(L2_local,L2_global, 1,MPI_DOUBLE,MPI_SUM,0,MPI_COMM_WORLD,ierror)  
+call mpi_reduce(Li_local,Li_global, 1,MPI_DOUBLE,MPI_MAX,0,MPI_COMM_WORLD,ierror)  
+
+!  if(mype==0) write(*,*) "L1=",L1_global/(n1*n2*n3),"L2=",sqrt(L2_global/(n1*n2*n3)),"Linf=",Li_global
+
+if (mype==0) then
+!   open (unit = 154673,status="old", position="append", file = "qg-err.dat")
+!   open (unit = 154673, file = "qg-err.dat")
+   write(154673,"(E12.5,E12.5,E12.5,E12.5)") time,L1_global/(n1*n2*n3),sqrt(L2_global/(n1*n2*n3)),Li_global
+end if
+
+
 
 !************ Terminating processes **********************!                                                                                                                         
 

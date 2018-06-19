@@ -2,8 +2,12 @@ MODULE parameters
 
    IMPLICIT NONE
 
-    integer, parameter :: n1=128, n2=128, n3=128
-    integer, parameter :: npe=64
+    integer, parameter :: vres = 4
+    integer, parameter :: tres = 3
+
+    integer, parameter :: n1=64, n2=64, n3=32*(2**vres)
+    integer, parameter :: npe=32
+
 
     integer, parameter :: n1d=n1+2, n2d=n2, n3d=n3
     integer, parameter :: n3h0=n3/npe, n3h1=n3/npe+2, n3h2=n3/npe+4
@@ -27,20 +31,32 @@ MODULE parameters
     real, parameter :: ktrunc_x = twopi/L1 * float(n1)/3.           ! dimensional truncation wavenumber (x)
     real, parameter :: ktrunc_z = twopi/L3 * float(n3)/3.           ! dimensional truncation wavenumber (x)
 
-    !C's and N's
-    integer, parameter :: n_one = 1, n_two = 2
-    integer, parameter :: barotropic = 1         !if = 1, then the streamfunction is barotropic.
-    double precision, parameter :: c_one = 1./( n_one*n_one - n_one*n_two*tanh(twopi*n_one)/tanh(twopi*n_two) )
-    double precision, parameter :: c_two = 1./( n_two*n_two - n_one*n_two*tanh(twopi*n_two)/tanh(twopi*n_one) )
 
-    integer, parameter :: fixed_flow = 0        !1: Skip the psi-inversion steps
-    integer, parameter :: passive_scalar = 0    !1: Set A and refraction to 0 and skip the LA -> A inversion. BR and BI become two (independent) passive scalars.
+    !For comprehensive test only!
+    !---------------------------!
+
+    integer, parameter :: num_q   = 0  !Take the analytical solution for psi, and compute q   numerically
+    integer, parameter :: num_psi = 0  !Take the analytical solution for q  , and compute psi numerically
+    integer, parameter :: num_all = 1  !Redefine the true solution as the numerical one.
+
+
+    integer, parameter :: init_test = 1
+    integer, parameter :: forcing = 1
+
+    double precision, parameter :: a_x = 1., a_y = 2., a_z = 1., a_t = 1.
+    double precision, parameter :: b_x = 2., b_y = 3.
+
+
     
 
     !Tags to specify run!
     !-------------------!
 
     integer, parameter :: no_waves = 1                  !1: Wave part ignored.
+
+    integer, parameter :: fixed_flow = 0        !1: Skip the psi-inversion steps
+    integer, parameter :: passive_scalar = 0    !1: Set A and refraction to 0 and skip the LA -> A inversion. BR and BI become two (independent) passive scalars.
+
 
     integer, parameter :: no_dispersion=0
     integer, parameter :: linear=0                      !1: set the nonlinear terms (advection) to 0. 
@@ -91,7 +107,7 @@ MODULE parameters
     !----------!
 
     integer, parameter :: tropopause=1, exponential=2, constant_N=3
-    integer, parameter :: stratification = constant_N
+    integer, parameter :: stratification = exponential!constant_N
 
     !Stratification = tropopause!
     integer, parameter :: fraction=128                   !If h#=150m, then fraction=133.333333~128
@@ -171,7 +187,7 @@ MODULE parameters
     double precision, parameter :: Ro  = U_scale/(cor*L_scale)                                  !Rossby number  U/fL
     double precision, parameter :: Fr  = U_scale/(N0*H_scale)                                   !Froude number  U/N(z0)H
     double precision, parameter :: W2F = (Uw_scale/U_scale)**2                                  ! wave to flow velocity magnitude squared
-    double precision, parameter :: Bu  = Fr*Fr/(Ro*Ro)                                          ! (Fr/Ro)^2 = Burger number 
+    double precision, parameter :: Bu  = 1.!Fr*Fr/(Ro*Ro)                                          ! (Fr/Ro)^2 = Burger number 
 
 
 
@@ -181,15 +197,15 @@ MODULE parameters
     real :: time=0.
     integer :: iter=0
     integer :: itermax=1000000000
-    real :: maxtime=40                      
-    double precision, parameter :: delt=0.1*dx !0.5*Bu*Ro/(2.*ktrunc_x*ktrunc_x) !0.25/ktrunc_x !0.5*Bu*Ro/(2.*ktrunc_x*ktrunc_x) 
+    real :: maxtime=1.                      
+    double precision, parameter :: delt=0.05/(2**tres) !0.1*dx !0.5*Bu*Ro/(2.*ktrunc_x*ktrunc_x) !0.25/ktrunc_x !0.5*Bu*Ro/(2.*ktrunc_x*ktrunc_x) 
     double precision, parameter :: gamma=1e-3                                  !Robert filter parameter
 
     !Other successful viscosity: 5e-2 * (10./ktrunc_x ) **2. 
     !PERFECT VISCOSITY: 0.01 * (64./(1.*n1)) **(4./3.)
     !In reality, nuh is 1/Re and nuz is 1/(Ar2*Re) with 1/Re = UL/nu
 
-    double precision, parameter :: coeff =0.1!0.4!0.4!0.1!0.075
+    double precision, parameter :: coeff =0.!0.1!0.4!0.4!0.1!0.075
     double precision, parameter :: coeffz=0.!coeff!/10.!/1000!/10.
 
     integer, parameter :: ilap = 4                   !horizontal viscosity = nuh nabla^(2*ilap). So ilap =1 is regular viscosity. ilap>1 is hyperviscosity
