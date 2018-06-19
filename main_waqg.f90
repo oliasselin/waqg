@@ -111,20 +111,17 @@ PROGRAM main
 
 
   !Initialize fields
-  call generate_fields_stag(psir,n3h1,ARr,n3h0,BRr,n3h0) 
+  if(init_vertical_structure==generic) then 
+     call init_psi_generic(uk,vk,wk,bk,psik,psir)
+     call init_q(qk,psik)
+  end if
 
-  call fft_r2c(psir,psik,n3h1)
-  call fft_r2c(ARr,ARk,n3h0)
-  call fft_r2c(BRr,BRk,n3h0)
+ if(norm_trop==1) call normalize_trop(uk,vk,wk,bk,psik,qk,wak)
 
-  AIk = (0.D0,0.D0)
-  BIk = (0.D0,0.D0)
-   qk = (0.D0,0.D0)
+ call generate_halo(uk,vk,wk,bk)
+ call generate_halo_q(qk) 
 
-  call compute_velo(uk,vk,wk,bk,psik) 
-  call generate_halo(uk,vk,wk,bk)
-  call generate_halo_q(qk) 
-
+ qok=qk 
 
  !Initial diagnostics!
  !*******************!
