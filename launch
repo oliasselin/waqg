@@ -1,10 +1,10 @@
 #!/bin/bash
 
 number_of_nodes=1
-number_of_tasks=2
+number_of_tasks=8
 
-sourdir=/scratch/05518/oasselin/test/source/
-datadir=/scratch/05518/oasselin/test/output/
+sourdir=/scratch/05518/oasselin/test_eady/source/
+datadir=/scratch/05518/oasselin/test_eady/output/
 
 mkdir -p $sourdir
 mkdir -p $datadir
@@ -44,7 +44,7 @@ cat > EXEC_STEP << EXEC
 #SBATCH -p development                # Queue (partition) name
 #SBATCH -N $number_of_nodes           # Total # of nodes 
 #SBATCH -n $number_of_tasks           # Total # of mpi tasks
-#SBATCH -t 00:00:30                   # Run time (hh:mm:ss)
+#SBATCH -t 00:05:00                   # Run time (hh:mm:ss)
 #SBATCH --mail-user=oasselin@ucsd.edu
 ##SBATCH --mail-type=all              # Send email at begin and end of job
 #SBATCH -A TG-OCE180004               # Allocation name (req'd if you have more than 1)
@@ -66,7 +66,7 @@ cat > COMPILE_STEP << COMPILE
                                                                                                                                                        
 
 cd $sourdir
-cp $HOME/waqg/*.f90 .
+cp $HOME/eady/*.f90 .
 
 PARA=parameters.f90
 MAIN=main_waqg.f90
