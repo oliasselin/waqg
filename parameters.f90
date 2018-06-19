@@ -40,6 +40,8 @@ MODULE parameters
     !Tags to specify run!
     !-------------------!
 
+    integer, parameter :: no_waves = 1                  !1: Wave part ignored.
+
     integer, parameter :: no_dispersion=0
     integer, parameter :: linear=0                      !1: set the nonlinear terms (advection) to 0. 
     integer, parameter :: inviscid=0                    !1: No dissipation, otherwise: dissipation

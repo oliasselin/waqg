@@ -141,13 +141,6 @@ PROGRAM main
  do id_field=1,nfields                                            
     if(out_slice ==1)  call slices(BRk,BIk,BRr,BIr,CRk,CIk,id_field)
  end do
- 
- do iz=1,num_spec
-    if(out_hspecw ==1) call hspec_waves(BRk,BIk,CRk,CIk,iz)
- end do
-
- if(out_we   ==1) call wave_energy(BRk,BIk,CRk,CIk)
- if(out_conv ==1) call we_conversion(ARk, AIk, nBRk, nBIk, rBRk, rBIk, nBRr, nBIr, rBRr, rBIr)
 
  !************************************************************************!
  !*** 1st time timestep using the projection method with Forward Euler ***!
@@ -156,9 +149,20 @@ PROGRAM main
  time=delt
  if(itermax>0) then
  iter=1
+
  
- call convol_waqg(nqk,nBRk,nBIk,nqr,nBRr,nBIr,uk,vk,qk,BRk,BIk,ur,vr,qr,BRr,BIr)
- call refraction_waqg(rBRk,rBIk,rBRr,rBIr,BRk,BIk,psik,BRr,BIr,psir)
+ if(no_waves == 1) then
+    call convol_q(nqk,nqr,uk,vk,qk,ur,vr,qr)
+    nBRk=(0.D0,0.D0)
+    nBIk=(0.D0,0.D0)
+    rBRk = (0.D0,0.D0)
+    rBIk = (0.D0,0.D0)
+    ARk = (0.D0,0.D0)
+    AIk = (0.D0,0.D0)
+ else
+    call convol_waqg(nqk,nBRk,nBIk,nqr,nBRr,nBIr,uk,vk,qk,BRk,BIk,ur,vr,qr,BRr,BIr)
+    call refraction_waqg(rBRk,rBIk,rBRr,rBIr,BRk,BIk,psik,BRr,BIr,psir)
+ end if
 
  !Compute dissipation 
  call dissipation_q_nv(dqk,qok)
@@ -218,7 +222,11 @@ end if
 if(fixed_flow==0) then
  ! --- Recover the streamfunction --- !
 
- call compute_qw(qwk,BRk,BIk,qwr,BRr,BIr)           ! Compute qw
+ if(no_waves == 1) then
+    qwk = (0.D0,0.D0)
+ else
+    call compute_qw(qwk,BRk,BIk,qwr,BRr,BIr)           ! Compute qw
+ end if
 
  do izh0=1,n3h0                                     ! Compute q* = q - qw
     izh1=izh0+1
@@ -237,7 +245,7 @@ if(fixed_flow==0) then
  ! ----------------------------------- !
 end if
 
-if(passive_scalar==0) then
+if(passive_scalar==0 .and. no_waves/=1) then
  ! --- Recover A from B --- !
 
  if(zero_aveB==1) call sumB(BRk,BIk)                           !Resets the vertical sum of B to zero
@@ -267,9 +275,19 @@ end if
      
      time=iter*delt
 
-     call convol_waqg(nqk,nBRk,nBIk,nqr,nBRr,nBIr,uk,vk,qk,BRk,BIk,ur,vr,qr,BRr,BIr)
-     call refraction_waqg(rBRk,rBIk,rBRr,rBIr,BRk,BIk,psik,BRr,BIr,psir)
-
+     if(no_waves == 1) then
+        call convol_q(nqk,nqr,uk,vk,qk,ur,vr,qr)
+        nBRk=(0.D0,0.D0)
+        nBIk=(0.D0,0.D0)
+        rBRk = (0.D0,0.D0)
+        rBIk = (0.D0,0.D0)
+        ARk = (0.D0,0.D0)
+        AIk = (0.D0,0.D0)
+     else
+        call convol_waqg(nqk,nBRk,nBIk,nqr,nBRr,nBIr,uk,vk,qk,BRk,BIk,ur,vr,qr,BRr,BIr)
+        call refraction_waqg(rBRk,rBIk,rBRr,rBIr,BRk,BIk,psik,BRr,BIr,psir)
+     end if
+ 
      !Compute dissipation from qok
      call dissipation_q_nv(dqk,qok)
 
@@ -349,7 +367,11 @@ BIk = BItempk
 if(fixed_flow==0) then
  ! --- Recover the streamfunction --- !                                                                                                                   
 
- call compute_qw(qwk,BRk,BIk,qwr,BRr,BIr)           !Compute qw                                                                                          
+ if(no_waves == 1) then
+    qwk = (0.D0,0.D0)
+ else
+    call compute_qw(qwk,BRk,BIk,qwr,BRr,BIr)           ! Compute qw                                                                                                                    
+ end if
 
  do izh0=1,n3h0                                     ! Compute q* = q - qw                                                                                 
     izh1=izh0+1
@@ -369,7 +391,7 @@ if(fixed_flow==0) then
 end if
 
 
-if(passive_scalar==0) then
+if(passive_scalar==0 .and. no_waves/=1) then
  ! --- Recover A from B --- !                                                                                                                                 
 
  if(zero_aveB==1) call sumB(BRk,BIk)                           !Resets the vertical sum of B to zero
@@ -404,13 +426,6 @@ if(out_etot ==1 .and. mod(iter,freq_etot )==0) call diag_zentrum(uk,vk,wk,bk,wak
  do id_field=1,nfields
     if(out_slice ==1 .and. mod(iter,freq_slice)==0 .and. count_slice(id_field)<max_slices)  call slices(BRk,BIk,BRr,BIr,CRk,CIk,id_field)
  end do
-
- do iz=1,num_spec
-    if(out_hspecw ==1  .and. mod(iter,freq_hspecw)==0 ) call hspec_waves(BRk,BIk,CRk,CIk,iz)
- end do
-
- if(out_we ==1   .and. mod(iter,freq_we   )==0)  call wave_energy(BRk,BIk,CRk,CIk)
- if(out_conv ==1 .and. mod(iter,freq_conv )==0)  call we_conversion(ARk, AIk, nBRk, nBIk, rBRk, rBIk, nBRr, nBIr, rBRr, rBIr)
 
 
  if(time>maxtime) EXIT
