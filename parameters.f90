@@ -41,6 +41,7 @@ MODULE parameters
     !-------------------!
 
     integer, parameter :: no_waves = 1                  !1: Wave part ignored.
+    integer, parameter :: eady = 1                      !1: Eady version: add a bunch of terms
 
     integer, parameter :: no_dispersion=0
     integer, parameter :: linear=0                      !1: set the nonlinear terms (advection) to 0. 
@@ -172,6 +173,7 @@ MODULE parameters
     double precision, parameter :: Fr  = U_scale/(N0*H_scale)                                   !Froude number  U/N(z0)H
     double precision, parameter :: W2F = (Uw_scale/U_scale)**2                                  ! wave to flow velocity magnitude squared
     double precision, parameter :: Bu  = Fr*Fr/(Ro*Ro)                                          ! (Fr/Ro)^2 = Burger number 
+    double precision, parameter :: Ek  = 0.                                                     ! Ekman term = r/Ro where r is nondimensionalized by H.
 
 
 
