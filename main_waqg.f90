@@ -338,7 +338,13 @@ end if
            do ikx=1,iktx
               kx = kxa(ikx)
               kh2=kx*kx+ky*ky
-              diss = nuh*delt*(1.*kh2)**(1.*ilap)
+
+              if(eady==1) then
+                 diss = delt* (i*kx*zash0(izh0) +  nuh*(1.*kh2)**(1.*ilap) )     !Integrating factor includes the term Uqx
+              else
+                 diss = nuh*delt*(1.*kh2)**(1.*ilap)          
+              end if
+
               if (L(ikx,iky).eq.1) then
                  qtempk(ikx,iky,izh1) =  qok(ikx,iky,izh1)*exp(-2*diss) - 2*delt*nqk(ikx,iky,izh0)*exp(-diss)  + 2*delt*dqk(ikx,iky,izh0)*exp(-2*diss)
                 BRtempk(ikx,iky,izh0) = BRok(ikx,iky,izh0)*exp(-2*diss) - 2*delt*(nBRk(ikx,iky,izh0) + (0.5/(Bu*Ro))*kh2*AIk(ikx,iky,izh0) - 0.5*rBIk(ikx,iky,izh0) )*exp(-diss)
@@ -348,6 +354,21 @@ end if
                 BRtempk(ikx,iky,izh0) = (0.D0,0.D0)
                 BItempk(ikx,iky,izh0) = (0.D0,0.D0)
               endif
+
+
+              if(eady == 1) then  !Add bottom and top boundary terms                                                                                             
+      
+                 !Bottom boundary: add vQy and the Ekman term                                                                                                             
+                 if(mype == 0 .and. izh0 == 1) then
+                    qk(ikx,iky,izh1) = qk(ikx,iky,izh1) + 2.*delt*(1./dz)*(i*kx*Bu + (1.*kh2)*Ek )*psik(ikx,iky,izh1)*exp(-diss)
+                 end if
+
+                 !Top Boundary: add vQy                                                                                                                                        
+                 if(mype == (npe-1) .and. izh0 == n3h0) then
+                    qk(ikx,iky,izh1) = qk(ikx,iky,izh1) - 2.*delt*(1./dz)*(i*kx*Bu)*psik(ikx,iky,izh1)*exp(-diss)
+                 end if
+              end if
+
            enddo
         enddo
      enddo
