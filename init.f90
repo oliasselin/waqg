@@ -600,12 +600,14 @@ end subroutine init_base_state
     double complex, dimension(iktx,ikty,n3h1) :: psik     
     double precision, dimension(n1d,n2d,n3h1) :: psir
 
+    double precision :: amplitude
     real :: phi(4*ave_k+1,4*ave_k+1)   
     real :: phase,norm1,norm2
-    double precision :: kh
+
+    double precision :: sum_psi=0.
 
     double precision :: kz,kk 
-    
+    double precision :: kh
     
     !Set random amplitude to be broadcasted 
     if(mype==0) then
