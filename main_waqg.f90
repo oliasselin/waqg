@@ -112,7 +112,7 @@ PROGRAM main
 
   call init_eady(psik,psir)
   call init_q(qk,psik)
-
+  call compute_velo(uk,vk,wk,bk,psik)
   call generate_halo(uk,vk,wk,bk)
   call generate_halo_q(qk) 
  
@@ -131,7 +131,7 @@ PROGRAM main
  if(out_etot ==1) call diag_zentrum(uk,vk,wk,bk,wak,psik,u_rot)
 
  do id_field=1,nfields                                            
-    if(out_slice ==1) call slices(uk,vk,wk,bk,wak,u_rot,ur,vr,wr,br,war,u_rotr,id_field)
+    if(out_slice ==1) call slices(uk,vk,bk,psik,qk,ur,vr,br,psir,qr,id_field)
  end do
 
  !************************************************************************!
@@ -457,7 +457,7 @@ end if
 if(out_etot ==1 .and. mod(iter,freq_etot )==0) call diag_zentrum(uk,vk,wk,bk,wak,psik,u_rot)
 
  do id_field=1,nfields
-    if(out_slice ==1 .and. mod(iter,freq_slice)==0 .and. count_slice(id_field)<max_slices) call slices(uk,vk,wk,bk,wak,u_rot,ur,vr,wr,br,war,u_rotr,id_field)
+    if(out_slice ==1 .and. mod(iter,freq_slice)==0 .and. count_slice(id_field)<max_slices) call slices(uk,vk,bk,psik,qk,ur,vr,br,psir,qr,id_field)
  end do
 
 

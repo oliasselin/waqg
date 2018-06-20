@@ -19,7 +19,7 @@ MODULE parameters
     double complex :: i = (0.,1.)
     double precision, parameter :: twopi=4.D0*asin(1.D0)
 
-    double precision, parameter :: dom_x = 80000                              !Horizontal domain size (in m)
+    double precision, parameter :: dom_x = 800000                              !Horizontal domain size (in m)
     double precision, parameter :: dom_z = 4000                               !Vertical   domain size (in m)
     double precision, parameter :: L1=twopi, L2=twopi, L3=twopi               !Domain size
     double precision, parameter :: dx=L1/n1,dy=L2/n2,dz=L3/n3                 !Cell dimensions  
@@ -61,8 +61,8 @@ MODULE parameters
 
     !Eady only
     integer, parameter :: ave_k=10              !Average wavenumber                                                                                          
-    real, parameter ::    var_k=2.              !Variance of of the gaussian in wavenumbers                                                                                          
-    double precision, parameter :: psi_0=0.1
+    real, parameter ::    var_k=10.              !Variance of of the gaussian in wavenumbers                                                                                          
+    double precision, parameter :: psi_0=0.05
 
 
     integer, parameter :: generic=1 
@@ -187,7 +187,7 @@ MODULE parameters
 
     real :: time=0.
     integer :: iter=0
-    integer :: itermax=1000000000
+    integer :: itermax=100000000
     real :: maxtime=40                      
     double precision, parameter :: delt=0.1*dx !0.5*Bu*Ro/(2.*ktrunc_x*ktrunc_x) !0.25/ktrunc_x !0.5*Bu*Ro/(2.*ktrunc_x*ktrunc_x) 
     double precision, parameter :: gamma=1e-3                                  !Robert filter parameter
@@ -273,7 +273,7 @@ MODULE parameters
     integer :: zval=n3/2                      !z-level at which we wish to plo a slice                                                                                                                               
     integer :: yval=n2/2
     integer :: xval=n1/2
-    integer :: hlvl(nfields)=[2,1,2,1,2,1,1]                                   
+    integer :: hlvl(nfields)=[2,2,1,1,2,1,1]                                   
     integer :: hlvl2(nfields2)=[1,1,1,1,0]                                   
 
     integer, parameter :: bot_height = 1
