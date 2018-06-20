@@ -2,8 +2,8 @@ MODULE parameters
 
    IMPLICIT NONE
 
-    integer, parameter :: n1=32, n2=32, n3=32
-    integer, parameter :: npe=2
+    integer, parameter :: n1=128, n2=128, n3=128
+    integer, parameter :: npe=64
 
     integer, parameter :: n1d=n1+2, n2d=n2, n3d=n3
     integer, parameter :: n3h0=n3/npe, n3h1=n3/npe+2, n3h2=n3/npe+4
@@ -41,8 +41,6 @@ MODULE parameters
     !-------------------!
 
     integer, parameter :: no_waves = 1                  !1: Wave part ignored.
-    integer, parameter :: eady     = 1                  !1: Eady version with fixed sheared flow imposed.
-
 
     integer, parameter :: no_dispersion=0
     integer, parameter :: linear=0                      !1: set the nonlinear terms (advection) to 0. 
@@ -182,7 +180,7 @@ MODULE parameters
 
     real :: time=0.
     integer :: iter=0
-    integer :: itermax=1
+    integer :: itermax=1000000000
     real :: maxtime=40                      
     double precision, parameter :: delt=0.1*dx !0.5*Bu*Ro/(2.*ktrunc_x*ktrunc_x) !0.25/ktrunc_x !0.5*Bu*Ro/(2.*ktrunc_x*ktrunc_x) 
     double precision, parameter :: gamma=1e-3                                  !Robert filter parameter
