@@ -2877,15 +2877,15 @@ end subroutine hspec
     !In nondim, stability of GW requires condition on Ar*Fr/(r1*r2) instead of 1/N
 !    if(base_state >= linear_prof .and. delt >= (sqrt(Ar2)*Fr/( sqrt(r_1st(n3/2+1)*r_2st(n3/2+1) ) )))then
     if(delt >= U_scale/(L_scale*sqrt(N_2_stra)) )then          !Equivalently dt must be < U/NL. Worst case with max(N)=Ns
-       write(*,*) "Can't resolve GW, min(Fr_H)=",U_scale/(L_scale*sqrt(N_2_stra))
+!       write(*,*) "Can't resolve GW, min(Fr_H)=",U_scale/(L_scale*sqrt(N_2_stra))
 !       stop
     elseif(delt >= (sqrt(Ar2)*Fr)  )then
-       write(*,*) "Can't resolve GW"
+!       write(*,*) "Can't resolve GW"
 !       stop
     end if
        !In nondim, stability for inertial waves becomes 1/Ro instead of f...
     if(delt >= Ro) then
-       write(*,*) "Can't resolve inertial waves, Ro=",Ro
+!       write(*,*) "Can't resolve inertial waves, Ro=",Ro
 !       stop
     elseif( (normalize==1 .and.   delt >= dz/sqrt(k_init+p_init)) .or. (norm_trop==1) .and. delt >= dz/URMS  ) then   !Approximate CFL depending on the normalization process. Watch out if no normalization!  
        write(*,*) "CFL fails"
@@ -2931,21 +2931,18 @@ end subroutine hspec
 
 
     write(unit_run,*) "Stratification=",stratification
+    write(unit_run,*) "N=",N0
+    write(unit_run,*) "f=",cor
+    write(unit_run,*) "N/f=",N0/cor
+    write(unit_run,*) "Ld=",(N0*dom_z/(cor*3.14159))/1000,"km.   (N D_z / f pi)"
+    write(unit_run,*) "Size of the domain / Ld=",dom_x/(N0*dom_z/(cor*3.14159))
     write(unit_run,*)
-    write(unit_run,*) "N_troposphere  = ",real(sqrt(N_2_trop))
-    write(unit_run,*) "N_stratosphere = ",real(sqrt(N_2_stra))
-    write(unit_run,*)
-    write(unit_run,*) "h = ",real(H_scale*H_N),"meters"
-    write(unit_run,*) "h_NONDIM = 2pi/",fraction," or ",real(1.*n3/(1.*fraction)),"dz"
-    write(unit_run,*) "z0=",z0
-    write(unit_run,*) "where_bz=",where_bz
-    write(unit_run,*) "norm_trop=",norm_trop
+    write(unit_run,*) "Mean flow strength=",U_scale 
+    write(unit_run,*) 
+    write(unit_run,*) "Eddy turnover times (Ld / U_scale), in days",((N0*dom_z/(cor*3.14159))/U_scale)/(3600*24)
+    write(unit_run,*) "Nondim time (L / U_scale), in days",(L_scale/U_scale)/(3600*24)
+    write(unit_run,*) "Number of turnover times in t = 1",L_scale/(N0*dom_z/(cor*3.14159))
     
-
-    write(unit_run,*)  "Vertial structure = ", init_vertical_structure
-
-    write(unit_run,*)  
-    write(unit_run,*)
 
     write(unit_run,*) "Coriolis parameter (f)= ",cor,"s^-1   or ",cor/0.0001,"f_earth"  
     write(unit_run,*) "U = ",U_scale,"ms^-1"
@@ -2955,29 +2952,9 @@ end subroutine hspec
     write(unit_run,*)  
     write(unit_run,*)
 
-
-
-    write(unit_run,*) "N/f = ",real(sqrt(N_2_trop)/cor)," in the troposphere"
-    write(unit_run,*) "N/f = ",real(sqrt(N_2_stra)/cor)," in the stratosphere"
     write(unit_run,*) "Ar = H/L = 1/",L_scale/H_scale
     write(unit_run,*) "Ro = ",Ro,"   Fr = ",Fr,"   Bu = ",Bu    !Average Fr
     
-    write(unit_run,*) "Transition wavelengths (DIM)"
-    write(unit_run,*)  
-
-    write(unit_run,*) "lambda_D = 2pi/kD = ",real(twopi*0.5*(sqrt(N_2_trop)+sqrt(N_2_stra))*10000/cor)            ,"meters"          !kD = f/ND with D is the depth of the domain = 10000m 
-    write(unit_run,*) "lambda_J = 2pi/kJ = ",real(twopi*0.5*(sqrt(N_2_trop)+sqrt(N_2_stra))*real(H_scale*H_N)/cor),"meters"          !kD = f/ND with D is the depth of the domain = 10000m 
-
-    write(unit_run,*)  
-    write(unit_run,*)  
-
-    write(unit_run,*) "Transition wavenumbers (NONDIM) - for SQG behavior, kD << kh << kJ" 
-    write(unit_run,*) 
-
-    write(unit_run,*) "kD = ",sqrt(Bu)/(0.5*twopi)   !fL/NH *1/D' where D' is the nondim dist between tropopause and bot or top.
-    write(unit_run,*) "kJ = ",sqrt(Bu)/H_N
-    write(unit_run,*) "kT = N/3 = ",n1/3          !This is the max well-resolved wavenumber
-
     write(unit_run,*) "Numerical Stability"
     write(unit_run,*)      
     write(unit_run,*) "dt  =",delt 
