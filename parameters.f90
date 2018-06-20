@@ -59,6 +59,11 @@ MODULE parameters
     !Initial structure!
     !-----------------!
 
+    !Eady only
+    integer, parameter :: ave_k=10              !Average wavenumber                                                                                          
+    real, parameter ::    var_k=2.              !Variance of of the gaussian in wavenumbers                                                                                          
+    double precision, parameter :: psi_0=0.1
+
 
     integer, parameter :: generic=1 
     integer, parameter :: init_vertical_structure=1

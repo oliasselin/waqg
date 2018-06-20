@@ -591,14 +591,98 @@ end subroutine init_base_state
         bk=bk*sqrt((k_init+p_init)/(norm1+norm2))
      end if
 
+
    END SUBROUTINE init_psi_generic
+
+
+   SUBROUTINE init_eady(psik,psir)
+
+    double complex, dimension(iktx,ikty,n3h1) :: psik     
+    double precision, dimension(n1d,n2d,n3h1) :: psir
+
+    real :: phi(4*ave_k+1,4*ave_k+1)   
+    real :: phase,norm1,norm2
+    double precision :: kh
+
+    double precision :: kz,kk 
+    
+    
+    !Set random amplitude to be broadcasted 
+    if(mype==0) then
+
+       CALL RANDOM_SEED (PUT=seed)
+
+       do ikx=1,4*ave_k+1
+          do iky=1,4*ave_k+1 
+
+                call random_number(phase)
+                phi(ikx,iky)=twopi*phase       !Random number between 0 and twopi
+
+          enddo
+       enddo
+
+    end if 
+
+    !Broadcast phi to everybody                                                                                                                                       
+    call mpi_bcast(phi,(4*ave_k+1)*(4*ave_k+1),MPI_REAL,0,MPI_COMM_WORLD,ierror)
+
+    
+
+    !Now set psi!
+    !-----------|
+    
+    psir   =0.D0
+
+    do ikx = -2*ave_k,2*ave_k
+       do iky = -2*ave_k,2*ave_k
+          
+          kh2 = ikx*ikx + iky*iky
+          kh  = sqrt(1.D0*kh2)
+          
+          kz  = kh/sqrt(Bu)     !In non-dim form, kz ~ NH/fL kh, Bu = (fL/NH)^2
+          
+          
+          if(kz>0. .and. kh2 >0) then 
+             
+             kk= sqrt(1.D0*kh2)                                                                                                                                
+             amplitude = exp( - (kk - 1.D0*ave_k)*(kk - 1.D0*ave_k)/(2.D0*var_k)) / sqrt(twopi*var_k)         !Gaussian decaying away from k=initial_k  
+             
+             !R-space loop to set psi!                                                                                                                            
+             do izh1=1,n3h1                                                                                                                                                   
+                do ix=1,n1d                                                                                                                                                   
+                   do iy=1,n2d                                                                                                                                                
+                      if(ix<=n1) then                                                                                                                                         
+                         
+                         psir(ix,iy,izh1) =  psir(ix,iy,izh1) + amplitude*cos(1.D0*ikx*xa(ix)  + 1.D0*iky*ya(iy)  + 1.D0*kz*zash1(izh1) + phi(ikx+2*ave_k+1,iky+2*ave_k+1)) 
+                         
+                         if(izh1 > 1 .and. izh1 < n3h1) sum_psi = sum_psi + psir(ix,iy,izh1)*psir(ix,iy,izh1)
+
+                      end if
+                   end do
+                end do
+             end do
+          end if
+          
+       end do
+    end do
+    
+    !Normalize psi to have a RMS of psi_0
+    psir=psir*psi_0/sqrt(sum_psi/(n1*n2*n3))
+
+    !Now move psi to k-space!
+    !-----------------------!
+    call fft_r2c(psir,psik,n3h1)
+ 
+  END SUBROUTINE init_eady
+
+
 
 
  SUBROUTINE init_q(qk,psik)
 
-   !This subroutine simply computes the RHS of the elliptic equation for psi, knowing psi.                                                                                                                          
-   !q = - kh2 psi + 1/rho d/dz (rho a_ell psi_z) with d psi./dz = 0 at bounds.                                                                                                                                                    
-   !The output is q without its halo.                                                                                                                                                                                              
+   !This subroutine simply computes the RHS of the elliptic equation for psi, knowing psi.                                                        
+   !q = - kh2 psi + 1/rho d/dz (rho a_ell psi_z) with d psi./dz = 0 at bounds.                                                                                               
+   !The output is q without its halo.                                                                                                                                    
 
     double complex, dimension(iktx,ikty,n3h1) :: qk,psik
 
@@ -621,10 +705,10 @@ end subroutine init_base_state
        end do
     end do
 
-    !Boundary corrections                                                                                                                                                                                                    
-    !At the top, d psi/dz = 0, so psik(top+1) = psi(top) and psi(bot-1) = psi(bot)                                                                                                                                              
+    !Boundary corrections                                                                                                                 
+    !At the top, d psi/dz = 0, so psik(top+1) = psi(top) and psi(bot-1) = psi(bot)                                                                               
 
-    if(mype==0) then  !At the bottom                                                                                                                                                                                  
+    if(mype==0) then  !At the bottom                                                                                                             
 
        do iky=1,ikty
           ky = kya(iky)

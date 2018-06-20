@@ -110,19 +110,14 @@ PROGRAM main
   if(mype==0)  call validate_run
 
 
-  !Initialize fields
-  if(init_vertical_structure==generic) then 
-     call init_psi_generic(uk,vk,wk,bk,psik,psir)
-     call init_q(qk,psik)
-  end if
+  call init_eady(psik,psir)
+  call init_q(qk,psik)
 
- if(norm_trop==1) call normalize_trop(uk,vk,wk,bk,psik,qk,wak)
-
- call generate_halo(uk,vk,wk,bk)
- call generate_halo_q(qk) 
-
- qok=qk 
-
+  call generate_halo(uk,vk,wk,bk)
+  call generate_halo_q(qk) 
+ 
+  qok=qk 
+ 
  !Initial diagnostics!
  !*******************!
 
