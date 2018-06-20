@@ -91,7 +91,7 @@ PROGRAM main
   equivalence(array2dr,array2di)
 
   !For implicit dissipation
-  double precision :: diss             ! nu_H * kH**(2*ilap) delt
+  double complex :: diss             ! nu_H * kH**(2*ilap) delt
 
   !Rotational part of u for slice...                                                                                                                                                                                                         
   double complex, dimension(iktx,ikty,n3h1) :: u_rot
@@ -210,7 +210,7 @@ end if
             BIk(ikx,iky,izh0) = (0.D0,0.D0)
           endif
 
-          if(eady == 1) then  !Add bottom and top boundary terms
+          if(eady == 1 .and. eady_bnd == 1) then  !Add bottom and top boundary terms
              !Bottom boundary: add vQy and the Ekman term                
              if(mype == 0 .and. izh0 == 1) then
                 qk(ikx,iky,izh1) = qk(ikx,iky,izh1) + delt*(1./dz)*(i*kx*Bu + (1.*kh2)*Ek )*psik(ikx,iky,izh1)*exp(-diss)
@@ -351,8 +351,7 @@ end if
               endif
 
 
-              if(eady == 1) then  !Add bottom and top boundary terms                                                                                             
-      
+              if(eady == 1 .and. eady_bnd == 1) then  !Add bottom and top boundary terms      
                  !Bottom boundary: add vQy and the Ekman term                                                                                                             
                  if(mype == 0 .and. izh0 == 1) then
                     qk(ikx,iky,izh1) = qk(ikx,iky,izh1) + 2.*delt*(1./dz)*(i*kx*Bu + (1.*kh2)*Ek )*psik(ikx,iky,izh1)*exp(-diss)
