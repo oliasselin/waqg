@@ -91,7 +91,7 @@ PROGRAM main
   equivalence(array2dr,array2di)
 
   !For implicit dissipation
-  double precision :: diss             ! nu_H * kH**(2*ilap) delt
+  double complex :: diss             ! nu_H * kH**(2*ilap) delt
 
   !Rotational part of u for slice...                                                                                                                                                                                                         
   double complex, dimension(iktx,ikty,n3h1) :: u_rot
@@ -190,6 +190,43 @@ PROGRAM main
    rBIk = (0.D0,0.D0)
 end if
 
+
+if(eady == 1) then
+ !Compute q^1 and B^1 with Forward Euler  
+ do izh0=1,n3h0
+    izh1=izh0+1
+    do iky=1,ikty
+       ky = kya(iky)
+       do ikx=1,iktx
+          kx = kxa(ikx)
+          kh2=kx*kx+ky*ky
+          diss = delt* (i*kx*zash0(izh0) +  nuh*(1.*kh2)**(1.*ilap) )     !Integrating factor includes the term Uqx 
+
+          if (L(ikx,iky).eq.1) then
+             qk(ikx,iky,izh1) = (  qok(ikx,iky,izh1) - delt* nqk(ikx,iky,izh0)  + delt*dqk(ikx,iky,izh0) )*exp(-diss)
+            BRk(ikx,iky,izh0) = (0.D0,0.D0)
+            BIk(ikx,iky,izh0) = (0.D0,0.D0)
+          else
+             qk(ikx,iky,izh1) = (0.D0,0.D0)
+            BRk(ikx,iky,izh0) = (0.D0,0.D0)
+            BIk(ikx,iky,izh0) = (0.D0,0.D0)
+          endif
+
+          !Bottom boundary: add vQy and the Ekman term
+          if(mype == 0 .and. izh0 == 1) then   
+             qk(ikx,iky,izh1) = qk(ikx,iky,izh1) + delt*(1./dz)*(i*kx*Bu + (1.*kh2)*Ek )*psik(ikx,iky,izh1)*exp(-diss)
+          end if
+
+          !Top Boundary: add vQy 
+          if(mype == (npe-1) .and. izh0 == n3h0) then   
+             qk(ikx,iky,izh1) = qk(ikx,iky,izh1) - delt*(1./dz)*(i*kx*Bu)*psik(ikx,iky,izh1)*exp(-diss)
+          end if
+
+
+       enddo
+    enddo
+ enddo
+else  !Normal, non-Eady operation mode
  !Compute q^1 and B^1 with Forward Euler  
  do izh0=1,n3h0
     izh1=izh0+1
@@ -211,7 +248,7 @@ end if
        enddo
     enddo
  enddo
-
+end if
 
  !Generate halo for q
  call generate_halo_q(qk)
