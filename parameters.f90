@@ -19,7 +19,7 @@ MODULE parameters
     double complex :: i = (0.,1.)
     double precision, parameter :: twopi=4.D0*asin(1.D0)
 
-    double precision, parameter :: dom_x = 800000                              !Horizontal domain size (in m)
+    double precision, parameter :: dom_x = 1600000                            !Horizontal domain size (in m)
     double precision, parameter :: dom_z = 4000                               !Vertical   domain size (in m)
     double precision, parameter :: L1=twopi, L2=twopi, L3=twopi               !Domain size
     double precision, parameter :: dx=L1/n1,dy=L2/n2,dz=L3/n3                 !Cell dimensions  
@@ -42,6 +42,7 @@ MODULE parameters
 
     integer, parameter :: no_waves = 1                  !1: Wave part ignored.
     integer, parameter :: eady = 1                      !1: Eady version: add a bunch of terms
+    integer, parameter :: eady_bnd = 1                  !1: Eady version: include the boundary terms (set NOT to zero only for testing purposes)
 
     integer, parameter :: no_dispersion=0
     integer, parameter :: linear=0                      !1: set the nonlinear terms (advection) to 0. 
@@ -62,7 +63,7 @@ MODULE parameters
     !Eady only
     integer, parameter :: ave_k=10              !Average wavenumber                                                                                          
     real, parameter ::    var_k=10.              !Variance of of the gaussian in wavenumbers                                                                                          
-    double precision, parameter :: psi_0=0.05
+    double precision, parameter :: psi_0=0.1
 
 
     integer, parameter :: generic=1 
@@ -171,14 +172,14 @@ MODULE parameters
     double precision, parameter :: H_scale=dom_z/L3          !Actual H in m ( z_real = H z' where z' in [0:L3]  is the nondim z.)
     double precision, parameter :: L_scale=dom_x/L1          !Actual L in m ( x_real = L x' where x' in [0:2pi] is the nondim x.)
     double precision, parameter :: cor=0.0001!0.00000000001!0.0005 !0.0001                           !Actual f = 0.0001 s^-1 (real value of planet Earth)
-    double precision, parameter :: U_scale=0.1                        !Actual U in m/s (u_real = U u' where u' is the nondim velocity ur implemented in the code)
+    double precision, parameter :: U_scale=0.1/(twopi)                        !Actual U in m/s (u_real = U u' where u' is the nondim velocity ur implemented in the code)
     double precision, parameter :: Uw_scale=1.                       !Characteristic magnitude of wave velocity (wave counterpart to U_scale for flow)
     double precision, parameter :: Ar2 = (H_scale/L_scale)**2                                   !(1./64.)**2!(1./10.)**2 !0.01     !Aspect ratio squared = (H/L)^2     
     double precision, parameter :: Ro  = U_scale/(cor*L_scale)                                  !Rossby number  U/fL
     double precision, parameter :: Fr  = U_scale/(N0*H_scale)                                   !Froude number  U/N(z0)H
     double precision, parameter :: W2F = (Uw_scale/U_scale)**2                                  ! wave to flow velocity magnitude squared
     double precision, parameter :: Bu  = Fr*Fr/(Ro*Ro)                                          ! (Fr/Ro)^2 = Burger number 
-    double precision, parameter :: Ek  = 0.                                                     ! Ekman term = r/Ro where r is nondimensionalized by H.
+    double precision, parameter :: Ek  = 1.                                                    ! Ekman term = r/Ro where r is nondimensionalized by H.
 
 
 
@@ -189,14 +190,14 @@ MODULE parameters
     integer :: iter=0
     integer :: itermax=100000000
     real :: maxtime=40                      
-    double precision, parameter :: delt=0.1*dx !0.5*Bu*Ro/(2.*ktrunc_x*ktrunc_x) !0.25/ktrunc_x !0.5*Bu*Ro/(2.*ktrunc_x*ktrunc_x) 
+    double precision, parameter :: delt=0.0001*dx !0.5*Bu*Ro/(2.*ktrunc_x*ktrunc_x) !0.25/ktrunc_x !0.5*Bu*Ro/(2.*ktrunc_x*ktrunc_x) 
     double precision, parameter :: gamma=1e-3                                  !Robert filter parameter
 
     !Other successful viscosity: 5e-2 * (10./ktrunc_x ) **2. 
     !PERFECT VISCOSITY: 0.01 * (64./(1.*n1)) **(4./3.)
     !In reality, nuh is 1/Re and nuz is 1/(Ar2*Re) with 1/Re = UL/nu
 
-    double precision, parameter :: coeff =0.1!0.4!0.4!0.1!0.075
+    double precision, parameter :: coeff =0.1!0.1!0.4!0.4!0.1!0.075
     double precision, parameter :: coeffz=0.!coeff!/10.!/1000!/10.
 
     integer, parameter :: ilap = 4                   !horizontal viscosity = nuh nabla^(2*ilap). So ilap =1 is regular viscosity. ilap>1 is hyperviscosity
