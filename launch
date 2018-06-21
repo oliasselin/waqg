@@ -1,10 +1,10 @@
 #!/bin/bash
 
 number_of_nodes=1
-number_of_tasks=2
+number_of_tasks=64
 
-sourdir=/scratch/05518/oasselin/test_eady/source/
-datadir=/scratch/05518/oasselin/test_eady/output/
+sourdir=/scratch/05518/oasselin/eady_Ek1_dt0.0001/source/
+datadir=/scratch/05518/oasselin/eady_Ek1_dt0.0001/output/
 
 mkdir -p $sourdir
 mkdir -p $datadir
@@ -38,13 +38,13 @@ cat > EXEC_STEP << EXEC
 #
 #----------------------------------------------------
 
-#SBATCH -J test                       # Job name
-#SBATCH -o $HOME/monitor/test.o%j     # Name of stdout output file
-#SBATCH -e $HOME/monitor/test.e%j     # Name of stderr error file
-#SBATCH -p development                # Queue (partition) name
+#SBATCH -J test1                       # Job name
+#SBATCH -o $HOME/monitor/test1.o%j     # Name of stdout output file
+#SBATCH -e $HOME/monitor/test1.e%j     # Name of stderr error file
+#SBATCH -p normal                     # Queue (partition) name
 #SBATCH -N $number_of_nodes           # Total # of nodes 
 #SBATCH -n $number_of_tasks           # Total # of mpi tasks
-#SBATCH -t 00:00:30                   # Run time (hh:mm:ss)
+#SBATCH -t 04:00:00                   # Run time (hh:mm:ss)
 #SBATCH --mail-user=oasselin@ucsd.edu
 ##SBATCH --mail-type=all              # Send email at begin and end of job
 #SBATCH -A TG-OCE180004               # Allocation name (req'd if you have more than 1)
