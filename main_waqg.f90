@@ -116,7 +116,8 @@ PROGRAM main
   call generate_halo(uk,vk,wk,bk)
   call generate_halo_q(qk) 
  
-  qok=qk 
+ psi_old = psik 
+     qok = qk 
  
  !Initial diagnostics!
  !*******************!
@@ -233,6 +234,9 @@ end if
 
 if(fixed_flow==0) then
  ! --- Recover the streamfunction --- !
+
+ !Keep the old version of psi for the stability of the Ekman term
+ psi_old = psik 
 
  if(no_waves == 1) then
     qwk = (0.D0,0.D0)
@@ -398,6 +402,9 @@ BIk = BItempk
 
 if(fixed_flow==0) then
  ! --- Recover the streamfunction --- !                                                                                                                   
+
+ !Keep the old version of psi for the stability of the Ekman term
+ psi_old = psik 
 
  if(no_waves == 1) then
     qwk = (0.D0,0.D0)
