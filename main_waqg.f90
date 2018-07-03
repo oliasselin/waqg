@@ -358,12 +358,12 @@ end if
               if(eady == 1 .and. eady_bnd == 1) then  !Add bottom and top boundary terms      
                  !Bottom boundary: add vQy and the Ekman term                                                                                                             
                  if(mype == 0 .and. izh0 == 1) then
-                    qk(ikx,iky,izh1) = qk(ikx,iky,izh1) + 2.*delt*(1./dz)*(i*kx*Bu*psik(ikx,iky,izh1) + (1.*kh2)*Ek*psi_old(ikx,iky,izh1)  )*exp(-diss)
+                    qtempk(ikx,iky,izh1) = qtempk(ikx,iky,izh1) + 2.*delt*(1./dz)*(i*kx*Bu*psik(ikx,iky,izh1) + (1.*kh2)*Ek*psi_old(ikx,iky,izh1)  )*exp(-diss)
                  end if
 
                  !Top Boundary: add vQy                                                                                                                                        
                  if(mype == (npe-1) .and. izh0 == n3h0) then
-                    qk(ikx,iky,izh1) = qk(ikx,iky,izh1) - 2.*delt*(1./dz)*(i*kx*Bu)*psik(ikx,iky,izh1)*exp(-diss)
+                    qtempk(ikx,iky,izh1) = qtempk(ikx,iky,izh1) - 2.*delt*(1./dz)*(i*kx*Bu)*psik(ikx,iky,izh1)*exp(-diss)
                  end if
               end if
 
