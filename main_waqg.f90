@@ -101,6 +101,7 @@ PROGRAM main
 
   !Error computation
   double precision ::   error,L1_local,L2_local,Li_local,L1_global,L2_global,Li_global
+  character(len = 32) :: fname                !future file name                                                                                                                       
 
 
   !********************** Initializing... *******************************!
