@@ -99,6 +99,10 @@ PROGRAM main
 
   equivalence(u_rotr,u_rot)
 
+  !Error computation
+  double precision ::   error,L1_local,L2_local,Li_local,L1_global,L2_global,Li_global
+
+
   !********************** Initializing... *******************************!
 
 
@@ -110,12 +114,17 @@ PROGRAM main
   if(mype==0)  call validate_run
 
 
-  call init_eady(psik,psir)
-  call init_q(qk,psik)
-  call compute_velo(uk,vk,wk,bk,psik)
-  call generate_halo(uk,vk,wk,bk)
+  !Initialize error file!
+  if(mype==0) then
+     write (fname, "(A22)") "eady_lin_adv_error.dat"
+     open (unit=154673,file=fname,action="write",status="replace")
+  end if
+
+  !Initialize q as simply cos(x):
+  call generate_fields_stag(qr,n3h1,psir,n3h1,ur,n3h2) 
+  call fft_r2c(qr,qk,n3h1)
   call generate_halo_q(qk) 
- 
+  
  psi_old = psik 
      qok = qk 
  
@@ -467,8 +476,72 @@ if(out_etot ==1 .and. mod(iter,freq_etot )==0) call diag_zentrum(uk,vk,wk,bk,wak
  end do
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+if(out_slice ==1 .and. mod(iter,freq_slice)==0) then
+
+   !Print slices of the solution!
+   call fft_c2r(qk,qr,n3h1)
+   
+   !Compute the error on q!
+   
+   error   =0.
+   L1_local=0.
+   L2_local=0.
+   Li_local=0.
+   L1_global=0.
+   L2_global=0.
+   Li_global=0.
+   
+   do izh0=1,n3h0
+      izh1=izh0+1
+      do ix=1,n1
+         do iy=1,n2
+
+!            error = ABS( psitr(ix,iy,izh1)*cos(a_t*time) - psir(ix,iy,izh1) )
+            error = ABS( cos(xa(ix) - zash0(izh0)*time) - qr(ix,iy,izh1) )
+            L1_local = L1_local + error
+            L2_local = L2_local + error**2
+            
+            if(error > Li_local) Li_local = error
+            
+         end do
+      end do
+   end do
+   
+   
+   
+   call mpi_reduce(L1_local,L1_global, 1,MPI_DOUBLE,MPI_SUM,0,MPI_COMM_WORLD,ierror)
+   call mpi_reduce(L2_local,L2_global, 1,MPI_DOUBLE,MPI_SUM,0,MPI_COMM_WORLD,ierror)
+   call mpi_reduce(Li_local,Li_global, 1,MPI_DOUBLE,MPI_MAX,0,MPI_COMM_WORLD,ierror)
+   
+   !  if(mype==0) write(*,*) "L1=",L1_global/(n1*n2*n3),"L2=",sqrt(L2_global/(n1*n2*n3)),"Linf=",Li_global                                                                                  
+
+   if (mype==0) then
+      write(154673,"(E12.5,E12.5,E12.5,E12.5)") time,L1_global/(n1*n2*n3),sqrt(L2_global/(n1*n2*n3)),Li_global
+   end if
+   
+
+   call fft_r2c(qr,qk,n3h1)
+
+end if
+
+
+
  if(time>maxtime) EXIT
 end do !End loop
+
+
 
 !************ Terminating processes **********************!                                                                                                                         
 
