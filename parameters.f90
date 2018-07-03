@@ -42,11 +42,11 @@ MODULE parameters
 
     integer, parameter :: no_waves = 1                  !1: Wave part ignored.
     integer, parameter :: eady = 1                      !1: Eady version: add a bunch of terms
-    integer, parameter :: eady_bnd = 0                  !1: Eady version: include the boundary terms (set NOT to zero only for testing purposes)
+    integer, parameter :: eady_bnd = 1                  !1: Eady version: include the boundary terms (set NOT to zero only for testing purposes)
 
     integer, parameter :: no_dispersion=0
-    integer, parameter :: linear=1                      !1: set the nonlinear terms (advection) to 0. 
-    integer, parameter :: inviscid=1                    !1: No dissipation, otherwise: dissipation
+    integer, parameter :: linear=0                      !1: set the nonlinear terms (advection) to 0. 
+    integer, parameter :: inviscid=0                    !1: No dissipation, otherwise: dissipation
     integer, parameter :: init_wageo=0                  !1: Initialize wk with Ro*wak
 
     integer, parameter :: zero_aveB=1                   !1: Set B=LA vertical average to zero
