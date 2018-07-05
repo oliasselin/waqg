@@ -1339,7 +1339,7 @@ end subroutine hspec
     if( bot_height > mype*n3h0 .AND. bot_height <= (mype+1)*n3h0 ) then
        
        !          write (fname, "(A9,I1,I1,A4)") "slicehbot",id_field,count_slice(id_field),".dat"
-       write (fname, "(A9,I1,I2,A4)") "slicehbot",id_field,count_slice(id_field),".dat"
+       write (fname, "(A9,I1,I3,A4)") "slicehbot",id_field,count_slice(id_field),".dat"
        open (unit=count_slice(id_field),file=fname,action="write",status="replace")
        
        iz=bot_height - mype*n3h0 + hlvl(id_field)
@@ -1360,7 +1360,7 @@ end subroutine hspec
     if( mid_height > mype*n3h0 .AND. mid_height <= (mype+1)*n3h0 ) then
        
        !          write (fname, "(A9,I1,I1,A4)") "slicehmid",id_field,count_slice(id_field),".dat"
-       write (fname, "(A9,I1,I2,A4)") "slicehmid",id_field,count_slice(id_field),".dat"
+       write (fname, "(A9,I1,I3,A4)") "slicehmid",id_field,count_slice(id_field),".dat"
        open (unit=count_slice(id_field),file=fname,action="write",status="replace")
        
        iz=mid_height - mype*n3h0 + hlvl(id_field)
@@ -1380,7 +1380,7 @@ end subroutine hspec
     if( top_height > mype*n3h0 .AND. top_height <= (mype+1)*n3h0 ) then
        
        !          write (fname, "(A9,I1,I1,A4)") "slicehtop",id_field,count_slice(id_field),".dat"
-       write (fname, "(A9,I1,I2,A4)") "slicehtop",id_field,count_slice(id_field),".dat"
+       write (fname, "(A9,I1,I3,A4)") "slicehtop",id_field,count_slice(id_field),".dat"
        open (unit=count_slice(id_field),file=fname,action="write",status="replace")
        
        iz=top_height - mype*n3h0 + hlvl(id_field)
@@ -1403,7 +1403,7 @@ end subroutine hspec
 
        if(mype==0) then
 !          write (fname, "(A6,I1,I1,A4)") "slicev",id_field,count_slice(id_field),".dat"
-          write (fname, "(A6,I1,I2,A4)") "slicev",id_field,count_slice(id_field),".dat"
+          write (fname, "(A6,I1,I3,A4)") "slicev",id_field,count_slice(id_field),".dat"
           open (unit=count_slice(id_field),file=fname,action="write",status="replace")
 
           !Copy ur slice on XY_slice (NOTICE IT'S NOT ON XY_slice_p)                                                                                                                                                                      
