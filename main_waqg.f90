@@ -113,8 +113,8 @@ PROGRAM main
   call init_eady(psik,psir)
   call init_q(qk,psik)
   call compute_velo(uk,vk,wk,bk,psik)
-  call generate_halo(uk,vk,wk,bk)
-  call generate_halo_q(qk) 
+  if(npe > 1) call generate_halo(uk,vk,wk,bk)
+  if(npe > 1) call generate_halo_q(qk) 
  
  psi_old = psik 
      qok = qk 
@@ -230,7 +230,7 @@ end if
 
 
  !Generate halo for q
- call generate_halo_q(qk)
+ if(npe > 1) call generate_halo_q(qk)
 
 if(fixed_flow==0) then
  ! --- Recover the streamfunction --- !
@@ -276,7 +276,7 @@ end if
 
  !Compute the corresponding u,v,w and t (u and v to be used in convol)                                                                                    
  call compute_velo(uk,vk,wk,bk,psik)
- call generate_halo(uk,vk,wk,bk)
+ if(npe > 1) call generate_halo(uk,vk,wk,bk)
 
 end if
 
@@ -396,8 +396,8 @@ BRk = BRtempk
 BIk = BItempk
 
  !Generate halo for q
- call generate_halo_q(qk)
- call generate_halo_q(qok)
+ if(npe > 1) call generate_halo_q(qk)
+ if(npe > 1) call generate_halo_q(qok)
  
 
 if(fixed_flow==0) then
@@ -446,7 +446,7 @@ end if
 
  !Compute the corresponding u,v,w and t 
  call compute_velo(uk,vk,wk,bk,psik)
- call generate_halo(uk,vk,wk,bk) 
+ if(npe > 1) call generate_halo(uk,vk,wk,bk) 
 
 
  !*** Diagnostics ***!
@@ -457,7 +457,7 @@ end if
     call omega_eqn_rhs(rhs,rhsr,psik)
     call mpitranspose(rhs,iktx,ikty,n3h0,qt,n3,iktyp)
     call omega_equation(wak,qt)
-    call generate_halo_q(wak)
+    if(npe > 1) call generate_halo_q(wak)
  end if
  
 if(out_etot ==1 .and. mod(iter,freq_etot )==0) call diag_zentrum(uk,vk,wk,bk,wak,psik,u_rot)
