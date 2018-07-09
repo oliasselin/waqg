@@ -40,6 +40,8 @@ MODULE parameters
     !Tags to specify run!
     !-------------------!
 
+    integer, parameter :: error_init = 1
+
     integer, parameter :: no_waves = 1                  !1: Wave part ignored.
     integer, parameter :: eady = 1                      !1: Eady version: add a bunch of terms
     integer, parameter :: eady_bnd = 1                  !1: Eady version: include the boundary terms (set NOT to zero only for testing purposes)
