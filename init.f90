@@ -875,6 +875,7 @@ end do
       integer :: hlev1,hlev2,hlev3   !What's your halo?
       integer :: iz1,iz2,iz3
 
+      double precision :: amp_factor
 
       hlev1=(nz1-n3h0)/2
       hlev2=(nz2-n3h0)/2
@@ -930,8 +931,40 @@ do ix=1,n1d
          end if
 
       if(ix<=n1) then
-         if(z1>=0) f1s(ix,iy,iz1)=z1*cos(x)
-         if(z2>=0) f2s(ix,iy,iz2)=z2*cos(x)
+         if(z1>=0) then
+
+            !This is A in (1-A)/(1+A). Only works for kh2 = 1
+            amp_factor = 1. / sqrt( 1. + 2.*Bu/(dz*dz) ) 
+
+
+            if(z1 < twopi/2.) then 
+               if(ix == 2 .and. iy == 2) write(*,*) "Field 1, psi_1 at z =",z1,"should be approximately =",L3/4
+               f1s(ix,iy,iz1)=cos(x)
+
+            else
+               if(ix == 2 .and. iy == 2) write(*,*) "Field 1, psi_2 at z =",z1,"should be approximately =",3*L3/4
+               f1s(ix,iy,iz1)=((1-amp_factor)/(1+amp_factor))*cos(x)
+
+            end if
+
+         end if
+         if(z2>=0) then
+
+            !This is A in (1-A)/(1+A). Only works for kh2 = 1                                                                                                          
+            amp_factor = 1. / sqrt( 1. + 2.*Bu/(dz*dz) )
+
+
+            if(z2 < twopi/2.) then
+               if(ix == 2 .and. iy == 2) write(*,*) "Field 2, psi_1 at z =",z2,"should be approximately =",L3/4
+               f2s(ix,iy,iz2)=cos(x)
+
+            else
+               if(ix == 2 .and. iy == 2) write(*,*) "Field 2, psi_2 at z =",z2,"should be approximately =",3*L3/4
+               f2s(ix,iy,iz2)=((1-amp_factor)/(1+amp_factor))*cos(x)
+
+            end if
+
+         end if
          if(z3>=0) f3s(ix,iy,iz3)=0.
       else
          if(z1>=0) f1s(ix,iy,iz1)=0.
