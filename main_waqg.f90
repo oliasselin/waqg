@@ -302,7 +302,7 @@ end if
 
 
  !Generate halo for q
- call generate_halo_q(qk)
+ if(npe>1) call generate_halo_q(qk)
 
 if(fixed_flow==0) then
  ! --- Recover the streamfunction --- !
@@ -348,7 +348,7 @@ end if
 
  !Compute the corresponding u,v,w and t (u and v to be used in convol)                                                                                    
  call compute_velo(uk,vk,wk,bk,psik)
- call generate_halo(uk,vk,wk,bk)
+ if(npe > 1) call generate_halo(uk,vk,wk,bk)
 
 end if
 
@@ -470,8 +470,8 @@ BRk = BRtempk
 BIk = BItempk
 
  !Generate halo for q
- call generate_halo_q(qk)
- call generate_halo_q(qok)
+ if(npe > 1) call generate_halo_q(qk)
+ if(npe > 1) call generate_halo_q(qok)
  
 
 if(fixed_flow==0) then
@@ -520,7 +520,7 @@ end if
 
  !Compute the corresponding u,v,w and t 
  call compute_velo(uk,vk,wk,bk,psik)
- call generate_halo(uk,vk,wk,bk) 
+ if(npe > 1) call generate_halo(uk,vk,wk,bk) 
 
 
  !*** Diagnostics ***!
