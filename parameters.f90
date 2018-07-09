@@ -41,6 +41,7 @@ MODULE parameters
     !-------------------!
 
     integer, parameter :: error_init = 1
+    integer, parameter :: error_comp = 1
 
     integer, parameter :: no_waves = 1                  !1: Wave part ignored.
     integer, parameter :: eady = 1                      !1: Eady version: add a bunch of terms

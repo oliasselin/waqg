@@ -541,6 +541,77 @@ if(out_etot ==1 .and. mod(iter,freq_etot )==0) call diag_zentrum(uk,vk,wk,bk,wak
  end do
 
 
+
+if(error_comp == 1 .and. out_slice ==1 .and. mod(iter,freq_slice)==0) then
+
+   !Compute the exact solution
+   do izh0=1,n3h0
+      izh1=izh0+1
+      do iky=1,ikty
+         ky = kya(iky)
+         do ikx=1,iktx
+            kx = kxa(ikx)
+            kh2=kx*kx+ky*ky
+
+            if(kh2 > 0.5) then
+
+               omega_exact = (kx*Bu)/(kh2*dz)
+               omega_exact = omega_exact/sqrt(1. + 2.*Bu/(dz*dz*kh2))
+
+!              omega_exact = kx*Bu/(sqrt(1.*kh2*kh2*dz*dz+2.*Bu))
+
+               psik_exact(ikx,iky,izh1) =  psik_initial(ikx,iky,izh1)*exp(-i*omega_exact*time)
+
+            else
+
+               psik_exact(ikx,iky,izh1) =  (0.D0,0.D0)
+
+            end if
+
+         enddo
+      enddo
+   enddo
+
+   !Get the real-space exact psi
+   call fft_c2r(psik_exact,psir_exact,n3h1)
+
+   !Get the real-space numerical psi
+   call fft_c2r(psik,psir,n3h1)
+
+
+   error   =0.
+   L1_local=0.
+   L2_local=0.
+   Li_local=0.
+   L1_global=0.
+   L2_global=0.
+   Li_global=0.
+   
+   do izh0=1,n3h0
+      izh1=izh0+1
+      do ix=1,n1
+         do iy=1,n2 
+            
+            error = ABS( psir_exact(ix,iy,izh1) - psir(ix,iy,izh1) )
+            L1_local = L1_local + error
+            L2_local = L2_local + error**2
+            
+            if(error > Li_local) Li_local = error 
+            
+         end do
+      end do
+   end do
+   
+  
+   write(154673,"(E12.5,E12.5,E12.5,E12.5)") time,L1_local/(n1*n2*n3),sqrt(L2_local/(n1*n2*n3)),Li_local
+      
+   !Recover the k-space psi to continue integration
+   call fft_r2c(psir,psik,n3h1)
+
+end if
+
+
+
  if(time>maxtime) EXIT
 end do !End loop
 
