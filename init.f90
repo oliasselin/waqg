@@ -605,6 +605,7 @@ end subroutine init_base_state
     real :: phase,norm1,norm2
 
     double precision :: sum_psi=0.
+    double precision :: sum_psi_p=0.
 
     double precision :: kz,kk 
     double precision :: kh
@@ -657,7 +658,7 @@ end subroutine init_base_state
                          
                          psir(ix,iy,izh1) =  psir(ix,iy,izh1) + amplitude*cos(1.D0*ikx*xa(ix)  + 1.D0*iky*ya(iy)  + 1.D0*kz*zash1(izh1) + phi(ikx+2*ave_k+1,iky+2*ave_k+1)) 
                          
-                         if(izh1 > 1 .and. izh1 < n3h1) sum_psi = sum_psi + psir(ix,iy,izh1)*psir(ix,iy,izh1)
+                         if(izh1 > 1 .and. izh1 < n3h1) sum_psi_p = sum_psi_p + psir(ix,iy,izh1)*psir(ix,iy,izh1)
 
                       end if
                    end do
@@ -668,6 +669,11 @@ end subroutine init_base_state
        end do
     end do
     
+    !Sum psi^2 over the entire domain
+    call mpi_reduce(sum_psi_p,sum_psi, 1,MPI_DOUBLE,MPI_SUM,0,MPI_COMM_WORLD,ierror)
+    call mpi_bcast(sum_psi,1,MPI_DOUBLE,0,MPI_COMM_WORLD,ierror)
+
+
     !Normalize psi to have a RMS of psi_0
     psir=psir*psi_0/sqrt(sum_psi/(n1*n2*n3))
 
