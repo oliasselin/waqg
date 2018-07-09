@@ -109,7 +109,7 @@ PROGRAM main
   equivalence(psir_initial,psik_initial)
   equivalence(psir_exact  ,psik_exact  )
 
-  double precision :: omega_exact
+  double complex :: omega_exact
 
   !********************** Initializing... *******************************!
 
@@ -167,7 +167,7 @@ PROGRAM main
     L2_global=0.
     Li_global=0.
     
-    do izh0=1,n3h0
+    do izh0=1,1
        izh1=izh0+1
        do ix=1,n1
           do iy=1,n2
@@ -183,7 +183,7 @@ PROGRAM main
     end do
     
     time = 0.
-    write(154673,"(E12.5,E12.5,E12.5,E12.5)") time,L1_local/(n1*n2*n3),sqrt(L2_local/(n1*n2*n3)),Li_local
+    write(154673,"(E12.5,E12.5,E12.5,E12.5)") time,L1_local/(n1*n2),sqrt(L2_local/(n1*n2)),Li_local
     !Recover the k-space psi to continue integration                                                                                                                    
     call fft_r2c(psir,psik,n3h1)
  end if
@@ -555,12 +555,10 @@ if(error_comp == 1 .and. out_slice ==1 .and. mod(iter,freq_slice)==0) then
 
             if(kh2 > 0.5) then
 
-               omega_exact = (kx*Bu)/(kh2*dz)
-               omega_exact = omega_exact/sqrt(1. + 2.*Bu/(dz*dz*kh2))
 
-!              omega_exact = kx*Bu/(sqrt(1.*kh2*kh2*dz*dz+2.*Bu))
+               omega_exact = i*kx*dz/2. + Ek/dz
 
-               psik_exact(ikx,iky,izh1) =  psik_initial(ikx,iky,izh1)*exp(-i*omega_exact*time)
+               psik_exact(ikx,iky,izh1) =  psik_initial(ikx,iky,izh1)*exp(omega_exact*time)
 
             else
 
@@ -587,7 +585,7 @@ if(error_comp == 1 .and. out_slice ==1 .and. mod(iter,freq_slice)==0) then
    L2_global=0.
    Li_global=0.
    
-   do izh0=1,n3h0
+   do izh0=1,1
       izh1=izh0+1
       do ix=1,n1
          do iy=1,n2 
@@ -603,7 +601,7 @@ if(error_comp == 1 .and. out_slice ==1 .and. mod(iter,freq_slice)==0) then
    end do
    
   
-   write(154673,"(E12.5,E12.5,E12.5,E12.5)") time,L1_local/(n1*n2*n3),sqrt(L2_local/(n1*n2*n3)),Li_local
+   write(154673,"(E12.5,E12.5,E12.5,E12.5)") time,L1_local/(n1*n2),sqrt(L2_local/(n1*n2)),Li_local
       
    !Recover the k-space psi to continue integration
    call fft_r2c(psir,psik,n3h1)

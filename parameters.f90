@@ -46,7 +46,7 @@ MODULE parameters
     integer, parameter :: no_waves = 1                  !1: Wave part ignored.
     integer, parameter :: eady = 1                      !1: Eady version: add a bunch of terms
     integer, parameter :: eady_bnd = 1                  !1: Eady version: include the boundary terms (set NOT to zero only for testing purposes)
-    integer, parameter :: eady_vQy = 1                  !1: Set the Uqx and small-scale dissipation terms to 0.
+    integer, parameter :: eady_vQy = 0                  !1: Set the Uqx and small-scale dissipation terms to 0.
     
 
     integer, parameter :: no_dispersion=0
@@ -183,8 +183,8 @@ MODULE parameters
     double precision, parameter :: Ro  = U_scale/(cor*L_scale)                                  !Rossby number  U/fL
     double precision, parameter :: Fr  = U_scale/(N0*H_scale)                                   !Froude number  U/N(z0)H
     double precision, parameter :: W2F = (Uw_scale/U_scale)**2                                  ! wave to flow velocity magnitude squared
-    double precision, parameter :: Bu  = Fr*Fr/(Ro*Ro)                                          ! (Fr/Ro)^2 = Burger number 
-    double precision, parameter :: Ek  = 0.                                                    ! Ekman term = r/Ro where r is nondimensionalized by H.
+    double precision, parameter :: Bu  = 0.!Fr*Fr/(Ro*Ro)                                          ! (Fr/Ro)^2 = Burger number 
+    double precision, parameter :: Ek  = 1.                                                    ! Ekman term = r/Ro where r is nondimensionalized by H.
 
 
 

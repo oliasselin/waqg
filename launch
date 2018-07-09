@@ -3,8 +3,8 @@
 number_of_nodes=1
 number_of_tasks=1
 
-sourdir=/scratch/05518/oasselin/eady/test_vQy/test_init_sdt/source/
-datadir=/scratch/05518/oasselin/eady/test_vQy/test_init_sdt/output/
+sourdir=/scratch/05518/oasselin/eady/test_Ek/test_init_sdt/source/
+datadir=/scratch/05518/oasselin/eady/test_Ek/test_init_sdt/output/
 
 mkdir -p $sourdir
 mkdir -p $datadir
