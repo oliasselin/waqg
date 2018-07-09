@@ -556,9 +556,9 @@ if(error_comp == 1 .and. out_slice ==1 .and. mod(iter,freq_slice)==0) then
             if(kh2 > 0.5) then
 
 
-               omega_exact = i*kx*dz/2. + Ek/dz
+               omega_exact = i*kx*zash0(izh0) + Ek/dz
 
-               psik_exact(ikx,iky,izh1) =  psik_initial(ikx,iky,izh1)*exp(omega_exact*time)
+               psik_exact(ikx,iky,izh1) =  psik_initial(ikx,iky,izh1)*exp(-omega_exact*time)
 
             else
 
