@@ -181,7 +181,7 @@ MODULE parameters
     double precision, parameter :: Fr  = U_scale/(N0*H_scale)                                   !Froude number  U/N(z0)H
     double precision, parameter :: W2F = (Uw_scale/U_scale)**2                                  ! wave to flow velocity magnitude squared
     double precision, parameter :: Bu  = Fr*Fr/(Ro*Ro)                                          ! (Fr/Ro)^2 = Burger number 
-    double precision, parameter :: Ek  = 1.                                                    ! Ekman term = r/Ro where r is nondimensionalized by H.
+    double precision, parameter :: Ek  = 0.                                                    ! Ekman term = r/Ro where r is nondimensionalized by H.
 
 
 
