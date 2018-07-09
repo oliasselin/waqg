@@ -99,6 +99,18 @@ PROGRAM main
 
   equivalence(u_rotr,u_rot)
 
+  !Error computation
+  double precision ::   error,L1_local,L2_local,Li_local,L1_global,L2_global,Li_global
+  character(len = 32) :: fname                !future file name                                                                                                                      
+
+  double complex,   dimension(iktx,ikty,n3h1) :: psik_initial,psik_exact        !pressure, and rhs of pressure equation!
+  double precision, dimension(n1d,n2d,n3h1)   :: psir_initial,psir_exact
+ 
+  equivalence(psir_initial,psik_initial)
+  equivalence(psir_exact  ,psik_exact  )
+
+  double precision :: omega_exact
+
   !********************** Initializing... *******************************!
 
 
@@ -109,16 +121,74 @@ PROGRAM main
   call init_base_state
   if(mype==0)  call validate_run
 
+ !Initialize error file!
+  if(mype==0) then
+     write (fname, "(A9)") "error.dat"
+     open (unit=154673,file=fname,action="write",status="replace")
+  end if
 
-  call init_eady(psik,psir)
+  call generate_fields_stag(psir,n3h1,psir_initial,n3h1,qr,n3h1) 
+  call fft_r2c(psir,psik,n3h1)
+  call fft_r2c(psir_initial,psik_initial,n3h1)
+
   call init_q(qk,psik)
   call compute_velo(uk,vk,wk,bk,psik)
-  call generate_halo(uk,vk,wk,bk)
-  call generate_halo_q(qk) 
  
  psi_old = psik 
      qok = qk 
- 
+
+ if(error_init == 1) then
+    !Let's compute the initial error on psi!
+    do izh0=1,n3h0      
+       izh1=izh0+1
+       do iky=1,ikty
+          do ikx=1,iktx
+             if (L(ikx,iky).eq.1) then
+                qwk(ikx,iky,izh0)=  qk(ikx,iky,izh1) 
+             endif
+          enddo
+       enddo
+    enddo
+    call mpitranspose(qwk,iktx,ikty,n3h0,qt,n3,iktyp)  !Transpose q*                                                                                                       
+    call psi_solver(psik,qt)                           !Solve the QGPV equation L(phi)=q*, assuming psi_z = 0 at top/bot (homogeneous problem)   
+    
+    psik_exact = psik_initial
+    !Get the real-space exact psi                                                                                                                                                      
+    call fft_c2r(psik_exact,psir_exact,n3h1)
+
+    !Get the real-space numerical psi                                                                                                                                     
+    call fft_c2r(psik,psir,n3h1)
+
+    error   =0.
+    L1_local=0.
+    L2_local=0.
+    Li_local=0.
+    L1_global=0.
+    L2_global=0.
+    Li_global=0.
+    
+    do izh0=1,n3h0
+       izh1=izh0+1
+       do ix=1,n1
+          do iy=1,n2
+             
+             error = ABS( psir_exact(ix,iy,izh1) - psir(ix,iy,izh1) )
+             L1_local = L1_local + error
+             L2_local = L2_local + error**2
+             
+             if(error > Li_local) Li_local = error
+             
+          end do
+       end do
+    end do
+    
+    time = 0.
+    write(154673,"(E12.5,E12.5,E12.5,E12.5)") time,L1_local/(n1*n2*n3),sqrt(L2_local/(n1*n2*n3)),Li_local
+    !Recover the k-space psi to continue integration                                                                                                                    
+    call fft_r2c(psir,psik,n3h1)
+ end if
+
+
  !Initial diagnostics!
  !*******************!
 
