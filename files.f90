@@ -13,7 +13,7 @@ MODULE files
   integer, parameter :: unit_energy =50
 !  integer, parameter :: unit_etrop  =51
 !  integer, parameter :: unit_estra  =52
-  integer, parameter :: unit_energyr=53
+  integer, parameter :: unit_energyr=53444
   integer, parameter :: unit_we=544
   integer, parameter :: unit_conv=545
 
