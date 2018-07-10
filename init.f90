@@ -605,6 +605,7 @@ end subroutine init_base_state
     real :: phase,norm1,norm2
 
     double precision :: sum_psi=0.
+    double precision :: sum_psi_p=0.
 
     double precision :: kz,kk 
     double precision :: kh
@@ -657,7 +658,7 @@ end subroutine init_base_state
                          
                          psir(ix,iy,izh1) =  psir(ix,iy,izh1) + amplitude*cos(1.D0*ikx*xa(ix)  + 1.D0*iky*ya(iy)  + 1.D0*kz*zash1(izh1) + phi(ikx+2*ave_k+1,iky+2*ave_k+1)) 
                          
-                         if(izh1 > 1 .and. izh1 < n3h1) sum_psi = sum_psi + psir(ix,iy,izh1)*psir(ix,iy,izh1)
+                         if(izh1 > 1 .and. izh1 < n3h1) sum_psi_p = sum_psi_p + psir(ix,iy,izh1)*psir(ix,iy,izh1)
 
                       end if
                    end do
@@ -668,6 +669,11 @@ end subroutine init_base_state
        end do
     end do
     
+    !Sum psi^2 over the entire domain
+    call mpi_reduce(sum_psi_p,sum_psi, 1,MPI_DOUBLE,MPI_SUM,0,MPI_COMM_WORLD,ierror)
+    call mpi_bcast(sum_psi,1,MPI_DOUBLE,0,MPI_COMM_WORLD,ierror)
+
+
     !Normalize psi to have a RMS of psi_0
     psir=psir*psi_0/sqrt(sum_psi/(n1*n2*n3))
 
@@ -679,12 +685,11 @@ end subroutine init_base_state
 
 
 
-
  SUBROUTINE init_q(qk,psik)
 
-   !This subroutine simply computes the RHS of the elliptic equation for psi, knowing psi.                                                        
-   !q = - kh2 psi + 1/rho d/dz (rho a_ell psi_z) with d psi./dz = 0 at bounds.                                                                                               
-   !The output is q without its halo.                                                                                                                                    
+   !This subroutine simply computes the RHS of the elliptic equation for psi, knowing psi.                                                                                            
+   !q = - kh2 psi + 1/rho d/dz (rho a_ell psi_z) with d psi./dz = 0 at bounds.                                                                            
+   !The output is q without its halo.                                                                                                                                                
 
     double complex, dimension(iktx,ikty,n3h1) :: qk,psik
 
@@ -699,7 +704,21 @@ end subroutine init_base_state
              kh2= kx*kx+ky*ky
 
              if (L(ikx,iky).eq.1) then
+
                 qk(ikx,iky,izh1) =  (rho_u(izh2)*a_ell_u(izh2)/rho_s(izh2))*psik(ikx,iky,izh1+1)  - ( (rho_u(izh2)*a_ell_u(izh2) + rho_u(izh2-1)*a_ell_u(izh2-1) )/rho_s(izh2) + kh2*dz*dz)*psik(ikx,iky,izh1)  +  (rho_u(izh2-1)*a_ell_u(izh2-1)/rho_s(izh2))*psik(ikx,iky,izh1-1)
+
+
+                !Boundary corrections                                                                                                                                 
+                !At the top, d psi/dz = 0, so psik(top+1) = psi(top) and psi(bot-1) = psi(bot)                                                                                     
+                if(mype==0 .and. izh1 == izbot1) then  !At the bottom                                                                                                                  
+
+                   qk(ikx,iky,izbot1) =  (rho_u(izbot2)*a_ell_u(izbot2)/rho_s(izbot2))*psik(ikx,iky,izbot1+1)  - ( rho_u(izbot2)*a_ell_u(izbot2)/rho_s(izbot2) + kh2*dz*dz)*psik(ikx,iky,izbot1)
+
+                end if
+
+                if(mype==(npe-1) .and. izh1 == iztop1) then !At the top                                                                                    
+                   qk(ikx,iky,iztop1) =   - ( rho_u(iztop2-1)*a_ell_u(iztop2-1)/rho_s(iztop2) + kh2*dz*dz)*psik(ikx,iky,iztop1)  +  (rho_u(iztop2-1)*a_ell_u(iztop2-1)/rho_s(iztop2))*psik(ikx,iky,iztop1-1)
+                end if
 
              endif
 
@@ -707,42 +726,9 @@ end subroutine init_base_state
        end do
     end do
 
-    !Boundary corrections                                                                                                                 
-    !At the top, d psi/dz = 0, so psik(top+1) = psi(top) and psi(bot-1) = psi(bot)                                                                               
-
-    if(mype==0) then  !At the bottom                                                                                                             
-
-       do iky=1,ikty
-          ky = kya(iky)
-          do ikx=1,iktx
-             kx = kxa(ikx)
-             kh2= kx*kx+ky*ky
-
-             if (L(ikx,iky).eq.1) then
-                qk(ikx,iky,izbot1) =  (rho_u(izbot2)*a_ell_u(izbot2)/rho_s(izbot2))*psik(ikx,iky,izbot1+1)  - ( rho_u(izbot2)*a_ell_u(izbot2)/rho_s(izbot2) + kh2*dz*dz)*psik(ikx,iky,izbot1)
-             endif
-
-          end do
-       end do
-    else if(mype==(npe-1)) then !At the top   
-       do iky=1,ikty
-          ky = kya(iky)
-          do ikx=1,iktx
-             kx = kxa(ikx)
-             kh2= kx*kx+ky*ky
-
-             if (L(ikx,iky).eq.1) then
-                qk(ikx,iky,iztop1) =   - ( rho_u(iztop2-1)*a_ell_u(iztop2-1)/rho_s(iztop2) + kh2*dz*dz)*psik(ikx,iky,iztop1)  +  (rho_u(iztop2-1)*a_ell_u(iztop2-1)/rho_s(iztop2))*psik(ikx,iky,iztop1-1)
-             endif
-
-          end do
-       end do
-    end if
-
     qk=qk/(dz*dz)
 
   end SUBROUTINE init_q
-
 
 
 
