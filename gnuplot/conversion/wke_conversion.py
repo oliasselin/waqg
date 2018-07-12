@@ -6,14 +6,14 @@ import numpy as np
 
 #dkdt[:,i] is... i=0 time in turnover times, i=1  d/dt WkE, i=2: \Gamma_f  i=3: \Gamma_d
 
-run = 'shakespeare/test'
+run = 'test_conv/test2'
 
-timestep=0.1
 
 #path_we = '/scratch/05518/oasselin/'+run+'/output/we.dat'
 path_cv3 = '/scratch/05518/oasselin/'+run+'/output/conv3.dat'
 cv3 = np.loadtxt(path_cv3)
 
+timestep = cv3[1,0] - cv3[0,0]
 
 nts = int(cv3.shape[0])
     

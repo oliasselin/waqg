@@ -7,10 +7,7 @@ import numpy as np
 #p[:,i]    is... i=0 time in turnover times, i=1  WPE,      i=2: A,        i=3: R,        i=4: F         i=5: D 
 #dpdt[:,i] is... i=0 time in turnover times, i=1  d/dt WPE, i=2: \Gamma_a, i=3: \Gamma_r, i=4: \Gamma_f  i=5: \Gamma_d
 
-run = 'shakespeare/test'
-
-
-timestep=0.1
+run = 'test_conv/test2'
 
 
 path_cv1 = '/scratch/05518/oasselin/'+run+'/output/conv1.dat'
@@ -27,6 +24,7 @@ nts = int(cv2.shape[0])
 dpdt = np.zeros((nts-1,6))
 p    = np.zeros((nts-1,6))
 
+timestep = cv1[1,0] - cv1[0,0]
 
 
 for t in range(nts-1):
@@ -44,4 +42,3 @@ for t in range(nts-1):
 
 
 np.savetxt('data/dpdt_direct.dat',dpdt)
-
