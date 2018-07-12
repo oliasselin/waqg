@@ -7,7 +7,7 @@ import numpy as np
 #p[:,i]    is... i=0 time in turnover times, i=1  WPE,      i=2: A,        i=3: R,        i=4: F         i=5: D 
 #dpdt[:,i] is... i=0 time in turnover times, i=1  d/dt WPE, i=2: \Gamma_a, i=3: \Gamma_r, i=4: \Gamma_f  i=5: \Gamma_d
 
-run = 'test_conv/test2'
+run = 'shakespeare/test_conv'
 
 
 path_we = '/scratch/05518/oasselin/'+run+'/output/we.dat'

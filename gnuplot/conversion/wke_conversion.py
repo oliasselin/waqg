@@ -6,7 +6,7 @@ import numpy as np
 
 #dkdt[:,i] is... i=0 time in turnover times, i=1  d/dt WkE, i=2: \Gamma_f  i=3: \Gamma_d
 
-run = 'test_conv/test2'
+run = 'shakespeare/test_conv'
 
 
 #path_we = '/scratch/05518/oasselin/'+run+'/output/we.dat'

@@ -1,10 +1,10 @@
 #!/bin/bash
 
 number_of_nodes=1
-number_of_tasks=32
+number_of_tasks=2
 
-sourdir=/scratch/05518/oasselin/shakespeare/test/source/
-datadir=/scratch/05518/oasselin/shakespeare/test/output/
+sourdir=/scratch/05518/oasselin/shakespeare/test_conv/source/
+datadir=/scratch/05518/oasselin/shakespeare/test_conv/output/
 
 mkdir -p $sourdir
 mkdir -p $datadir
@@ -38,14 +38,14 @@ cat > EXEC_STEP << EXEC
 #
 #----------------------------------------------------
 
-#SBATCH -J U0.25                      # Job name
-#SBATCH -o $HOME/monitor/U0.25.o%j    # Name of stdout output file
-#SBATCH -e $HOME/monitor/U0.25.e%j    # Name of stderr error file
+#SBATCH -J tc                      # Job name
+#SBATCH -o $HOME/monitor/tc.o%j    # Name of stdout output file
+#SBATCH -e $HOME/monitor/tc.e%j    # Name of stderr error file
 #SBATCH -p development               # Queue (partition) name
 ##SBATCH -p normal                     # Queue (partition) name
 #SBATCH -N $number_of_nodes           # Total # of nodes 
 #SBATCH -n $number_of_tasks           # Total # of mpi tasks
-#SBATCH -t 00:10:00                   # Run time (hh:mm:ss)
+#SBATCH -t 00:05:00                   # Run time (hh:mm:ss)
 #SBATCH --mail-user=oasselin@ucsd.edu
 ##SBATCH --mail-type=all              # Send email at begin and end of job
 #SBATCH -A TG-OCE180004               # Allocation name (req'd if you have more than 1)
@@ -67,7 +67,7 @@ cat > COMPILE_STEP << COMPILE
                                                                                                                                                        
 
 cd $sourdir
-cp $HOME/waqg/*.f90 .
+cp $HOME/test-conversion/*.f90 .
 
 PARA=parameters.f90
 MAIN=main_waqg.f90

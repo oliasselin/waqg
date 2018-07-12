@@ -2,7 +2,7 @@ MODULE parameters
 
    IMPLICIT NONE
 
-    integer, parameter :: n1=32, n2=32, n3=32
+    integer, parameter :: n1=32, n2=32, n3=64
     integer, parameter :: npe=2
 
     integer, parameter :: n1d=n1+2, n2d=n2, n3d=n3
@@ -36,6 +36,8 @@ MODULE parameters
     integer, parameter :: fixed_flow = 1        !1: Skip the psi-inversion steps
     integer, parameter :: passive_scalar = 0    !1: Set A and refraction to 0 and skip the LA -> A inversion. BR and BI become two (independent) passive scalars.
     
+
+    integer, parameter :: mixed_ts = 0
 
     !Tags to specify run!
     !-------------------!

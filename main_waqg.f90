@@ -423,6 +423,10 @@ end if
      !Compute d/dt B at the same time that the right-hand side is computed (prior to filtering)
      dBRk = (BRtempk - BRok)/(2.*delt)
      dBIk = (BItempk - BIok)/(2.*delt)
+     if(mixed_ts == 0 .and. out_conv ==1 .and. mod(iter,freq_conv )==0)  then
+        call wke_conversion(BRk, BIk, BRr, BIr, FRk, FIk, FRr, FIr, dBRk, dBIk, dBRr, dBIr)
+        call we_conversion(ARk, AIk, BRk, BIk, CRk, CIk,  dBRk, dBIk, nBRk, nBIk, rBRk, rBIk, FRk, FIk, dBRr, dBIr, nBRr, nBIr, rBRr, rBIr, FRr, FIr)
+     end if
 
      !Apply Robert-Asselin filter to damp the leap-frog computational mode
      do izh0=1,n3h0
@@ -525,7 +529,7 @@ if(out_etot ==1 .and. mod(iter,freq_etot )==0) call diag_zentrum(uk,vk,wk,bk,wak
  end do
 
  if(out_we ==1   .and. mod(iter,freq_we   )==0)  call wave_energy(BRk,BIk,CRk,CIk)
- if(out_conv ==1 .and. mod(iter,freq_conv )==0)  then
+ if(mixed_ts == 1 .and. out_conv ==1 .and. mod(iter,freq_conv )==0)  then
     call wke_conversion(BRk, BIk, BRr, BIr, FRk, FIk, FRr, FIr, dBRk, dBIk, dBRr, dBIr)
     call we_conversion(ARk, AIk, BRk, BIk, CRk, CIk,  dBRk, dBIk, nBRk, nBIk, rBRk, rBIk, FRk, FIk, dBRr, dBIr, nBRr, nBIr, rBRr, rBIr, FRr, FIr)
  end if
