@@ -1,7 +1,7 @@
 #!/bin/bash
 
 number_of_nodes=1
-number_of_tasks=2
+number_of_tasks=32
 
 sourdir=/scratch/05518/oasselin/shakespeare/test_conv/source/
 datadir=/scratch/05518/oasselin/shakespeare/test_conv/output/
@@ -45,7 +45,7 @@ cat > EXEC_STEP << EXEC
 ##SBATCH -p normal                     # Queue (partition) name
 #SBATCH -N $number_of_nodes           # Total # of nodes 
 #SBATCH -n $number_of_tasks           # Total # of mpi tasks
-#SBATCH -t 00:05:00                   # Run time (hh:mm:ss)
+#SBATCH -t 00:15:00                   # Run time (hh:mm:ss)
 #SBATCH --mail-user=oasselin@ucsd.edu
 ##SBATCH --mail-type=all              # Send email at begin and end of job
 #SBATCH -A TG-OCE180004               # Allocation name (req'd if you have more than 1)
