@@ -116,6 +116,13 @@ PROGRAM main
   equivalence(FRr,FRk)
   equivalence(FIr,FIk)
 
+  !Test the potential energy balance by directly diagnosing d/dt B.
+  double complex,   dimension(iktx,ikty,n3h0) :: dBRk, dBIk
+  double precision, dimension(n1d,n2d,n3h0)   :: dBRr, dBIr
+
+  equivalence(dBRr,dBRk)
+  equivalence(dBIr,dBIk)
+
   !********************** Initializing... *******************************!
 
 
@@ -166,12 +173,25 @@ PROGRAM main
     if(out_slice ==1)  call slices(BRk,BIk,BRr,BIr,CRk,CIk,id_field)
  end do
  
+ !One time call to print the mean flow and gaussian
+ do id_field=1,nfields2
+    call slices_wl(uk,gck,gsk,ur,gcr,gsr,id_field)
+ end do
+
+
  do iz=1,num_spec
     if(out_hspecw ==1) call hspec_waves(BRk,BIk,CRk,CIk,iz)
  end do
 
+ !Just for test: we shall set d/dt B = 0 initially although it isn't the case
+ dBRk = (0.D0,0.D0)
+ dBIk = (0.D0,0.D0)
+
  if(out_we   ==1) call wave_energy(BRk,BIk,CRk,CIk)
- if(out_conv ==1) call we_conversion(ARk, AIk, BRk, BIk, nBRk, nBIk, rBRk, rBIk, FRk, FIk, nBRr, nBIr, rBRr, rBIr, FRr, FIr)
+ if(out_conv ==1) then
+    call wke_conversion(BRk, BIk, BRr, BIr, FRk, FIk, FRr, FIr, dBRk, dBIk, dBRr, dBIr)
+    call we_conversion(ARk, AIk, BRk, BIk, CRk, CIk,  dBRk, dBIk, nBRk, nBIk, rBRk, rBIk, FRk, FIk, dBRr, dBIr, nBRr, nBIr, rBRr, rBIr, FRr, FIr)
+ end if
 
  !************************************************************************!
  !*** 1st time timestep using the projection method with Forward Euler ***!
@@ -288,12 +308,24 @@ end if
 if(passive_scalar==0) then
  ! --- Recover A from B --- !
 
+ !Add forcing to the RHS of the equation!
+ if(forcing == 1) then
+    nBRk = nBRk - FRk
+    nBIk = nBIk - FIk
+ end if
+
  if(zero_aveB==1) call sumB(BRk,BIk)                           !Resets the vertical sum of B to zero
 
  call compute_sigma(sigma,nBRk, nBIk, rBRk, rBIk)              !Compute the sum of A
  call mpitranspose(BRk,iktx,ikty,n3h0,BRkt,n3,iktyp)           !Transpose BR to iky-parallelized space 
  call mpitranspose(BIk,iktx,ikty,n3h0,BIkt,n3,iktyp)           !Transpose BK to iky-parallelized space 
  call compute_A(ARk,AIK,BRkt,BIkt,CRk,CIK,sigma)               !Compute A!
+
+ !Remove forcing from the nonlinear term of the equation for the conversion diagnostic!
+ if(forcing == 1) then
+    nBRk = nBRk + FRk
+    nBIk = nBIk + FIk
+ end if
 
  ! ------------------------ !
 end if
@@ -388,6 +420,14 @@ end if
      enddo
 
 
+     !Compute d/dt B at the same time that the right-hand side is computed (prior to filtering)
+     dBRk = (BRtempk - BRok)/(2.*delt)
+     dBIk = (BItempk - BIok)/(2.*delt)
+     if(mixed_ts == 0 .and. out_conv ==1 .and. mod(iter,freq_conv )==0)  then
+        call wke_conversion(BRk, BIk, BRr, BIr, FRk, FIk, FRr, FIr, dBRk, dBIk, dBRr, dBIr)
+        call we_conversion(ARk, AIk, BRk, BIk, CRk, CIk,  dBRk, dBIk, nBRk, nBIk, rBRk, rBIk, FRk, FIk, dBRr, dBIr, nBRr, nBIr, rBRr, rBIr, FRr, FIr)
+     end if
+
      !Apply Robert-Asselin filter to damp the leap-frog computational mode
      do izh0=1,n3h0
         izh1=izh0+1
@@ -442,12 +482,25 @@ end if
 if(passive_scalar==0) then
  ! --- Recover A from B --- !                                                                                                                                 
 
+ !Add forcing to the RHS of the equation!                                                                                                                                                
+ if(forcing == 1) then
+    nBRk = nBRk - FRk
+    nBIk = nBIk - FIk
+ end if
+
+
  if(zero_aveB==1) call sumB(BRk,BIk)                           !Resets the vertical sum of B to zero
 
  call compute_sigma(sigma,nBRk, nBIk, rBRk, rBIk)              !Compute the sum of A                                                                                    
  call mpitranspose(BRk,iktx,ikty,n3h0,BRkt,n3,iktyp)           !Transpose BR to iky-parallelized space                                                                   
  call mpitranspose(BIk,iktx,ikty,n3h0,BIkt,n3,iktyp)           !Transpose BK to iky-parallelized space                                                                  
  call compute_A(ARk,AIK,BRkt,BIkt,CRk,CIK,sigma)               !Compute A!                                                                                                               
+
+ !Remove forcing from the nonlinear term of the equation for the conversion diagnostic!
+ if(forcing == 1) then
+    nBRk = nBRk + FRk
+    nBIk = nBIk + FIk
+ end if
 
  ! ------------------------ !       
 end if
@@ -476,8 +529,10 @@ if(out_etot ==1 .and. mod(iter,freq_etot )==0) call diag_zentrum(uk,vk,wk,bk,wak
  end do
 
  if(out_we ==1   .and. mod(iter,freq_we   )==0)  call wave_energy(BRk,BIk,CRk,CIk)
- if(out_conv ==1 .and. mod(iter,freq_conv )==0)  call we_conversion(ARk, AIk, BRk, BIk, nBRk, nBIk, rBRk, rBIk, FRk, FIk, nBRr, nBIr, rBRr, rBIr, FRr, FIr)
-
+ if(mixed_ts == 1 .and. out_conv ==1 .and. mod(iter,freq_conv )==0)  then
+    call wke_conversion(BRk, BIk, BRr, BIr, FRk, FIk, FRr, FIr, dBRk, dBIk, dBRr, dBIr)
+    call we_conversion(ARk, AIk, BRk, BIk, CRk, CIk,  dBRk, dBIk, nBRk, nBIk, rBRk, rBIk, FRk, FIk, dBRr, dBIr, nBRr, nBIr, rBRr, rBIr, FRr, FIr)
+ end if
 
  if(time>maxtime) EXIT
 end do !End loop

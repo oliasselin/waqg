@@ -632,7 +632,7 @@ MODULE derivatives
       equivalence(utermr,utermk)
       equivalence(vtermr,vtermk)
 
-      !I think we don't need to keep a copy of u in qg, right?
+      !We shall keep a copy only of uk for the test
       call fft_c2r(uk,ur,n3h2)
       call fft_c2r(vk,vr,n3h2)
      
@@ -792,8 +792,8 @@ MODULE derivatives
       BIk = BImem
 
 
-
-
+      !Since we don't use the streamfunction to recover uk...
+      if(fixed_flow == 1) call fft_r2c(ur,uk,n3h2)
 
 
 

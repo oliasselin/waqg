@@ -2,8 +2,8 @@ MODULE parameters
 
    IMPLICIT NONE
 
-    integer, parameter :: n1=32, n2=32, n3=32
-    integer, parameter :: npe=2
+    integer, parameter :: n1=64, n2=64, n3=128
+    integer, parameter :: npe=32
 
     integer, parameter :: n1d=n1+2, n2d=n2, n3d=n3
     integer, parameter :: n3h0=n3/npe, n3h1=n3/npe+2, n3h2=n3/npe+4
@@ -37,6 +37,8 @@ MODULE parameters
     integer, parameter :: passive_scalar = 0    !1: Set A and refraction to 0 and skip the LA -> A inversion. BR and BI become two (independent) passive scalars.
     
 
+    integer, parameter :: mixed_ts = 0
+
     !Tags to specify run!
     !-------------------!
 
@@ -46,7 +48,7 @@ MODULE parameters
     integer, parameter :: inviscid=0                    !1: No dissipation, otherwise: dissipation
     integer, parameter :: init_wageo=0                  !1: Initialize wk with Ro*wak
 
-    integer, parameter :: zero_aveB=0                   !1: Set B=LA vertical average to zero
+    integer, parameter :: zero_aveB=1                   !1: Set B=LA vertical average to zero
 
     integer :: dealiasing=1         ! 1: Dealias, 0: don't. May not work though...
 
@@ -208,7 +210,7 @@ MODULE parameters
     !PERFECT VISCOSITY: 0.01 * (64./(1.*n1)) **(4./3.)
     !In reality, nuh is 1/Re and nuz is 1/(Ar2*Re) with 1/Re = UL/nu
 
-    double precision, parameter :: coeff =0.1!0.4!0.4!0.1!0.075
+    double precision, parameter :: coeff =0.4!0.4!0.1!0.075
     double precision, parameter :: coeffz=0.!coeff!/10.!/1000!/10.
 
     integer, parameter :: ilap = 4                   !horizontal viscosity = nuh nabla^(2*ilap). So ilap =1 is regular viscosity. ilap>1 is hyperviscosity
@@ -279,14 +281,14 @@ MODULE parameters
     !Slices
     integer, parameter :: max_slices = 999     
     integer, parameter :: nfields  = 4         !Don't forget to change tag_slice_xz(nfields) accordingly in "mpi.f90"
-    integer, parameter :: nfields2 = 5         !Don't forget to change tag_slice_xz(nfields) accordingly in "mpi.f90"
+    integer, parameter :: nfields2 = 3         !Don't forget to change tag_slice_xz(nfields) accordingly in "mpi.f90"
     integer :: count_slice(nfields) = 0       !number of slices
     integer :: count_slice2(nfields2) = 0       !number of slices
     integer :: zval=n3/2                      !z-level at which we wish to plo a slice                                                                                                                               
     integer :: yval=n2/2
     integer :: xval=n1/2
     integer :: hlvl(nfields)=[0,0,0,0]                                   
-    integer :: hlvl2(nfields2)=[1,1,1,1,0]                                   
+    integer :: hlvl2(nfields2)=[2,0,0]                                   
 
     integer, parameter :: bot_height = 1
     integer, parameter :: mid_height = n3/2
