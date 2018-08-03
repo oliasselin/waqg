@@ -952,9 +952,9 @@ do ix=1,n1d
          end if
 
       if(ix<=n1) then
-         if(z1>=0) f1s(ix,iy,iz1)=-gamma*cos(y) + lambda*z1    !U
-         if(z2>=0) f2s(ix,iy,iz2)= gamma*cos(x)                !V
-         if(z3>=0) f3s(ix,iy,iz3)= gamma*( sin(x) + sin(y) )   !Psi without the vertical shear term (Psi is used to compute refraction (Zeta) only anyway...)
+         if(z1>=0) f1s(ix,iy,iz1)=-gamma_strain*cos(y) + lambda*z1    !U
+         if(z2>=0) f2s(ix,iy,iz2)= gamma_strain*cos(x)                !V
+         if(z3>=0) f3s(ix,iy,iz3)= gamma_strain*( sin(x) + sin(y) )   !Psi without the vertical shear term (Psi is used to compute refraction (Zeta) only anyway...)
       else
          if(z1>=0) f1s(ix,iy,iz1)=0.
          if(z2>=0) f2s(ix,iy,iz2)=0.
