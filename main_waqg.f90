@@ -133,7 +133,8 @@ PROGRAM main
   call init_base_state
 
   !Initialize fields
-  call generate_fields_stag(gcr,n3h0,gsr,n3h0,ur,n3h2) 
+  call generate_fields_stag(gcr,n3h0,gsr,n3h0,wr,n3h2) 
+  call generate_fields_stag2(ur,n3h2,vr,n3h2,psir,n3h1) 
 
   ARk = (0.D0,0.D0)
   AIk = (0.D0,0.D0)
@@ -142,13 +143,11 @@ PROGRAM main
 
    qk = (0.D0,0.D0)
 
-   vk = (0.D0,0.D0)
-   wk = (0.D0,0.D0)
    bk = (0.D0,0.D0)
 
- psik = (0.D0,0.D0)
-
+  call fft_r2c(psir,psik,n3h2)
   call fft_r2c(ur,uk,n3h2)
+  call fft_r2c(vr,vk,n3h2)
   call fft_r2c(gcr,gck,n3h0)
   call fft_r2c(gsr,gsk,n3h0)
 
