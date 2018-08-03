@@ -2,8 +2,8 @@ MODULE parameters
 
    IMPLICIT NONE
 
-    integer, parameter :: n1=64, n2=64, n3=128
-    integer, parameter :: npe=32
+    integer, parameter :: n1=128, n2=128, n3=128
+    integer, parameter :: npe=64
 
     integer, parameter :: n1d=n1+2, n2d=n2, n3d=n3
     integer, parameter :: n3h0=n3/npe, n3h1=n3/npe+2, n3h2=n3/npe+4
@@ -19,7 +19,7 @@ MODULE parameters
     double complex :: i = (0.,1.)
     double precision, parameter :: twopi=4.D0*asin(1.D0)
 
-    double precision, parameter :: dom_x = 80000                              !Horizontal domain size (in m)
+    double precision, parameter :: dom_x = 400000                              !Horizontal domain size (in m)
     double precision, parameter :: dom_z = 4000                               !Vertical   domain size (in m)
     double precision, parameter :: L1=twopi, L2=twopi, L3=twopi               !Domain size
     double precision, parameter :: dx=L1/n1,dy=L2/n2,dz=L3/n3                 !Cell dimensions  
@@ -166,7 +166,7 @@ MODULE parameters
     double precision, parameter :: H_scale=dom_z/L3          !Actual H in m ( z_real = H z' where z' in [0:L3]  is the nondim z.)
     double precision, parameter :: L_scale=dom_x/L1          !Actual L in m ( x_real = L x' where x' in [0:2pi] is the nondim x.)
     double precision, parameter :: cor=0.0001!0.00000000001!0.0005 !0.0001                           !Actual f = 0.0001 s^-1 (real value of planet Earth)
-    double precision, parameter :: U_scale=0.25                        !Actual U in m/s (u_real = U u' where u' is the nondim velocity ur implemented in the code)
+    double precision, parameter :: U_scale=0.1                       !Actual U in m/s (u_real = U u' where u' is the nondim velocity ur implemented in the code)
     double precision, parameter :: Uw_scale=1.                       !Characteristic magnitude of wave velocity (wave counterpart to U_scale for flow)
     double precision, parameter :: Ar2 = (H_scale/L_scale)**2                                   !(1./64.)**2!(1./10.)**2 !0.01     !Aspect ratio squared = (H/L)^2     
     double precision, parameter :: Ro  = U_scale/(cor*L_scale)                                  !Rossby number  U/fL
@@ -180,18 +180,21 @@ MODULE parameters
 
     !Spatial Gaussian: G(x,z) = exp[ - g_x^2 (x-x0g)^2 - g_z^2 (z-z0g)^2 ]
 
-    double precision, parameter :: g_x = 0.7, g_z = 5.    
-    double precision, parameter :: x0g = L1/2, z0g = L3
+    double precision, parameter :: g_x = 2.8, g_y = 2.8, g_z = 5.    
+    double precision, parameter :: x0g = 3*L1/4, y0g = L1/4, z0g = L3
+
+    double precision, parameter :: lambda =       1./twopi        !Lambda in dim * H_scale/U_scale = lambda in the model.
+    double precision, parameter :: gamma_strain = 1.              !Gamma  in dim * L_scale/U_scale = gamma_strain in the model.
 
     !Time envelope: E(t) = 0.5*amplitude_e*(tanh(omega_e*(time-tei))-tanh(omega_e*(time-tef)))
 
-    double precision, parameter :: tei = 3. , tef = 7.   !Time-envelope initial/final kicks in/out
-    double precision, parameter :: omega_e = 1.          !Envelope speed
+    double precision, parameter :: tei = 0.2 , tef = 0.4   !Time-envelope initial/final kicks in/out
+    double precision, parameter :: omega_e = 20.          !Envelope speed
     double precision, parameter :: amplitude_e = 1.      !Envelope amplitude
 
     !Wave part: exp[i(k_wl x - omega_wl*time)]. These are the characteristics we want the wave launched to possess
 
-    double precision, parameter :: k_wl = 6. , m_wl = 20.                                      !x- and z-direction wavenumbers
+    double precision, parameter :: k_wl = 20. , m_wl = 20.                                      !x- and z-direction wavenumbers
     double precision, parameter :: omega_wl = twopi*k_wl + 0.5*(k_wl*k_wl)/(Bu*Ro*m_wl*m_wl)   !Frequency excited
 
 
@@ -210,7 +213,7 @@ MODULE parameters
     !PERFECT VISCOSITY: 0.01 * (64./(1.*n1)) **(4./3.)
     !In reality, nuh is 1/Re and nuz is 1/(Ar2*Re) with 1/Re = UL/nu
 
-    double precision, parameter :: coeff =0.4!0.4!0.1!0.075
+    double precision, parameter :: coeff =0.1!0.4!0.1!0.075
     double precision, parameter :: coeffz=0.!coeff!/10.!/1000!/10.
 
     integer, parameter :: ilap = 4                   !horizontal viscosity = nuh nabla^(2*ilap). So ilap =1 is regular viscosity. ilap>1 is hyperviscosity
@@ -232,8 +235,8 @@ MODULE parameters
     !Output!
     !------!
 
-    integer, parameter :: out_etot   = 0, freq_etot   = INT(0.1/delt)!50!346!n3/64!n3!64!n3!50*n3/64      !Total energy                                                    
-    integer, parameter :: out_we     = 1, freq_we     = INT(0.1/delt)!50!346!n3/64!n3!64!n3!50*n3/64      !Total energy                                                    
+    integer, parameter :: out_etot   = 0, freq_etot   = INT(0.01/delt)!50!346!n3/64!n3!64!n3!50*n3/64      !Total energy                                                    
+    integer, parameter :: out_we     = 1, freq_we     = INT(0.01/delt)!50!346!n3/64!n3!64!n3!50*n3/64      !Total energy                                                    
     integer, parameter :: out_conv   = 1, freq_conv   = freq_we      !Conversion terms in the potential energy equation.
     integer, parameter :: out_hspec  = 0, freq_hspec  = 5*freq_etot!n3/64!n3!freq_etot*10     !Horizontal energy spectrum at various heights 
     integer, parameter :: out_hspecw = 1, freq_hspecw = 1*freq_etot!n3/64!n3!freq_etot*10     !Horizontal energy spectrum at various heights 
@@ -301,7 +304,7 @@ MODULE parameters
                                               !halo levels (u=2,zz=1...)                                                                                                                                                     
     integer :: id_field                       !dummy index to differenciate fields plotted  
 
-    integer, parameter :: out_slice   = 1, freq_slice =  1* freq_etot
+    integer, parameter :: out_slice   = 1, freq_slice =  1* freq_we
     integer, parameter :: out_eta     = 0, freq_eta   =  freq_hspec
     integer, parameter :: out_tspec   = 0
 
