@@ -864,8 +864,8 @@ do ix=1,n1d
          end if
 
       if(ix<=n1) then
-         if(z1>=0) f1s(ix,iy,iz1)=exp( -(g_x**2)*(x-x0g)**2 -(g_z**2)*(z1-z0g)**2 )*cos(k_wl*x)   !G_c = G(x,z)*cos(k_wl*x)
-         if(z2>=0) f2s(ix,iy,iz2)=exp( -(g_x**2)*(x-x0g)**2 -(g_z**2)*(z2-z0g)**2 )*sin(k_wl*x)   !G_s = G(x,z)*sin(k_wl*x)
+         if(z1>=0) f1s(ix,iy,iz1)=exp( -(g_x**2)*(x-x0g)**2 -(g_y**2)*(y-y0g)**2 -(g_z**2)*(z1-z0g)**2 )*cos(k_wl*x)   !G_c = G(x,z)*cos(k_wl*x)
+         if(z2>=0) f2s(ix,iy,iz2)=exp( -(g_x**2)*(x-x0g)**2 -(g_y**2)*(y-y0g)**2 -(g_z**2)*(z2-z0g)**2 )*sin(k_wl*x)   !G_s = G(x,z)*sin(k_wl*x)
          if(z3>=0) f3s(ix,iy,iz3)=0.!z3                                                              !Constant-shear zonal velocity U
       else
          if(z1>=0) f1s(ix,iy,iz1)=0.
