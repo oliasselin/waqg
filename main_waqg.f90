@@ -145,7 +145,7 @@ PROGRAM main
 
    bk = (0.D0,0.D0)
 
-  call fft_r2c(psir,psik,n3h2)
+  call fft_r2c(psir,psik,n3h1)
   call fft_r2c(ur,uk,n3h2)
   call fft_r2c(vr,vk,n3h2)
   call fft_r2c(gcr,gck,n3h0)
