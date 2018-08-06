@@ -184,7 +184,7 @@ MODULE parameters
     double precision, parameter :: x0g = 3*L1/4, y0g = L1/4, z0g = L3
 
     double precision, parameter :: lambda =       1./twopi        !Lambda in dim * H_scale/U_scale = lambda in the model.
-    double precision, parameter :: gamma_strain = 1.              !Gamma  in dim * L_scale/U_scale = gamma_strain in the model.
+    double precision, parameter :: gamma_strain = 0.!1.              !Gamma  in dim * L_scale/U_scale = gamma_strain in the model.
 
     !Time envelope: E(t) = 0.5*amplitude_e*(tanh(omega_e*(time-tei))-tanh(omega_e*(time-tef)))
 
@@ -235,8 +235,8 @@ MODULE parameters
     !Output!
     !------!
 
-    integer, parameter :: out_etot   = 0, freq_etot   = INT(0.001/delt)!50!346!n3/64!n3!64!n3!50*n3/64      !Total energy                                                    
-    integer, parameter :: out_we     = 1, freq_we     = INT(0.001/delt)!50!346!n3/64!n3!64!n3!50*n3/64      !Total energy                                                    
+    integer, parameter :: out_etot   = 0, freq_etot   = INT(0.01/delt)!50!346!n3/64!n3!64!n3!50*n3/64      !Total energy                                                    
+    integer, parameter :: out_we     = 1, freq_we     = INT(0.01/delt)!50!346!n3/64!n3!64!n3!50*n3/64      !Total energy                                                    
     integer, parameter :: out_conv   = 1, freq_conv   = freq_we      !Conversion terms in the potential energy equation.
     integer, parameter :: out_hspec  = 0, freq_hspec  = 5*freq_etot!n3/64!n3!freq_etot*10     !Horizontal energy spectrum at various heights 
     integer, parameter :: out_hspecw = 1, freq_hspecw = 1*freq_etot!n3/64!n3!freq_etot*10     !Horizontal energy spectrum at various heights 

@@ -4,32 +4,36 @@ import sys
 
 
 
-run = 'shakespeare/U0.25-amp1-coeff0.1'
-sli = 'v'   #htop,hmid,hbot,v
-field = '4'
+run = 'escape/only_shear'
+sli = 'htop'   #htop,hmid,hbot,v
+field = '2'
 
 if field=='1':
     field_name = 'WKE'
+if field=='2':
+    field_name = 'Re-LA'
+if field=='3':
+    field_name = 'Im-LA'
 if field=='4':
     field_name = 'WPE'
 
-hres = 64
+hres = 128
 vres = 128
 
-timestep=0.1
+timestep=0.01
 
-U_scale = 0.25
-L_scale = 80000/(3.14159*2.)
+U_scale = 0.1
+L_scale = 400000/(3.14159*2.)
 
 tau_e = L_scale/(U_scale)/3600 #eddy turnover time in hours
 
-delay = 10 #In cs
+delay = 1 #In cs
 
 fixed_cbrange='minmax'     #0: free, 1: set min only, 2: set max only, 3: set both max and min 
-cbmin = 0
-cbmax = 0.005
+cbmin = -0.005
+cbmax = 0.005#1e-5
 
-nmax = 100 #Maximum number of slices
+nmax = 350 #Maximum number of slices
 
 
 for k in range(0,nmax):
