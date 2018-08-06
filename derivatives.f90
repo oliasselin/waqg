@@ -792,8 +792,9 @@ MODULE derivatives
       BIk = BImem
 
 
-      !Since we don't use the streamfunction to recover uk...
+      !Since we don't use the streamfunction to recover uk and vk...
       if(fixed_flow == 1) call fft_r2c(ur,uk,n3h2)
+      if(fixed_flow == 1) call fft_r2c(vr,vk,n3h2)
 
 
 
