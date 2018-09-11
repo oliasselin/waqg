@@ -1,8 +1,8 @@
 #!/bin/bash
 
 number_of_nodes=1
-number_of_tasks=2
-ntasks_per_node=2
+number_of_tasks=1
+ntasks_per_node=1
 
 sourdir=/$HOME/output/test/source/ 
 datadir=/$HOME/output/test/data/
@@ -43,7 +43,7 @@ cat > COMPILE_STEP << COMPILE
                                                                                                                                                        
 
 cd $sourdir
-cp $HOME/eady2/*.f90 .
+cp $HOME/eady/*.f90 .
 
 PARA=parameters.f90
 MAIN=main_waqg.f90
