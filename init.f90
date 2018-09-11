@@ -636,10 +636,15 @@ end subroutine init_base_state
     
     psir   =0.D0
 
+
     do ikx = -2*ave_k,2*ave_k
        do iky = -2*ave_k,2*ave_k
+
+          ky = kya(iky)
+          kx = kxa(ikx)
+
+          kh2= kx*kx+ky*ky          
           
-          kh2 = ikx*ikx + iky*iky
           kh  = sqrt(1.D0*kh2)
           
           kz  = kh/sqrt(Bu)     !In non-dim form, kz ~ NH/fL kh, Bu = (fL/NH)^2
@@ -656,7 +661,7 @@ end subroutine init_base_state
                    do iy=1,n2d                                                                                                                                                
                       if(ix<=n1) then                                                                                                                                         
                          
-                         psir(ix,iy,izh1) =  psir(ix,iy,izh1) + amplitude*cos(1.D0*ikx*xa(ix)  + 1.D0*iky*ya(iy)  + 1.D0*kz*zash1(izh1) + phi(ikx+2*ave_k+1,iky+2*ave_k+1)) 
+                         psir(ix,iy,izh1) =  psir(ix,iy,izh1) + amplitude*cos(1.D0*kx*xa(ix)  + 1.D0*ky*ya(iy)  + 1.D0*kz*zash1(izh1) + phi(ikx+2*ave_k+1,iky+2*ave_k+1)) 
                          
                          if(izh1 > 1 .and. izh1 < n3h1) sum_psi_p = sum_psi_p + psir(ix,iy,izh1)*psir(ix,iy,izh1)
 
