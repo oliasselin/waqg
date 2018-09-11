@@ -5,4 +5,4 @@ This is the QG model as was used for the PoF, San Diego and JAS papers (and of c
 # Current development
 
 The goal for the next few weeks is to include the averaged effect of near-inertial waves. 
-dddd
+dddddd
