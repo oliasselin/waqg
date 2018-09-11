@@ -205,23 +205,25 @@ end if
              qk(ikx,iky,izh1) = (  qok(ikx,iky,izh1) - delt* nqk(ikx,iky,izh0)  + delt*dqk(ikx,iky,izh0) )*exp(-diss)
             BRk(ikx,iky,izh0) = ( BRok(ikx,iky,izh0) - delt*nBRk(ikx,iky,izh0)  - delt*(0.5/(Bu*Ro))*kh2*AIk(ikx,iky,izh0) + delt*0.5*rBIk(ikx,iky,izh0) )*exp(-diss)
             BIk(ikx,iky,izh0) = ( BIok(ikx,iky,izh0) - delt*nBIk(ikx,iky,izh0)  + delt*(0.5/(Bu*Ro))*kh2*ARk(ikx,iky,izh0) - delt*0.5*rBRk(ikx,iky,izh0) )*exp(-diss)
+
+            if(eady == 1 .and. eady_bnd == 1) then  !Add bottom and top boundary terms
+               !Bottom boundary: add vQy and the Ekman term                
+               if(mype == 0 .and. izh0 == 1) then
+                  qk(ikx,iky,izh1) = qk(ikx,iky,izh1) + delt*(1./dz)*(i*kx*Bu*psik(ikx,iky,izh1) + (1.*kh2)*Ek*psi_old(ikx,iky,izh1) )*exp(-diss)
+               end if
+
+               !Top Boundary: add vQy            
+               if(mype == (npe-1) .and. izh0 == n3h0) then
+                  qk(ikx,iky,izh1) = qk(ikx,iky,izh1) - delt*(1./dz)*(i*kx*Bu)*psik(ikx,iky,izh1)*exp(-diss)
+               end if
+            end if
+
           else
              qk(ikx,iky,izh1) = (0.D0,0.D0)
             BRk(ikx,iky,izh0) = (0.D0,0.D0)
             BIk(ikx,iky,izh0) = (0.D0,0.D0)
           endif
 
-          if(eady == 1 .and. eady_bnd == 1) then  !Add bottom and top boundary terms
-             !Bottom boundary: add vQy and the Ekman term                
-             if(mype == 0 .and. izh0 == 1) then
-                qk(ikx,iky,izh1) = qk(ikx,iky,izh1) + delt*(1./dz)*(i*kx*Bu*psik(ikx,iky,izh1) + (1.*kh2)*Ek*psi_old(ikx,iky,izh1) )*exp(-diss)
-             end if
-
-             !Top Boundary: add vQy            
-             if(mype == (npe-1) .and. izh0 == n3h0) then
-                qk(ikx,iky,izh1) = qk(ikx,iky,izh1) - delt*(1./dz)*(i*kx*Bu)*psik(ikx,iky,izh1)*exp(-diss)
-             end if
-          end if
 
 
        enddo
@@ -348,24 +350,24 @@ end if
                  qtempk(ikx,iky,izh1) =  qok(ikx,iky,izh1)*exp(-2*diss) - 2*delt*nqk(ikx,iky,izh0)*exp(-diss)  + 2*delt*dqk(ikx,iky,izh0)*exp(-2*diss)
                 BRtempk(ikx,iky,izh0) = BRok(ikx,iky,izh0)*exp(-2*diss) - 2*delt*(nBRk(ikx,iky,izh0) + (0.5/(Bu*Ro))*kh2*AIk(ikx,iky,izh0) - 0.5*rBIk(ikx,iky,izh0) )*exp(-diss)
                 BItempk(ikx,iky,izh0) = BIok(ikx,iky,izh0)*exp(-2*diss) - 2*delt*(nBIk(ikx,iky,izh0) - (0.5/(Bu*Ro))*kh2*ARk(ikx,iky,izh0) + 0.5*rBRk(ikx,iky,izh0) )*exp(-diss)
+                
+                if(eady == 1 .and. eady_bnd == 1) then  !Add bottom and top boundary terms      
+                   !Bottom boundary: add vQy and the Ekman term                                                                                                             
+                   if(mype == 0 .and. izh0 == 1) then
+                      qtempk(ikx,iky,izh1) = qtempk(ikx,iky,izh1) + 2.*delt*(1./dz)*(i*kx*Bu*psik(ikx,iky,izh1) + (1.*kh2)*Ek*psi_old(ikx,iky,izh1)  )*exp(-diss)
+                   end if
+
+                   !Top Boundary: add vQy                                                                                                                                        
+                   if(mype == (npe-1) .and. izh0 == n3h0) then
+                      qtempk(ikx,iky,izh1) = qtempk(ikx,iky,izh1) - 2.*delt*(1./dz)*(i*kx*Bu)*psik(ikx,iky,izh1)*exp(-diss)
+                   end if
+                end if
+
               else
                  qtempk(ikx,iky,izh1) = (0.D0,0.D0)
                 BRtempk(ikx,iky,izh0) = (0.D0,0.D0)
                 BItempk(ikx,iky,izh0) = (0.D0,0.D0)
               endif
-
-
-              if(eady == 1 .and. eady_bnd == 1) then  !Add bottom and top boundary terms      
-                 !Bottom boundary: add vQy and the Ekman term                                                                                                             
-                 if(mype == 0 .and. izh0 == 1) then
-                    qtempk(ikx,iky,izh1) = qtempk(ikx,iky,izh1) + 2.*delt*(1./dz)*(i*kx*Bu*psik(ikx,iky,izh1) + (1.*kh2)*Ek*psi_old(ikx,iky,izh1)  )*exp(-diss)
-                 end if
-
-                 !Top Boundary: add vQy                                                                                                                                        
-                 if(mype == (npe-1) .and. izh0 == n3h0) then
-                    qtempk(ikx,iky,izh1) = qtempk(ikx,iky,izh1) - 2.*delt*(1./dz)*(i*kx*Bu)*psik(ikx,iky,izh1)*exp(-diss)
-                 end if
-              end if
 
            enddo
         enddo
