@@ -196,9 +196,9 @@ end if
           kh2=kx*kx+ky*ky
 
           if(eady==1) then
-             diss = delt* (i*kx*zash0(izh0) +  nuh*(1.*kh2)**(1.*ilap) )     !Integrating factor includes the term Uqx
+             diss = delt* (i*kx*zash0(izh0) +  nuh*((1.*kx)**(2.*ilap) + (1.*ky)**(2.*ilap))  )     !Integrating factor includes the term Uqx
           else
-             diss = nuh*delt*(1.*kh2)**(1.*ilap)          
+             diss = nuh*delt*((1.*kx)**(2.*ilap) + (1.*ky)**(2.*ilap))          
           end if
 
           if (L(ikx,iky).eq.1) then
@@ -341,9 +341,9 @@ end if
               kh2=kx*kx+ky*ky
 
               if(eady==1) then
-                 diss = delt* (i*kx*zash0(izh0) +  nuh*(1.*kh2)**(1.*ilap) )     !Integrating factor includes the term Uqx
+                 diss = delt* (i*kx*zash0(izh0) +  nuh*((1.*kx)**(2.*ilap) + (1.*ky)**(2.*ilap)) )     !Integrating factor includes the term Uqx
               else
-                 diss = nuh*delt*(1.*kh2)**(1.*ilap)          
+                 diss = nuh*delt*((1.*kx)**(2.*ilap) + (1.*ky)**(2.*ilap))          
               end if
 
               if (L(ikx,iky).eq.1) then
