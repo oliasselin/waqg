@@ -1340,18 +1340,18 @@ end subroutine hspec
        
        !          write (fname, "(A9,I1,I1,A4)") "slicehbot",id_field,count_slice(id_field),".dat"
        write (fname, "(A9,I1,I3,A4)") "slicehbot",id_field,count_slice(id_field),".dat"
-       open (unit=count_slice(id_field),file=fname,action="write",status="replace")
+       open (unit=unit_slices,file=fname,action="write",status="replace")
        
        iz=bot_height - mype*n3h0 + hlvl(id_field)
        
        
        do iy=1,n2
-          write(unit=count_slice(id_field),fmt=333) (real(field(ix,iy,iz)),ix=1,n1)
-          write(unit=count_slice(id_field),fmt=*) '           '
+          write(unit=unit_slices,fmt=333) (real(field(ix,iy,iz)),ix=1,n1)
+          write(unit=unit_slices,fmt=*) '           '
        enddo
 333    format(1x,E12.5,1x)
        
-       close (unit=count_slice(id_field))
+       close (unit=unit_slices)
        
     end if
     
@@ -1361,18 +1361,18 @@ end subroutine hspec
        
        !          write (fname, "(A9,I1,I1,A4)") "slicehmid",id_field,count_slice(id_field),".dat"
        write (fname, "(A9,I1,I3,A4)") "slicehmid",id_field,count_slice(id_field),".dat"
-       open (unit=count_slice(id_field),file=fname,action="write",status="replace")
+       open (unit=unit_slices,file=fname,action="write",status="replace")
        
        iz=mid_height - mype*n3h0 + hlvl(id_field)
        
        
        do iy=1,n2
-          write(unit=count_slice(id_field),fmt=333) (real(field(ix,iy,iz)),ix=1,n1)
-          write(unit=count_slice(id_field),fmt=*) '           '
+          write(unit=unit_slices,fmt=333) (real(field(ix,iy,iz)),ix=1,n1)
+          write(unit=unit_slices,fmt=*) '           '
        enddo
        
        
-       close (unit=count_slice(id_field))
+       close (unit=unit_slices)
        
     end if
     
@@ -1381,18 +1381,18 @@ end subroutine hspec
        
        !          write (fname, "(A9,I1,I1,A4)") "slicehtop",id_field,count_slice(id_field),".dat"
        write (fname, "(A9,I1,I3,A4)") "slicehtop",id_field,count_slice(id_field),".dat"
-       open (unit=count_slice(id_field),file=fname,action="write",status="replace")
+       open (unit=unit_slices,file=fname,action="write",status="replace")
        
        iz=top_height - mype*n3h0 + hlvl(id_field)
        
        
        do iy=1,n2
-          write(unit=count_slice(id_field),fmt=333) (real(field(ix,iy,iz)),ix=1,n1)
-          write(unit=count_slice(id_field),fmt=*) '           '
+          write(unit=unit_slices,fmt=333) (real(field(ix,iy,iz)),ix=1,n1)
+          write(unit=unit_slices,fmt=*) '           '
        enddo
        
        
-       close (unit=count_slice(id_field))
+       close (unit=unit_slices)
        
     end if
 
@@ -1404,7 +1404,7 @@ end subroutine hspec
        if(mype==0) then
 !          write (fname, "(A6,I1,I1,A4)") "slicev",id_field,count_slice(id_field),".dat"
           write (fname, "(A6,I1,I3,A4)") "slicev",id_field,count_slice(id_field),".dat"
-          open (unit=count_slice(id_field),file=fname,action="write",status="replace")
+          open (unit=unit_slices,file=fname,action="write",status="replace")
 
           !Copy ur slice on XY_slice (NOTICE IT'S NOT ON XY_slice_p)                                                                                                                                                                      
           do ix=1,n1
@@ -1433,10 +1433,10 @@ end subroutine hspec
 !             end do
 !          end do
           do iz=1,n3
-             write(unit=count_slice(id_field),fmt=333) (XZ_slice(ix,iz),ix=1,n1)
-             write(unit=count_slice(id_field),fmt=*) '           '
+             write(unit=unit_slices,fmt=333) (XZ_slice(ix,iz),ix=1,n1)
+             write(unit=unit_slices,fmt=*) '           '
           enddo
-          close (unit=count_slice(id_field))
+          close (unit=unit_slices)
 
           
        end if
