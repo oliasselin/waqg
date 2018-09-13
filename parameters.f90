@@ -2,8 +2,8 @@ MODULE parameters
 
    IMPLICIT NONE
 
-    integer, parameter :: n1=128, n2=128, n3=2
-    integer, parameter :: npe=1
+    integer, parameter :: n1=256, n2=256, n3=128
+    integer, parameter :: npe=64
 
     integer, parameter :: n1d=n1+2, n2d=n2, n3d=n3
     integer, parameter :: n3h0=n3/npe, n3h1=n3/npe+2, n3h2=n3/npe+4
@@ -179,7 +179,7 @@ MODULE parameters
     double precision, parameter :: Fr  = U_scale/(N0*H_scale)                                   !Froude number  U/N(z0)H
     double precision, parameter :: W2F = (Uw_scale/U_scale)**2                                  ! wave to flow velocity magnitude squared
     double precision, parameter :: Bu  = Fr*Fr/(Ro*Ro)                                          ! (Fr/Ro)^2 = Burger number 
-    double precision, parameter :: Ek  = 5.                                                    ! Ekman term = r/Ro where r is nondimensionalized by H.
+    double precision, parameter :: Ek  = 100.                                                    ! Ekman term = r/Ro where r is nondimensionalized by H.
 
 
 
@@ -190,7 +190,7 @@ MODULE parameters
     integer :: iter=0
     integer :: itermax=100000000
     real :: maxtime=40                      
-    double precision, parameter :: delt=0.005*dx !0.5*Bu*Ro/(2.*ktrunc_x*ktrunc_x) !0.25/ktrunc_x !0.5*Bu*Ro/(2.*ktrunc_x*ktrunc_x) 
+    double precision, parameter :: delt=0.01*dx !0.5*Bu*Ro/(2.*ktrunc_x*ktrunc_x) !0.25/ktrunc_x !0.5*Bu*Ro/(2.*ktrunc_x*ktrunc_x) 
     double precision, parameter :: gamma=1e-3                                  !Robert filter parameter
 
     !Other successful viscosity: 5e-2 * (10./ktrunc_x ) **2. 
