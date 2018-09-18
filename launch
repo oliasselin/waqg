@@ -3,8 +3,8 @@
 number_of_nodes=1
 number_of_tasks=64
 
-sourdir=/scratch/05518/oasselin/eady/256x128_Ek100_dt0.01_c1_ilap2/source/
-datadir=/scratch/05518/oasselin/eady/256x128_Ek100_dt0.01_c1_ilap2/output/
+sourdir=/scratch/05518/oasselin/eady/256x128_Ek160_dt0.001_c1_ilap2/source/
+datadir=/scratch/05518/oasselin/eady/256x128_Ek160_dt0.001_c1_ilap2/output/
 
 mkdir -p $sourdir
 mkdir -p $datadir

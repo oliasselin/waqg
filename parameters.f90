@@ -63,7 +63,7 @@ MODULE parameters
     !Eady only
     integer, parameter :: ave_k=10              !Average wavenumber                                                                                          
     real, parameter ::    var_k=10.              !Variance of of the gaussian in wavenumbers                                                                                          
-    double precision, parameter :: psi_0=0.1
+    double precision, parameter :: psi_0=1.     
 
 
     integer, parameter :: generic=1 
@@ -179,7 +179,9 @@ MODULE parameters
     double precision, parameter :: Fr  = U_scale/(N0*H_scale)                                   !Froude number  U/N(z0)H
     double precision, parameter :: W2F = (Uw_scale/U_scale)**2                                  ! wave to flow velocity magnitude squared
     double precision, parameter :: Bu  = Fr*Fr/(Ro*Ro)                                          ! (Fr/Ro)^2 = Burger number 
-    double precision, parameter :: Ek  = 100.                                                    ! Ekman term = r/Ro where r is nondimensionalized by H.
+
+    double precision, parameter :: delta_E = 63                                                 !Depth of the Ekman layer: 63 m
+    double precision, parameter :: Ek  = delta_E/(Ro*H_scale)                                   !Ekman term = delta_E/(Ro H)
 
 
 
@@ -190,7 +192,7 @@ MODULE parameters
     integer :: iter=0
     integer :: itermax=100000000
     real :: maxtime=40                      
-    double precision, parameter :: delt=0.01*dx !0.5*Bu*Ro/(2.*ktrunc_x*ktrunc_x) !0.25/ktrunc_x !0.5*Bu*Ro/(2.*ktrunc_x*ktrunc_x) 
+    double precision, parameter :: delt=0.001*dx !0.5*Bu*Ro/(2.*ktrunc_x*ktrunc_x) !0.25/ktrunc_x !0.5*Bu*Ro/(2.*ktrunc_x*ktrunc_x) 
     double precision, parameter :: gamma=1e-3                                  !Robert filter parameter
 
     !Other successful viscosity: 5e-2 * (10./ktrunc_x ) **2. 

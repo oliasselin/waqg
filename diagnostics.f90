@@ -2953,8 +2953,11 @@ end subroutine hspec
     write(unit_run,*)
 
     write(unit_run,*) "Ar = H/L = 1/",L_scale/H_scale
-    write(unit_run,*) "Ro = ",Ro,"   Fr = ",Fr,"   Bu = ",Bu    !Average Fr
+    write(unit_run,*) "Ro = ",Ro,"   Fr = ",Fr,"   Bu = ",Bu    
+    write(unit_run,*) "Ek = ",Ek,"   Delta_E = ",delta_E
     
+
+
     write(unit_run,*) "Numerical Stability"
     write(unit_run,*)      
     write(unit_run,*) "dt  =",delt 
