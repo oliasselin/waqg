@@ -2,8 +2,8 @@ MODULE parameters
 
    IMPLICIT NONE
 
-    integer, parameter :: n1=256, n2=256, n3=128
-    integer, parameter :: npe=64
+    integer, parameter :: n1=64, n2=64, n3=8
+    integer, parameter :: npe=2
 
     integer, parameter :: n1d=n1+2, n2d=n2, n3d=n3
     integer, parameter :: n3h0=n3/npe, n3h1=n3/npe+2, n3h2=n3/npe+4
@@ -180,7 +180,7 @@ MODULE parameters
     double precision, parameter :: W2F = (Uw_scale/U_scale)**2                                  ! wave to flow velocity magnitude squared
     double precision, parameter :: Bu  = Fr*Fr/(Ro*Ro)                                          ! (Fr/Ro)^2 = Burger number 
 
-    double precision, parameter :: delta_E = 63                                                 !Depth of the Ekman layer: 63 m
+    double precision, parameter :: delta_E = 40                                                 !Depth of the Ekman layer: 63 m
     double precision, parameter :: Ek  = delta_E/(Ro*H_scale)                                   !Ekman term = delta_E/(Ro H)
 
 
@@ -293,5 +293,12 @@ MODULE parameters
     integer, parameter :: out_slice   = 1, freq_slice =  1*freq_etot
     integer, parameter :: out_eta     = 0, freq_eta   =  freq_hspec
     integer, parameter :: out_tspec   = 0
+
+    !Restart
+    integer :: count_restart = 0       !number of slices
+    integer :: dump = 0
+    integer :: restart = 1
+!    character(len = 32) :: restart_location="../../restart/output/"     
+!    integer, parameter :: restart_no=0
 
 END MODULE parameters

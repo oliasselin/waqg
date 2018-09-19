@@ -99,6 +99,9 @@ PROGRAM main
 
   equivalence(u_rotr,u_rot)
 
+!  character(len = 64) :: fname_try                                                                                                                                     
+       
+
   !********************** Initializing... *******************************!
 
 
@@ -109,16 +112,33 @@ PROGRAM main
   call init_base_state
   if(mype==0)  call validate_run
 
+!  if(mype==0) then
+!     write (fname_try, "(A21,A13,I1,A4)") restart_location,"restart_00_00",izh0+mype*n3h0,".dat"
+!     write(*,*) "fname=",fname
+!     write(*,*) "fname_try",fname_try
+!  end if
 
-  call init_eady(psik,psir)
+  if(restart==1) then
+     psik=0.
+     call read_restart(psik)                                                                                                                                                            
+     if(npe > 1) call generate_halo_q(psik)                                                                                                                                             
+  else
+     call init_eady(psik,psir)
+  end if
+
   call init_q(qk,psik)
   call compute_velo(uk,vk,wk,bk,psik)
   if(npe > 1) call generate_halo(uk,vk,wk,bk)
   if(npe > 1) call generate_halo_q(qk) 
+
  
  psi_old = psik 
      qok = qk 
- 
+
+
+  if(dump==1) call dump_restart(psik)
+
+
  !Initial diagnostics!
  !*******************!
 

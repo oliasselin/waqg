@@ -11,6 +11,7 @@ MODULE files
                                                                          
   !unit no of files for output                                                                                                                            
   integer, parameter :: unit_slices = 1
+  integer, parameter :: unit_dump = 2
   integer, parameter :: unit_energy =50
 !  integer, parameter :: unit_etrop  =51
 !  integer, parameter :: unit_estra  =52

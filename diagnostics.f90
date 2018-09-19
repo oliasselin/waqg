@@ -1472,6 +1472,9 @@ end subroutine hspec
 
      end subroutine slices
 
+
+
+
   subroutine slices4(uk,vk,wk,bk,wak,u_rot,ur,vr,wr,br,war,u_rotr,id_field)
 
     double complex, dimension(iktx,ikty,n3h2) :: uk,vk,wk,bk
@@ -4621,6 +4624,128 @@ SUBROUTINE cond_wz(wak)
       end if
 
     end subroutine tropopause_meanders
+
+
+  subroutine dump_restart(field)
+
+    double complex, dimension(iktx,ikty,n3h1) :: field
+    
+    integer :: unit
+    integer :: level
+    character(len = 32) :: fname                !future file name                                                                                                                                                                         
+
+    !Suboptimal but simple: print a horizontal slice per vertical level.
+    do izh0=1,n3h0
+       izh1=izh0+1
+
+       level = izh0+mype*n3h0
+       !Name file!
+       if(count_restart<10) then
+          if(level<10) then
+             write (fname, "(A9,I1,A3,I1,A4)") "restart_0",count_restart,"_00",izh0+mype*n3h0,".dat"
+          elseif(level<100 .and. level >= 10) then
+             write (fname, "(A9,I1,A2,I2,A4)") "restart_0",count_restart,"_0",izh0+mype*n3h0,".dat"
+          elseif(level<1000 .and. level >= 100) then
+             write (fname, "(A9,I1,A1,I3,A4)") "restart_0",count_restart,"_",izh0+mype*n3h0,".dat"
+          else
+             write(*,*) "Vertical resolution too large for dump!"
+             stop
+          end if
+
+       elseif(count_restart<100 .and. count_restart >= 10) then
+          if(level<10) then
+             write (fname, "(A8,I2,A3,I1,A4)") "restart_",count_restart,"_00",izh0+mype*n3h0,".dat"
+          elseif(level<100 .and. level >= 10) then
+             write (fname, "(A8,I2,A2,I2,A4)") "restart_",count_restart,"_0",izh0+mype*n3h0,".dat"
+          elseif(level<1000 .and. level >= 100) then
+             write (fname, "(A8,I2,A1,I3,A4)") "restart_",count_restart,"_",izh0+mype*n3h0,".dat"
+          else
+             write(*,*) "Vertical resolution too large for dump!"
+             stop
+          end if
+
+       else
+          write(*,*) "Too many restart files for dump!"
+          stop
+       end if
+
+
+       open (unit=unit_dump,file=fname,action="write",status="replace")
+
+       do iky=1,ikty
+          write(unit=unit_dump,fmt=335) (field(ikx,iky,izh1), ikx=1,iktx)
+       enddo
+335    format(1x,E24.17,1x,E24.17)
+
+       close (unit=unit_dump)      
+
+       !Test: this is what it should look like!
+!       if(mype==0) then
+
+!          write(*,*) "This should be in restart_00_001.dat"
+!          do iky=1,ikty
+!             do ikx=1,iktx
+
+!                write(*,*) psik(ikx,iky,izbot1)
+
+!             end do
+!          end do
+!       end if
+
+    end do
+
+    count_restart=count_restart+1
+
+  end subroutine dump_restart
+
+
+  subroutine read_restart(field)
+
+    double complex, dimension(iktx,ikty,n3h1) :: field
+    
+    integer :: unit
+    integer :: level
+!    character(len = 32) :: fname                !future file name                                                                                                                  
+    character(len = 64) :: fname                !future file name                                                                                                   
+
+    !Suboptimal but simple: print a horizontal slice per vertical level.
+    do izh0=1,n3h0
+       izh1=izh0+1
+
+       level = izh0+mype*n3h0
+       !Name file!
+
+       !Assume we are interested in reading restart #00 for now
+       if(level<10) then
+!          write (fname, "(A13,I1,A4)") "restart_00_00",izh0+mype*n3h0,".dat"
+          write (fname, "(A31,I1,A4)") "../../dump/output/restart_00_00",izh0+mype*n3h0,".dat"
+       elseif(level<100 .and. level >= 10) then
+!          write (fname, "(A12,I2,A4)") "restart_00_0",izh0+mype*n3h0,".dat"
+          write (fname, "(A30,I2,A4)") "../../dump/output/restart_00_0",izh0+mype*n3h0,".dat"
+       elseif(level<1000 .and. level >= 100) then
+!          write (fname, "(A11,I3,A4)") "restart_00_",izh0+mype*n3h0,".dat"
+          write (fname, "(A29,I3,A4)") "../../dump/output/restart_00_",izh0+mype*n3h0,".dat"
+       else
+          write(*,*) "Vertical resolution too large for dump!"
+          stop
+       end if
+
+       open (unit=unit_dump,file=fname,action="read",status="old")
+
+       do iky=1,ikty
+          do ikx=1,iktx
+             read(unit=unit_dump,fmt=335) field(ikx,iky,izh1)
+          end do
+       end do
+335    format(1x,E24.17,1x,E24.17)
+       close (unit=unit_dump)      
+    
+    end do
+
+
+
+
+  end subroutine read_restart
 
 
 
