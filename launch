@@ -3,8 +3,8 @@
 number_of_nodes=1
 number_of_tasks=64
 
-sourdir=/scratch/05518/oasselin/eady/256x128_Ek160_dt0.001_c1_ilap2/source/
-datadir=/scratch/05518/oasselin/eady/256x128_Ek160_dt0.001_c1_ilap2/output/
+sourdir=/scratch/05518/oasselin/eady/256x128_dE40_r65_dt0.002/source/
+datadir=/scratch/05518/oasselin/eady/256x128_dE40_r65_dt0.002/output/
 
 mkdir -p $sourdir
 mkdir -p $datadir
@@ -44,7 +44,7 @@ cat > EXEC_STEP << EXEC
 #SBATCH -p normal                     # Queue (partition) name
 #SBATCH -N $number_of_nodes           # Total # of nodes 
 #SBATCH -n $number_of_tasks           # Total # of mpi tasks
-#SBATCH -t 16:00:00                   # Run time (hh:mm:ss)
+#SBATCH -t 08:00:00                   # Run time (hh:mm:ss)
 #SBATCH --mail-user=oasselin@ucsd.edu
 ##SBATCH --mail-type=all              # Send email at begin and end of job
 #SBATCH -A TG-OCE180004               # Allocation name (req'd if you have more than 1)

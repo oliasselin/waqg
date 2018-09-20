@@ -101,7 +101,6 @@ PROGRAM main
 
   !********************** Initializing... *******************************!
 
-
   call initialize_mpi
   call init_files
   call initialize_fftw(array2dr,array2di,fr_even,fk_even,fr_odd,fk_odd)
@@ -109,16 +108,23 @@ PROGRAM main
   call init_base_state
   if(mype==0)  call validate_run
 
+  if(restart==1) then
+     call read_restart(psik)                                                                                                                                                            
+     if(npe > 1) call generate_halo_q(psik)                                                                                                                                             
+  else
+     call init_eady(psik,psir)
+  end if
 
-  call init_eady(psik,psir)
   call init_q(qk,psik)
   call compute_velo(uk,vk,wk,bk,psik)
   if(npe > 1) call generate_halo(uk,vk,wk,bk)
   if(npe > 1) call generate_halo_q(qk) 
+
  
  psi_old = psik 
      qok = qk 
- 
+
+
  !Initial diagnostics!
  !*******************!
 
@@ -134,6 +140,8 @@ PROGRAM main
  do id_field=1,nfields                                            
     if(out_slice ==1) call slices(uk,vk,bk,psik,qk,ur,vr,br,psir,qr,id_field)
  end do
+
+ if(dump==1) call dump_restart(psik)
 
  !************************************************************************!
  !*** 1st time timestep using the projection method with Forward Euler ***!
@@ -464,12 +472,14 @@ end if
  
 if(out_etot ==1 .and. mod(iter,freq_etot )==0) call diag_zentrum(uk,vk,wk,bk,wak,psik,u_rot)
 
- do id_field=1,nfields
-    if(out_slice ==1 .and. mod(iter,freq_slice)==0 .and. count_slice(id_field)<max_slices) call slices(uk,vk,bk,psik,qk,ur,vr,br,psir,qr,id_field)
- end do
+do id_field=1,nfields
+   if(out_slice ==1 .and. mod(iter,freq_slice)==0 .and. count_slice(id_field)<max_slices) call slices(uk,vk,bk,psik,qk,ur,vr,br,psir,qr,id_field)
+end do
 
+if(dump==1 .and. mod(iter,freq_dump)==0) call dump_restart(psik)
+ 
 
- if(time>maxtime) EXIT
+if(time>maxtime) EXIT
 end do !End loop
 
 !************ Terminating processes **********************!                                                                                                                         
