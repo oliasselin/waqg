@@ -99,11 +99,7 @@ PROGRAM main
 
   equivalence(u_rotr,u_rot)
 
-!  character(len = 64) :: fname_try                                                                                                                                     
-       
-
   !********************** Initializing... *******************************!
-
 
   call initialize_mpi
   call init_files
@@ -112,14 +108,7 @@ PROGRAM main
   call init_base_state
   if(mype==0)  call validate_run
 
-!  if(mype==0) then
-!     write (fname_try, "(A21,A13,I1,A4)") restart_location,"restart_00_00",izh0+mype*n3h0,".dat"
-!     write(*,*) "fname=",fname
-!     write(*,*) "fname_try",fname_try
-!  end if
-
   if(restart==1) then
-     psik=0.
      call read_restart(psik)                                                                                                                                                            
      if(npe > 1) call generate_halo_q(psik)                                                                                                                                             
   else
@@ -134,9 +123,6 @@ PROGRAM main
  
  psi_old = psik 
      qok = qk 
-
-
-  if(dump==1) call dump_restart(psik)
 
 
  !Initial diagnostics!
@@ -154,6 +140,8 @@ PROGRAM main
  do id_field=1,nfields                                            
     if(out_slice ==1) call slices(uk,vk,bk,psik,qk,ur,vr,br,psir,qr,id_field)
  end do
+
+ if(dump==1) call dump_restart(psik)
 
  !************************************************************************!
  !*** 1st time timestep using the projection method with Forward Euler ***!
@@ -484,12 +472,14 @@ end if
  
 if(out_etot ==1 .and. mod(iter,freq_etot )==0) call diag_zentrum(uk,vk,wk,bk,wak,psik,u_rot)
 
- do id_field=1,nfields
-    if(out_slice ==1 .and. mod(iter,freq_slice)==0 .and. count_slice(id_field)<max_slices) call slices(uk,vk,bk,psik,qk,ur,vr,br,psir,qr,id_field)
- end do
+do id_field=1,nfields
+   if(out_slice ==1 .and. mod(iter,freq_slice)==0 .and. count_slice(id_field)<max_slices) call slices(uk,vk,bk,psik,qk,ur,vr,br,psir,qr,id_field)
+end do
 
+if(dump==1 .and. mod(iter,freq_dump)==0) call dump_restart(psik)
+ 
 
- if(time>maxtime) EXIT
+if(time>maxtime) EXIT
 end do !End loop
 
 !************ Terminating processes **********************!                                                                                                                         

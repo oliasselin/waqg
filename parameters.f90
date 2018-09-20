@@ -2,7 +2,7 @@ MODULE parameters
 
    IMPLICIT NONE
 
-    integer, parameter :: n1=64, n2=64, n3=8
+    integer, parameter :: n1=64, n2=64, n3=24
     integer, parameter :: npe=2
 
     integer, parameter :: n1d=n1+2, n2d=n2, n3d=n3
@@ -295,10 +295,11 @@ MODULE parameters
     integer, parameter :: out_tspec   = 0
 
     !Restart
-    integer :: count_restart = 0       !number of slices
-    integer :: dump = 0
-    integer :: restart = 1
-!    character(len = 32) :: restart_location="../../restart/output/"     
-!    integer, parameter :: restart_no=0
+    integer :: count_restart = 0                                 !when dumping: restart file number 
+    integer, parameter :: dump = 0, freq_dump = freq_slice*10    !dump = 1 means you dump, every "freq_dump" timestep
+    integer, parameter :: restart = 1                            !restart = 1 start from file
+    integer, parameter :: restart_no = 2                         !Restart file number (from 0 to 99)
+    character(len = 64), parameter :: floc='../../dump/output/'  !Location of the restart file (when restarting only: dumping in local output/ folder)
+    
 
 END MODULE parameters
