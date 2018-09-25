@@ -1,8 +1,9 @@
 set term pngcairo
 set size square
 set pm3d map
-set palette model RGB
-set palette defined
+load 'rdbu.pal'
+#set palette model RGB
+#set palette defined
 set key off
 
 unset xtics
