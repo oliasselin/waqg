@@ -2,8 +2,8 @@ MODULE parameters
 
    IMPLICIT NONE
 
-    integer, parameter :: n1=256, n2=256, n3=128
-    integer, parameter :: npe=64
+    integer, parameter :: n1=64, n2=64, n3=64
+    integer, parameter :: npe=2
 
     integer, parameter :: n1d=n1+2, n2d=n2, n3d=n3
     integer, parameter :: n3h0=n3/npe, n3h1=n3/npe+2, n3h2=n3/npe+4
@@ -190,7 +190,7 @@ MODULE parameters
 
     real :: time=0.
     integer :: iter=0
-    integer :: itermax=100000000
+    integer :: itermax=0!100000000
     real :: maxtime=40                      
     double precision, parameter :: delt=0.002*dx !0.5*Bu*Ro/(2.*ktrunc_x*ktrunc_x) !0.25/ktrunc_x !0.5*Bu*Ro/(2.*ktrunc_x*ktrunc_x) 
     double precision, parameter :: gamma=1e-3                                  !Robert filter parameter
@@ -296,10 +296,14 @@ MODULE parameters
 
     !Restart
     integer :: count_restart = 0                                 !when dumping: restart file number 
-    integer, parameter :: dump = 1, freq_dump = freq_slice*10    !dump = 1 means you dump, every "freq_dump" timestep
-    integer, parameter :: restart = 1                            !restart = 1 start from file
+    integer, parameter :: dump = 0, freq_dump = freq_slice*10    !dump = 1 means you dump, every "freq_dump" timestep
+    integer, parameter :: restart = 0                            !restart = 1 start from file
     integer, parameter :: restart_no = 65                         !Restart file number (from 0 to 99)
     character(len = 64), parameter :: floc='../../256x128_dE40/output/'  !Location of the restart file (when restarting only: dumping in local output/ folder)
-    
+
+
+    !Filtering of modes
+    integer, parameter :: filter_A=1
+    integer, parameter :: out_specA = 1, freq_specA = 1
 
 END MODULE parameters

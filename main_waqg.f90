@@ -125,6 +125,45 @@ PROGRAM main
      qok = qk 
 
 
+  !Test the z-spectrum!
+     
+  call generate_fields_stag(BRr,n3h0,BIr,n3h0,ARr,n3h0) 
+
+  call fft_r2c(BRr,BRk,n3h0)
+  call fft_r2c(BIr,BIk,n3h0)
+
+  call mpitranspose(BRk,iktx,ikty,n3h0,BRkt,n3,iktyp)           !Transpose BR to iky-parallelized space                                                                                 
+  call mpitranspose(BIk,iktx,ikty,n3h0,BIkt,n3,iktyp)           !Transpose BK to iky-parallelized space   
+
+  call spec_A(BRkt,BIkt,CRk,CIk)  
+
+  call mpitranspose(BRkt,iktx,n3,iktyp,BRk,ikty,n3h0)
+  call mpitranspose(BIkt,iktx,n3,iktyp,BIk,ikty,n3h0)
+
+  uk=0.
+  vk=0.
+  psik=0.
+  qk=0.
+
+  do ikx=1,iktx
+     do iky=1,ikty
+        do izh0=1,n3h0
+           izh1=izh0+1
+           izh2=izh0+2
+
+           uk(ikx,iky,izh2)=BRk(ikx,iky,izh0)
+           vk(ikx,iky,izh2)=BIk(ikx,iky,izh0)
+         psik(ikx,iky,izh1)=CRk(ikx,iky,izh0)
+           qk(ikx,iky,izh1)=CIk(ikx,iky,izh0)
+
+       end do
+    end do
+ end do
+
+  !-------------------!
+
+
+
  !Initial diagnostics!
  !*******************!
 

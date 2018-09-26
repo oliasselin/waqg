@@ -1221,19 +1221,23 @@ end subroutine hspec
     if(id_field==1)   then
        bmem=uk
        call fft_c2r(uk,ur,n3h2)
-       field = U_scale*ur  
+       field=ur
+!       field = U_scale*ur  
     else if(id_field==2) then
        bmem=vk
        call fft_c2r(vk,vr,n3h2)
-       field = U_scale*vr  
+       field = vr
+!       field = U_scale*vr  
     else if(id_field==3) then
        qmem=psik
        call fft_c2r(psik,psir,n3h1)
-       field = U_scale*L_scale*psir  
+       field = psir
+!       field = U_scale*L_scale*psir  
     else if(id_field==4) then
        qmem=qk
        call fft_c2r(qk,qr,n3h1)
-       field = (U_scale/L_scale)*qr
+       field = qr
+!       field = (U_scale/L_scale)*qr
     else if(id_field==5) then             !QG streamfunction
        bmem=bk
        call fft_c2r(bk,br,n3h2)
@@ -4762,6 +4766,147 @@ SUBROUTINE cond_wz(wak)
 
 
   end subroutine read_restart
+
+
+
+  subroutine spec_A(ARkt,AIkt,DRk,DIk)
+
+
+    double complex, dimension(iktx,n3, iktyp) :: ARkt          !Transposed (ky-parallelization) BIk                                                            
+    double complex, dimension(iktx,n3, iktyp) :: AIkt          !Transposed (ky-parallelization) BIk  
+
+    double precision, dimension(iktx,n3, iktyp) :: specAt          !Transposed (ky-parallelization) BIk  
+
+    !For test only:
+    double complex, dimension(iktx,n3, iktyp) :: DRkt          !Transposed (ky-parallelization) BIk                                                            
+    double complex, dimension(iktx,n3, iktyp) :: DIkt          !Transposed (ky-parallelization) BIk  
+
+    double complex,   dimension(iktx,ikty,n3h0) :: DRk, DIk
+
+    double precision, dimension(n3,iktx,iktyp) :: ReU,ImU,ReV,ImV
+
+    real :: error
+    error =0.
+    DRkt=0.
+    DIkt=0.
+
+
+    ReU = 0.D0
+    ImU = 0.D0
+    ReV = 0.D0
+    ImV = 0.D0
+
+    !Transform A to kz-space
+    DO ikx=1,iktx
+
+       DO ikyp=1,iktyp
+          iky=ikyp+iktyp*mype
+
+          if(L(ikx,iky)==1 ) then
+
+             do iz=1,n3
+             
+                ReU(iz,ikx,ikyp)=DBLE(ARkt(ikx,iz,ikyp))
+                ImU(iz,ikx,ikyp)=DIMAG(ARkt(ikx,iz,ikyp))
+
+                ReV(iz,ikx,ikyp)=DBLE(AIkt(ikx,iz,ikyp))
+                ImV(iz,ikx,ikyp)=DIMAG(AIkt(ikx,iz,ikyp))
+
+             end do
+
+             call dfftw_execute_r2r(plan_ztokz,ReU(1,ikx,ikyp),ReU(1,ikx,ikyp))
+             call dfftw_execute_r2r(plan_ztokz,ImU(1,ikx,ikyp),ImU(1,ikx,ikyp))
+             call dfftw_execute_r2r(plan_ztokz,ReV(1,ikx,ikyp),ReV(1,ikx,ikyp))
+             call dfftw_execute_r2r(plan_ztokz,ImV(1,ikx,ikyp),ImV(1,ikx,ikyp))
+             
+
+             
+
+          end if
+       end DO
+    end DO
+
+    !Normalize!
+    ReU=ReU/(2.*n3)
+    ImU=ImU/(2.*n3)
+    ReV=ReV/(2.*n3)
+    ImV=ImV/(2.*n3)
+    
+    !Print spectrum!
+    DO ikx=1,iktx
+       kx=kxa(ikx)
+       DO ikyp=1,iktyp
+          iky=ikyp+iktyp*mype
+          ky=kya(iky)
+          if(L(ikx,iky)==1 ) then
+
+             do iz=1,n3
+
+                if(abs(ReU(iz,ikx,ikyp))+abs(ImU(iz,ikx,ikyp))>1e-10) write(*,*) "Significant energy in U. (kx,ky,kz),mype,",kx,ky,(iz-1)/2.,mype
+                if(abs(ReU(iz,ikx,ikyp))+abs(ImU(iz,ikx,ikyp))>1e-10) write(*,*) "Significant energy in U. Here is the val,",ReU(iz,ikx,ikyp),ImU(iz,ikx,ikyp)
+
+                if(abs(ReV(iz,ikx,ikyp))+abs(ImV(iz,ikx,ikyp))>1e-10) write(*,*) "Significant energy in V. (kx,ky,kz),mype,",kx,ky,(iz-1)/2.,mype
+                if(abs(ReV(iz,ikx,ikyp))+abs(ImV(iz,ikx,ikyp))>1e-10) write(*,*) "Significant energy in V. Here is the val,",ReU(iz,ikx,ikyp),ImU(iz,ikx,ikyp)
+
+                !|\tilde{A}|^2 = (a - d)^2 + (b+c)^2
+                specAt(iz,ikx,ikyp)=(ReU(iz,ikx,ikyp) - ImV(iz,ikx,ikyp))**2 + (ImU(iz,ikx,ikyp) + ReV(iz,ikx,ikyp) )**2
+
+             end do
+          end if
+       end DO
+    end DO
+
+    !Broadcast spectrum and print with mype==0!
+
+    
+
+    !Filter, and send back to z-space!
+    if(filter_A==1) then
+       DO ikx=1,iktx
+          
+          DO ikyp=1,iktyp
+             iky=ikyp+iktyp*mype
+             
+             if(L(ikx,iky)==1 ) then
+                
+                !Perform filering!
+
+
+                !----------------!
+
+                call dfftw_execute_r2r(plan_kztoz,ReU(1,ikx,ikyp),ReU(1,ikx,ikyp))
+                call dfftw_execute_r2r(plan_kztoz,ImU(1,ikx,ikyp),ImU(1,ikx,ikyp))
+                call dfftw_execute_r2r(plan_kztoz,ReV(1,ikx,ikyp),ReV(1,ikx,ikyp))
+                call dfftw_execute_r2r(plan_kztoz,ImV(1,ikx,ikyp),ImV(1,ikx,ikyp))
+                
+                !Normalize I guess!                                                                                                                                                         
+                do iz=1,n3
+                   
+                   DRkt(ikx,iz,ikyp)= ReU(iz,ikx,ikyp) + i*ImU(iz,ikx,ikyp)
+                   DIkt(ikx,iz,ikyp)= ReV(iz,ikx,ikyp) + i*ImV(iz,ikx,ikyp)
+
+                   error = error + real(  (DRkt(ikx,iz,ikyp) - ARkt(ikx,iz,ikyp))*CONJG(DRkt(ikx,iz,ikyp) - ARkt(ikx,iz,ikyp)) )
+                   error = error + real(  (DIkt(ikx,iz,ikyp) - AIkt(ikx,iz,ikyp))*CONJG(DIkt(ikx,iz,ikyp) - AIkt(ikx,iz,ikyp)) )
+                   
+                end do
+
+                
+             end if
+
+
+          end DO
+       end DO
+    end if
+
+
+    write(*,*) "Error on fft(ifft), mype",error,mype
+
+    !Transpose C to the regular z-parallelized world                                                                                                                                   
+    call mpitranspose(DRkt,iktx,n3,iktyp,DRk,ikty,n3h0)
+    call mpitranspose(DIkt,iktx,n3,iktyp,DIk,ikty,n3h0)
+
+  end subroutine spec_A
+
 
 
 
