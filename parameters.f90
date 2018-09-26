@@ -302,8 +302,11 @@ MODULE parameters
     character(len = 64), parameter :: floc='../../256x128_dE40/output/'  !Location of the restart file (when restarting only: dumping in local output/ folder)
 
 
-    !Filtering of modes
-    integer, parameter :: filter_A=1
+    !Filtering of A modes
+    integer, parameter :: filter_A=0
+    integer, parameter :: print_A=1
     integer, parameter :: out_specA = 1, freq_specA = 1
+    integer :: count_A=0
+    double precision, parameter :: YBJ_criterion = 1.           !Tolerate modes with Nkh/fkz < YBJ_criterion.
 
 END MODULE parameters
