@@ -140,6 +140,8 @@ PROGRAM main
 
  if(out_etot ==1) call diag_zentrum(uk,vk,wk,bk,wak,psik,u_rot)
 
+ if(out_we   ==1) call wave_energy(BRk,BIk,CRk,CIk)
+
  do id_field=1,nfields                                            
     if(out_slice ==1) call slices(uk,vk,bk,psik,qk,ur,vr,br,psir,qr,id_field)
  end do
@@ -491,6 +493,8 @@ do id_field=1,nfields
 end do
 
 if(dump==1 .and. mod(iter,freq_dump)==0) call dump_restart(psik)
+
+if(out_we ==1   .and. mod(iter,freq_we   )==0)  call wave_energy(BRk,BIk,CRk,CIk)
  
 
 if(time>maxtime) EXIT
