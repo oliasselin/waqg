@@ -123,6 +123,10 @@ PROGRAM main
  psi_old = psik 
      qok = qk 
 
+  !For the stability test!
+  call generate_fields_stag(BRr,n3h0,BIr,n3h0,wr,n3h2) 
+  !----------------------!
+
 
  !Initial diagnostics!
  !*******************!
