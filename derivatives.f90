@@ -3,7 +3,7 @@ MODULE derivatives
   USE parameters
   USE fft
   USE mpi
-
+  USE files
 
   IMPLICIT NONE
 
@@ -2355,6 +2355,126 @@ MODULE derivatives
 
     end SUBROUTINE compute_rot
 
+
+subroutine spec_A(ARkt,AIkt)
+
+    double complex, dimension(iktx,n3, iktyp) :: ARkt          !Transposed (ky-parallelization) ARk                                                            
+    double complex, dimension(iktx,n3, iktyp) :: AIkt          !Transposed (ky-parallelization) AIk  
+
+    double precision, dimension(n3) :: ReU,ImU,ReV,ImV         !Components of \hat{A}(kx,ky,z) and their kz transform
+
+    double precision :: kz2
+
+    character(len = 32) :: fname,fname2                !future file names                                                                                                             
+
+    DO ikyp=1,iktyp
+       iky=ikyp+iktyp*mype
+       ky=kya(iky)
+
+       !Prepare files to print \tilde{A}(kx,ky,kz) (one for each ky)!
+       if(print_A == 1 .and. mod(iter,freq_print_A)==0) then
+          write (fname, "(A1,I3,A3,I3,A4)") "A",count_A,"_ky",iky,".dat"
+          open (unit=unit_specA,file=fname,action="write",status="replace")
+          if(count_A==0) then !Print the list of kx for this ky
+             write (fname2, "(A10,I3,A4)") "klist_A_ky",iky,".dat"
+             open (unit=unit_speckA,file=fname2,action="write",status="replace")
+          end if
+       end if
+
+
+       DO ikx=1,iktx
+          kx=kxa(ikx)
+
+          kh2=kx*kx+ky*ky
+
+          if(L(ikx,iky)==1 ) then
+
+             do iz=1,n3
+
+                ReU(iz)=DBLE(ARkt(ikx,iz,ikyp))
+                ImU(iz)=DIMAG(ARkt(ikx,iz,ikyp))
+
+                ReV(iz)=DBLE(AIkt(ikx,iz,ikyp))
+                ImV(iz)=DIMAG(AIkt(ikx,iz,ikyp))
+
+             end do
+
+             call dfftw_execute_r2r(plan_ztokz,ReU(1),ReU(1))
+             call dfftw_execute_r2r(plan_ztokz,ImU(1),ImU(1))
+             call dfftw_execute_r2r(plan_ztokz,ReV(1),ReV(1))
+             call dfftw_execute_r2r(plan_ztokz,ImV(1),ImV(1))
+             
+             !Normalize!
+             ReU=ReU/(2.*n3)
+             ImU=ImU/(2.*n3)
+             ReV=ReV/(2.*n3)
+             ImV=ImV/(2.*n3)
+
+
+             !Print \tilde{A}(kx,ky,kz)!
+             if(print_A == 1 .and. mod(iter,freq_print_A)==0) then
+                do iz=1,n3
+                   write(unit=unit_specA,fmt=336) ReU(iz) - ImV(iz), ImU(iz) + ReV(iz)        !This is \tilde{A}(kx,ky,kz)'s real and imag parts
+                enddo
+336             format(1x,E12.5,1x,E12.5,1x)
+
+                if(count_A==0) then 
+                   write(unit=unit_speckA,fmt=337) kx, ky
+337                format(1x,I5,1x,I5,1x)                  
+                end if
+             end if
+
+
+             !Filter if desired.
+             if(filter_A == 1 .and. mod(iter,freq_filter_A)==0) then
+
+                do iz=1,n3
+                   kz2=((iz-1)/2.)**2
+
+                   if(kz2 > 0 .and. kh2 >= YBJ_criterion*Bu*kz2) then  
+
+                      ReU(iz)=0.
+                      ImU(iz)=0.
+                      ReV(iz)=0.
+                      ImV(iz)=0.
+
+                   end if
+
+                end do
+
+                !Transform back to (kx,ky,z) space and update A
+                call dfftw_execute_r2r(plan_kztoz,ReU(1),ReU(1))
+                call dfftw_execute_r2r(plan_kztoz,ImU(1),ImU(1))
+                call dfftw_execute_r2r(plan_kztoz,ReV(1),ReV(1))
+                call dfftw_execute_r2r(plan_kztoz,ImV(1),ImV(1))
+
+                do iz=1,n3
+
+                   ARkt(ikx,iz,ikyp)= ReU(iz) + i*ImU(iz)
+                   AIkt(ikx,iz,ikyp)= ReV(iz) + i*ImV(iz)
+
+                end do
+
+             end if
+
+
+          end if
+       end DO
+
+
+       !Close the file for \tilde{A}(kx,ky,kz)!
+       if(print_A == 1 .and. mod(iter,freq_print_A)==0) then
+          close (unit=unit_specA)
+          if(count_A==1) close (unit=unit_speckA)
+       end if
+
+
+    end DO
+
+
+    count_A = count_A + 1
+
+  end subroutine spec_A
 
 
     END MODULE derivatives
