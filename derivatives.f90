@@ -4,6 +4,7 @@ MODULE derivatives
   USE fft
   USE mpi
 
+
   IMPLICIT NONE
 
 !  integer :: kx,ky,kh2
@@ -1250,6 +1251,9 @@ MODULE derivatives
          end DO
       end DO
 
+      
+      !Print the spectrum and filter A if desired
+      if( (filter_A == 1 .and. mod(iter,freq_filter_A)==0 ) .or. (print_A == 1 .and. mod(iter,freq_print_A)==0) )  call spec_A(ARkt,AIkt)
 
       !Transpose A back to the regular z-parallelized world
       call mpitranspose(ARkt,iktx,n3,iktyp,ARk,ikty,n3h0)
@@ -2350,4 +2354,7 @@ MODULE derivatives
 
 
     end SUBROUTINE compute_rot
+
+
+
     END MODULE derivatives

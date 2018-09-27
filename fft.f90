@@ -18,18 +18,16 @@ MODULE fft
   integer, parameter :: norm_rc = n1*n2
 
 
+
   !For z-spectra.
-  integer*8 :: plan_even_z
-  integer*8 :: plan_odd_z
+  integer*8 :: plan_ztokz,plan_kztoz
 
-  integer, parameter :: fftw_redft10         =  5, fftw_rodft00                   = 7
-
- ! https://code.google.com/p/fdtd3d/source/browse/trunk/fortran/fftw3.f
+  integer, parameter :: fftw_redft10         =  5, fftw_redft01                   = 4
 
 
   CONTAINS
 
-    SUBROUTINE initialize_fftw(array2dr,array2di,fr_even,fk_even,fr_odd,fk_odd)
+    SUBROUTINE initialize_fftw(array2dr,array2di,fr_even,fk_even)
       
       !2D horizontal transforms                                                                                                                                                                                        
       double precision, dimension(n1d,n2d) :: array2dr
@@ -37,17 +35,14 @@ MODULE fft
 
       !For z-spectra
       double precision, dimension(n3)   :: fr_even,fk_even
-      double precision, dimension(n3-1) :: fr_odd ,fk_odd
-
 
       !2D horizontal transforms                                                                                                                                                                                              
       call dfftw_plan_dft_r2c_2d(plan_r2c,n1,n2,array2dr,array2di,fftw_estimate+fftw_in_place)
       call dfftw_plan_dft_c2r_2d(plan_c2r,n1,n2,array2di,array2dr,fftw_estimate+fftw_in_place)
 
       !For z-spectra
-      call dfftw_plan_r2r_1d(plan_even_z,n3  ,fr_even,fk_even,  FFTW_REDFT10,     fftw_estimate+fftw_in_place)
-      call dfftw_plan_r2r_1d(plan_odd_z ,n3-1,fr_odd ,fk_odd ,  FFTW_RODFT00,     fftw_estimate+fftw_in_place)
-
+      call dfftw_plan_r2r_1d(plan_ztokz,n3,fr_even,fk_even,  FFTW_REDFT10,     fftw_estimate+fftw_in_place)
+      call dfftw_plan_r2r_1d(plan_kztoz,n3,fk_even,fr_even,  FFTW_REDFT01,     fftw_estimate+fftw_in_place)
 
     END SUBROUTINE initialize_fftw
 

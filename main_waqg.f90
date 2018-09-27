@@ -84,7 +84,6 @@ PROGRAM main
   double complex,   dimension(iktx,ikty) :: array2di
 
   double precision, dimension(n3)   :: fr_even,fk_even
-  double precision, dimension(n3-1) :: fr_odd ,fk_odd
 
   equivalence(fr_even,fk_even)
   equivalence(fr_odd ,fk_odd )
@@ -103,7 +102,7 @@ PROGRAM main
 
   call initialize_mpi
   call init_files
-  call initialize_fftw(array2dr,array2di,fr_even,fk_even,fr_odd,fk_odd)
+  call initialize_fftw(array2dr,array2di,fr_even,fk_even)
   call init_arrays
   call init_base_state
   if(mype==0)  call validate_run
@@ -142,6 +141,7 @@ PROGRAM main
  end do
 
  if(dump==1) call dump_restart(psik)
+
 
  !************************************************************************!
  !*** 1st time timestep using the projection method with Forward Euler ***!
