@@ -183,6 +183,11 @@ PROGRAM main
     AIk=(0.D0,0.D0)
  end if
 
+ if(no_refraction==1) then
+    rBRk = (0.D0,0.D0)
+    rBIk = (0.D0,0.D0)
+ end if
+
   qok = qk
  BRok = BRk
  BIok = BIk
@@ -330,6 +335,11 @@ end if
      if(no_dispersion==1) then
         ARk=(0.D0,0.D0)
         AIk=(0.D0,0.D0)
+     end if
+     
+     if(no_refraction==1) then
+        rBRk = (0.D0,0.D0)
+        rBIk = (0.D0,0.D0)
      end if
 
      if(passive_scalar==1) then
