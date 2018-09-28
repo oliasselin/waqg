@@ -2,7 +2,7 @@ MODULE parameters
 
    IMPLICIT NONE
 
-    integer, parameter :: n1=256, n2=256, n3=64
+    integer, parameter :: n1=64, n2=64, n3=64
     integer, parameter :: npe=8
 
     integer, parameter :: n1d=n1+2, n2d=n2, n3d=n3
@@ -193,7 +193,7 @@ MODULE parameters
     integer :: iter=0
     integer :: itermax=100000000
     real :: maxtime=40                      
-    double precision, parameter :: delt=0.5*Bu*Ro/(2.*ktrunc_x*ktrunc_x) !0.25/ktrunc_x !0.5*Bu*Ro/(2.*ktrunc_x*ktrunc_x) 
+    double precision, parameter :: delt=0.5*Bu*Ro/(2.*ktrunc_x*ktrunc_x)  !Ro!delt=0.5*Bu*Ro/(2.*ktrunc_x*ktrunc_x) !0.25/ktrunc_x !0.5*Bu*Ro/(2.*ktrunc_x*ktrunc_x) 
     double precision, parameter :: gamma=1e-3                                  !Robert filter parameter
 
     !Other successful viscosity: 5e-2 * (10./ktrunc_x ) **2. 
@@ -304,13 +304,13 @@ MODULE parameters
     
 
     !Filtering of A modes
-    integer, parameter :: filter_A=0, freq_filter_A=1*freq_etot
+    integer, parameter :: filter_A=0, freq_filter_A=1!*freq_etot
     integer, parameter :: print_A=1, freq_print_A=1*freq_etot
     integer :: count_A=0
-    double precision, parameter :: YBJ_criterion = 1.           !Tolerate modes with Nkh/fkz < YBJ_criterion.
+    double precision, parameter :: YBJ_criterion = 1!100000.           !Tolerate modes with Nkh/fkz < YBJ_criterion.
 
 
     !Testing the dispersive term
-    double precision, parameter :: kx_test = 4, ky_test = 3, kz_test = 5.
+    double precision, parameter :: kx_test = ktrunc_x-1, ky_test = ktrunc_x-1, kz_test = 0.5
 
 END MODULE parameters

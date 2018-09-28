@@ -3,8 +3,8 @@
 number_of_nodes=1
 number_of_tasks=8
 
-sourdir=/scratch/05518/oasselin/filtering/test1/source/
-datadir=/scratch/05518/oasselin/filtering/test1/output/
+sourdir=/scratch/05518/oasselin/filtering/test4/unfiltered_stable_dt/source/
+datadir=/scratch/05518/oasselin/filtering/test4/unfiltered_stable_dt/output/
 
 mkdir -p $sourdir
 mkdir -p $datadir
@@ -41,10 +41,11 @@ cat > EXEC_STEP << EXEC
 #SBATCH -J test_eady                       # Job name
 #SBATCH -o $HOME/monitor/test_eady.o%j     # Name of stdout output file
 #SBATCH -e $HOME/monitor/test_eady.e%j     # Name of stderr error file
-#SBATCH -p development                     # Queue (partition) name
+#SBATCH -p normal                     # Queue (partition) name
+##SBATCH -p development                     # Queue (partition) name
 #SBATCH -N $number_of_nodes           # Total # of nodes 
 #SBATCH -n $number_of_tasks           # Total # of mpi tasks
-#SBATCH -t 00:05:00                   # Run time (hh:mm:ss)
+#SBATCH -t 00:10:00                   # Run time (hh:mm:ss)
 #SBATCH --mail-user=oasselin@ucsd.edu
 ##SBATCH --mail-type=all              # Send email at begin and end of job
 #SBATCH -A TG-OCE180004               # Allocation name (req'd if you have more than 1)
