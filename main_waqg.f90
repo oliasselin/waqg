@@ -123,6 +123,14 @@ PROGRAM main
  psi_old = psik 
      qok = qk 
 
+  !For the stability test!
+  call generate_fields_stag(BRr,n3h0,BIr,n3h0,wr,n3h2) 
+  call fft_r2c(BRr,BRk,n3h0)  
+  call fft_r2c(BIr,BIk,n3h0)  
+  !----------------------!
+
+  
+
 
  !Initial diagnostics!
  !*******************!
@@ -135,6 +143,8 @@ PROGRAM main
  end if
 
  if(out_etot ==1) call diag_zentrum(uk,vk,wk,bk,wak,psik,u_rot)
+
+ if(out_we   ==1) call wave_energy(BRk,BIk,CRk,CIk)
 
  do id_field=1,nfields                                            
     if(out_slice ==1) call slices(uk,vk,bk,psik,qk,ur,vr,br,psir,qr,id_field)
@@ -487,6 +497,8 @@ do id_field=1,nfields
 end do
 
 if(dump==1 .and. mod(iter,freq_dump)==0) call dump_restart(psik)
+
+if(out_we ==1   .and. mod(iter,freq_we   )==0)  call wave_energy(BRk,BIk,CRk,CIk)
  
 
 if(time>maxtime) EXIT
