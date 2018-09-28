@@ -125,7 +125,11 @@ PROGRAM main
 
   !For the stability test!
   call generate_fields_stag(BRr,n3h0,BIr,n3h0,wr,n3h2) 
+  call fft_r2c(BRr,BRk,n3h0)  
+  call fft_r2c(BIr,BIk,n3h0)  
   !----------------------!
+
+  
 
 
  !Initial diagnostics!
