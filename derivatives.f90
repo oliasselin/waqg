@@ -1167,17 +1167,21 @@ MODULE derivatives
       CRkt  = (0.D0,0.D0)
       CIkt  = (0.D0,0.D0)
 
-
-
       DO ikx=1,iktx
+         kx=kxa(ikx)
          DO ikyp=1,iktyp
             iky=ikyp+iktyp*mype
+            ky=kya(iky)
+
+            kh2=kx*kx + ky*ky
+
             if(kh2/=0 .and. L(ikx,iky)==1 ) then
                sumBR(ikx,ikyp) = BRkt(ikx,1,ikyp)
                sumBI(ikx,ikyp) = BIkt(ikx,1,ikyp)
             end if
          end DO
       end DO
+
 
       !Compute \tilde{A}, which is \hat{A} up to an arbitrary constant (\hat{A} at z = dz/2 set to 0)
       DO ikx=1,iktx
