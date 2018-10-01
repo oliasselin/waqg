@@ -56,7 +56,7 @@ PROGRAM main
 
   double complex, dimension(iktx,ikty,2) :: sigma    !Vertial integral of A(kx,ky), 1=real part, 2=imag part
 
-  double complex,   dimension(iktx,ikty,n3h0) :: FtRk, FtIk        !YBJ Forcing term (or any other term on the right-hand side of the YBJ equation, e.g. mean-flow advection of LA)
+  double complex,   dimension(iktx,ikty,n3h0) :: FtRk=(0.D0,0.D0), FtIk=(0.D0,0.D0)        !YBJ Forcing term (or any other term on the right-hand side of the YBJ equation, e.g. mean-flow advection of LA) Must be set to zero if no forcing present)
 
   equivalence(ur,uk)
   equivalence(vr,vk)
