@@ -1034,7 +1034,7 @@ MODULE derivatives
 
 
 
-    SUBROUTINE  compute_sigma(sigma,nBRk, nBIk, rBRk, rBIk)
+    SUBROUTINE  compute_sigma(sigma,nBRk, nBIk, rBRk, rBIk, FtRk, FtIk)
       ! this subroutine computes the vertical integral of A at every wavenumber.
 
       double complex, dimension(iktx,ikty,2)               :: sigma_to_reduce     !This is the sum local to each processor. Last dimension: 1=real 2=imag
@@ -1042,6 +1042,11 @@ MODULE derivatives
 
       !**** n = nonlinear advection term J(psi,B) **** r = refractive term ~ B*vort                                                                                            
       double complex,   dimension(iktx,ikty,n3h0), intent(in) :: nBRk, nBIk, rBRk, rBIk
+
+      !**** Forcing, or any other right-hand side term in the YBJ equation in the form: LA_t + J(psi,LA) + ... + Ft = 0. ****!    
+      !**** It MUST be set to zero if no forcing or mean-flow advection is present ****!
+      double complex,   dimension(iktx,ikty,n3h0), intent(in) :: FtRk, FtIk
+
 
       sigma_to_reduce = (0.D0,0.D0)
       sigma           = (0.D0,0.D0)
@@ -1054,8 +1059,8 @@ MODULE derivatives
                kx = kxa(ikx)
                kh2 = kx*kx + ky*ky
                if ((L(ikx,iky).eq.1) .and. kh2 > 0) then
-                  sigma_to_reduce(ikx,iky,1) = sigma_to_reduce(ikx,iky,1) + (rBRk(ikx,iky,izh0) + 2*nBIk(ikx,iky,izh0))/(1.D0*kh2) 
-                  sigma_to_reduce(ikx,iky,2) = sigma_to_reduce(ikx,iky,2) + (rBIk(ikx,iky,izh0) - 2*nBRk(ikx,iky,izh0))/(1.D0*kh2) 
+                  sigma_to_reduce(ikx,iky,1) = sigma_to_reduce(ikx,iky,1) + (rBRk(ikx,iky,izh0) + 2*(nBIk(ikx,iky,izh0)+FtIk(ikx,iky,izh0)) )/(1.D0*kh2) 
+                  sigma_to_reduce(ikx,iky,2) = sigma_to_reduce(ikx,iky,2) + (rBIk(ikx,iky,izh0) - 2*(nBRk(ikx,iky,izh0)+FtRk(ikx,iky,izh0)) )/(1.D0*kh2) 
                endif
             enddo
          enddo

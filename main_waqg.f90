@@ -56,6 +56,7 @@ PROGRAM main
 
   double complex, dimension(iktx,ikty,2) :: sigma    !Vertial integral of A(kx,ky), 1=real part, 2=imag part
 
+  double complex,   dimension(iktx,ikty,n3h0) :: FtRk, FtIk        !YBJ Forcing term (or any other term on the right-hand side of the YBJ equation, e.g. mean-flow advection of LA)
 
   equivalence(ur,uk)
   equivalence(vr,vk)
@@ -276,7 +277,7 @@ if(passive_scalar==0 .and. no_waves/=1) then
 
  if(zero_aveB==1) call sumB(BRk,BIk)                           !Resets the vertical sum of B to zero
 
- call compute_sigma(sigma,nBRk, nBIk, rBRk, rBIk)              !Compute the sum of A
+ call compute_sigma(sigma,nBRk, nBIk, rBRk, rBIk, FtRk, FtIk)  !Compute the sum of A
  call mpitranspose(BRk,iktx,ikty,n3h0,BRkt,n3,iktyp)           !Transpose BR to iky-parallelized space 
  call mpitranspose(BIk,iktx,ikty,n3h0,BIkt,n3,iktyp)           !Transpose BK to iky-parallelized space 
  call compute_A(ARk,AIK,BRkt,BIkt,CRk,CIK,sigma)               !Compute A!
@@ -445,7 +446,7 @@ if(passive_scalar==0 .and. no_waves/=1) then
 
  if(zero_aveB==1) call sumB(BRk,BIk)                           !Resets the vertical sum of B to zero
 
- call compute_sigma(sigma,nBRk, nBIk, rBRk, rBIk)              !Compute the sum of A                                                                                    
+ call compute_sigma(sigma,nBRk, nBIk, rBRk, rBIk, FtRk, FtIk)  !Compute the sum of A                                                                                                    
  call mpitranspose(BRk,iktx,ikty,n3h0,BRkt,n3,iktyp)           !Transpose BR to iky-parallelized space                                                                   
  call mpitranspose(BIk,iktx,ikty,n3h0,BIkt,n3,iktyp)           !Transpose BK to iky-parallelized space                                                                  
  call compute_A(ARk,AIK,BRkt,BIkt,CRk,CIK,sigma)               !Compute A!                                                                                                               
