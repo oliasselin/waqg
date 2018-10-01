@@ -162,6 +162,7 @@ PROGRAM main
     ARk = (0.D0,0.D0)
     AIk = (0.D0,0.D0)
  else
+    if(zero_aveB==1) call sumB(BRk,BIk)                           !Resets the vertical sum of B to zero
     call convol_waqg(nqk,nBRk,nBIk,nqr,nBRr,nBIr,uk,vk,qk,BRk,BIk,ur,vr,qr,BRr,BIr)
     call refraction_waqg(rBRk,rBIk,rBRr,rBIr,BRk,BIk,psik,BRr,BIr,psir)
  end if
@@ -272,19 +273,6 @@ if(fixed_flow==0) then
  ! ----------------------------------- !
 end if
 
-if(passive_scalar==0 .and. no_waves/=1) then
- ! --- Recover A from B --- !
-
- if(zero_aveB==1) call sumB(BRk,BIk)                           !Resets the vertical sum of B to zero
-
- call compute_sigma(sigma,nBRk, nBIk, rBRk, rBIk, FtRk, FtIk)  !Compute the sum of A
- call mpitranspose(BRk,iktx,ikty,n3h0,BRkt,n3,iktyp)           !Transpose BR to iky-parallelized space 
- call mpitranspose(BIk,iktx,ikty,n3h0,BIkt,n3,iktyp)           !Transpose BK to iky-parallelized space 
- call compute_A(ARk,AIK,BRkt,BIkt,CRk,CIK,sigma)               !Compute A!
-
- ! ------------------------ !
-end if
-
  !Compute the corresponding u,v,w and t (u and v to be used in convol)                                                                                    
  call compute_velo(uk,vk,wk,bk,psik)
  if(npe > 1) call generate_halo(uk,vk,wk,bk)
@@ -311,6 +299,7 @@ end if
         ARk = (0.D0,0.D0)
         AIk = (0.D0,0.D0)
      else
+        if(zero_aveB==1) call sumB(BRk,BIk)                           !Resets the vertical sum of B to zero
         call convol_waqg(nqk,nBRk,nBIk,nqr,nBRr,nBIr,uk,vk,qk,BRk,BIk,ur,vr,qr,BRr,BIr)
         call refraction_waqg(rBRk,rBIk,rBRr,rBIr,BRk,BIk,psik,BRr,BIr,psir)
      end if
@@ -339,6 +328,38 @@ end if
        rBRk = (0.D0,0.D0)
        rBIk = (0.D0,0.D0)
      end if
+
+     if(passive_scalar/=1 .and. no_dispersion/=1 .and. no_waves/=1) then     !This was moved to the right place on October 1st, 2018 (see diary on the same day for details)
+        ! --- Recover A from B --- !
+        if(eady==1) then !Include the mean-flow advection in the right-hand side, J(Psi,LA) --> i*k_x*z*LA
+           do izh0=1,n3h0
+              do iky=1,ikty
+                 do ikx=1,iktx
+                    kx = kxa(ikx)
+
+                    if (L(ikx,iky).eq.1) then
+                       FtRk(ikx,iky,izh0)=i*kx*zash0(izh0)*BRk(ikx,iky,izh0)
+                       FtIk(ikx,iky,izh0)=i*kx*zash0(izh0)*BIk(ikx,iky,izh0)
+                    end if
+
+                 end do
+              end do
+           end do
+        else
+           FtRk=(0.D0,0.D0)
+           FtIk=(0.D0,0.D0)
+        end if
+
+        call compute_sigma(sigma,nBRk, nBIk, rBRk, rBIk, FtRk, FtIk)  !Compute the sum of A
+        call mpitranspose(BRk,iktx,ikty,n3h0,BRkt,n3,iktyp)           !Transpose BR to iky-parallelized space 
+        call mpitranspose(BIk,iktx,ikty,n3h0,BIkt,n3,iktyp)           !Transpose BK to iky-parallelized space 
+        call compute_A(ARk,AIK,BRkt,BIkt,CRk,CIK,sigma)               !Compute A!
+        
+        ! ------------------------ !
+     end if
+
+
+
 
      !Compute q^n+1 and B^n+1 using leap-frog
      do izh0=1,n3h0
@@ -439,21 +460,6 @@ if(fixed_flow==0) then
 
  ! ----------------------------------- !  
 end if
-
-
-if(passive_scalar==0 .and. no_waves/=1) then
- ! --- Recover A from B --- !                                                                                                                                 
-
- if(zero_aveB==1) call sumB(BRk,BIk)                           !Resets the vertical sum of B to zero
-
- call compute_sigma(sigma,nBRk, nBIk, rBRk, rBIk, FtRk, FtIk)  !Compute the sum of A                                                                                                    
- call mpitranspose(BRk,iktx,ikty,n3h0,BRkt,n3,iktyp)           !Transpose BR to iky-parallelized space                                                                   
- call mpitranspose(BIk,iktx,ikty,n3h0,BIkt,n3,iktyp)           !Transpose BK to iky-parallelized space                                                                  
- call compute_A(ARk,AIK,BRkt,BIkt,CRk,CIK,sigma)               !Compute A!                                                                                                               
-
- ! ------------------------ !       
-end if
-
 
  !Compute the corresponding u,v,w and t 
  call compute_velo(uk,vk,wk,bk,psik)
