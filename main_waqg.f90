@@ -152,6 +152,10 @@ PROGRAM main
     if(out_slice ==1) call slices(uk,vk,bk,psik,qk,ur,vr,br,psir,qr,id_field)
  end do
 
+ do id_field=1,nfieldsw                                            
+    if(out_slicew ==1) call slices_waves(BRk,BIk,BRr,BIr,CRk,CIk,id_field)
+ end do
+
  if(dump==1) call dump_restart(psik)
 
 
@@ -502,6 +506,11 @@ if(out_etot ==1 .and. mod(iter,freq_etot )==0) call diag_zentrum(uk,vk,wk,bk,wak
 
 do id_field=1,nfields
    if(out_slice ==1 .and. mod(iter,freq_slice)==0 .and. count_slice(id_field)<max_slices) call slices(uk,vk,bk,psik,qk,ur,vr,br,psir,qr,id_field)
+end do
+
+
+do id_field=1,nfieldsw
+   if(out_slicew ==1 .and. mod(iter,freq_slicew)==0 .and. count_slicew(id_field)<max_slices) call slices_waves(BRk,BIk,BRr,BIr,CRk,CIk,id_field)
 end do
 
 if(dump==1 .and. mod(iter,freq_dump)==0) call dump_restart(psik)

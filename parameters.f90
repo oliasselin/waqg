@@ -27,13 +27,18 @@ MODULE parameters
     real, parameter :: ktrunc_x = twopi/L1 * float(n1)/3.           ! dimensional truncation wavenumber (x)
     real, parameter :: ktrunc_z = twopi/L3 * float(n3)/3.           ! dimensional truncation wavenumber (x)
 
-    integer, parameter :: fixed_flow = 0        !1: Skip the psi-inversion steps
-    integer, parameter :: passive_scalar = 0    !1: Set A and refraction to 0 and skip the LA -> A inversion. BR and BI become two (independent) passive scalars.
-    
 
     !Tags to specify run!
     !-------------------!
 
+    !C's and N's
+    integer, parameter :: n_one = 1, n_two = 2
+    double precision, parameter :: c_one = 1./( n_one*n_one - n_one*n_two*tanh(twopi*n_one)/tanh(twopi*n_two) )
+    double precision, parameter :: c_two = 1./( n_two*n_two - n_one*n_two*tanh(twopi*n_two)/tanh(twopi*n_one) )
+
+    integer, parameter :: fixed_flow = 0        !1: Skip the psi-inversion steps
+    integer, parameter :: passive_scalar = 0    !1: Set A and refraction to 0 and skip the LA -> A inversion. BR and BI become two (independent) passive scalars.
+    
     integer, parameter :: no_waves = 0                  !1: Wave part ignored.
     integer, parameter :: eady = 1                      !1: Eady version: add a bunch of terms
     integer, parameter :: eady_bnd = 1                  !1: Eady version: include the boundary terms (set NOT to zero only for testing purposes)
@@ -265,14 +270,14 @@ MODULE parameters
     !Slices
     integer, parameter :: max_slices = 999     
     integer, parameter :: nfields  = 7         !Don't forget to change tag_slice_xz(nfields) accordingly in "mpi.f90"
-    integer, parameter :: nfields2 = 5         !Don't forget to change tag_slice_xz(nfields) accordingly in "mpi.f90"
+    integer, parameter :: nfieldsw = 4         !Don't forget to change tag_slice_xz(nfields) accordingly in "mpi.f90"
     integer :: count_slice(nfields) = 0       !number of slices
-    integer :: count_slice2(nfields2) = 0       !number of slices
+    integer :: count_slicew(nfieldsw) = 0       !number of slices
     integer :: zval=n3/2                      !z-level at which we wish to plo a slice                                                                                                                               
     integer :: yval=n2/2
     integer :: xval=n1/2
     integer :: hlvl(nfields)=[2,2,1,1,2,1,1]                                   
-    integer :: hlvl2(nfields2)=[1,1,1,1,0]                                   
+    integer :: hlvlw(nfieldsw)=[0,0,0,0]                                   
 
     integer, parameter :: bot_height = 1
     integer, parameter :: mid_height = n3/2
@@ -286,6 +291,7 @@ MODULE parameters
     integer :: id_field                       !dummy index to differenciate fields plotted  
 
     integer, parameter :: out_slice   = 1, freq_slice =  1*freq_etot
+    integer, parameter :: out_slicew  = 1, freq_slicew=  1*freq_etot
     integer, parameter :: out_eta     = 0, freq_eta   =  freq_hspec
     integer, parameter :: out_tspec   = 0
 
