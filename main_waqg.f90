@@ -119,15 +119,16 @@ PROGRAM main
   call compute_velo(uk,vk,wk,bk,psik)
   if(npe > 1) call generate_halo(uk,vk,wk,bk)
   if(npe > 1) call generate_halo_q(qk) 
-
  
  psi_old = psik 
      qok = qk 
 
-  !For the stability test!
-  call generate_fields_stag(BRr,n3h0,BIr,n3h0,wr,n3h2) 
-  call fft_r2c(BRr,BRk,n3h0)  
-  call fft_r2c(BIr,BIk,n3h0)  
+  !**Initialize a storm**!
+  call generate_fields_stag(wr,n3h2,ARr,n3h0,BRr,n3h0) 
+  call fft_r2c(ARr,ARk,n3h0)
+  call fft_r2c(BRr,BRk,n3h0)
+  AIk = (0.D0,0.D0)
+  BIk = (0.D0,0.D0)
   !----------------------!
 
   
@@ -172,7 +173,7 @@ PROGRAM main
     ARk = (0.D0,0.D0)
     AIk = (0.D0,0.D0)
  else
-    if(zero_aveB==1) call sumB(BRk,BIk)                           !Resets the vertical sum of B to zero
+    if(zero_aveB==1) call sumB(BRk,BIk)                                               !Resets the vertical sum of B to zero
     call convol_waqg(nqk,nBRk,nBIk,nqr,nBRr,nBIr,uk,vk,qk,BRk,BIk,ur,vr,qr,BRr,BIr)
     call refraction_waqg(rBRk,rBIk,rBRr,rBIr,BRk,BIk,psik,BRr,BIr,psir)
  end if
