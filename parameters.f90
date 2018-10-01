@@ -2,8 +2,8 @@ MODULE parameters
 
    IMPLICIT NONE
 
-    integer, parameter :: n1=256, n2=256, n3=128
-    integer, parameter :: npe=64
+    integer, parameter :: n1=64, n2=64, n3=64
+    integer, parameter :: npe=8
 
     integer, parameter :: n1d=n1+2, n2d=n2, n3d=n3
     integer, parameter :: n3h0=n3/npe, n3h1=n3/npe+2, n3h2=n3/npe+4
@@ -40,13 +40,14 @@ MODULE parameters
     !Tags to specify run!
     !-------------------!
 
-    integer, parameter :: no_waves = 1                  !1: Wave part ignored.
-    integer, parameter :: eady = 1                      !1: Eady version: add a bunch of terms
-    integer, parameter :: eady_bnd = 1                  !1: Eady version: include the boundary terms (set NOT to zero only for testing purposes)
+    integer, parameter :: no_waves = 0                  !1: Wave part ignored.
+    integer, parameter :: eady = 0                      !1: Eady version: add a bunch of terms
+    integer, parameter :: eady_bnd = 0                  !1: Eady version: include the boundary terms (set NOT to zero only for testing purposes)
 
     integer, parameter :: no_dispersion=0
-    integer, parameter :: linear=0                      !1: set the nonlinear terms (advection) to 0. 
-    integer, parameter :: inviscid=0                    !1: No dissipation, otherwise: dissipation
+    integer, parameter :: no_refraction=1
+    integer, parameter :: linear=1                      !1: set the nonlinear terms (advection) to 0. 
+    integer, parameter :: inviscid=1                    !1: No dissipation, otherwise: dissipation
     integer, parameter :: init_wageo=0                  !1: Initialize wk with Ro*wak
 
     integer, parameter :: zero_aveB=1                   !1: Set B=LA vertical average to zero
@@ -192,14 +193,14 @@ MODULE parameters
     integer :: iter=0
     integer :: itermax=100000000
     real :: maxtime=40                      
-    double precision, parameter :: delt=0.002*dx !0.5*Bu*Ro/(2.*ktrunc_x*ktrunc_x) !0.25/ktrunc_x !0.5*Bu*Ro/(2.*ktrunc_x*ktrunc_x) 
+    double precision, parameter :: delt=0.5*Bu*Ro/(2.*ktrunc_x*ktrunc_x)  !Ro!delt=0.5*Bu*Ro/(2.*ktrunc_x*ktrunc_x) !0.25/ktrunc_x !0.5*Bu*Ro/(2.*ktrunc_x*ktrunc_x) 
     double precision, parameter :: gamma=1e-3                                  !Robert filter parameter
 
     !Other successful viscosity: 5e-2 * (10./ktrunc_x ) **2. 
     !PERFECT VISCOSITY: 0.01 * (64./(1.*n1)) **(4./3.)
     !In reality, nuh is 1/Re and nuz is 1/(Ar2*Re) with 1/Re = UL/nu
 
-    double precision, parameter :: coeff =1.!0.1!0.4!0.4!0.1!0.075
+    double precision, parameter :: coeff =0.!0.1!0.4!0.4!0.1!0.075
     double precision, parameter :: coeffz=0.!coeff!/10.!/1000!/10.
 
     integer, parameter :: ilap = 2                   !horizontal viscosity = nuh nabla^(2*ilap). So ilap =1 is regular viscosity. ilap>1 is hyperviscosity
@@ -222,7 +223,7 @@ MODULE parameters
     !------!
 
     integer, parameter :: out_etot   = 1, freq_etot   = INT(0.01/delt)!50!346!n3/64!n3!64!n3!50*n3/64      !Total energy                                                    
-    integer, parameter :: out_we     = 0, freq_we     = INT(0.1/delt)!50!346!n3/64!n3!64!n3!50*n3/64      !Total energy                                                    
+    integer, parameter :: out_we     = 1, freq_we     = INT(0.01/delt)!50!346!n3/64!n3!64!n3!50*n3/64      !Total energy                                                    
     integer, parameter :: out_conv   = 0, freq_conv   = freq_we      !Conversion terms in the potential energy equation.
     integer, parameter :: out_hspec  = 1, freq_hspec  = 10*freq_etot!n3/64!n3!freq_etot*10     !Horizontal energy spectrum at various heights 
     integer, parameter :: out_hspecw = 0, freq_hspecw = 1*freq_etot!n3/64!n3!freq_etot*10     !Horizontal energy spectrum at various heights 
@@ -296,10 +297,20 @@ MODULE parameters
 
     !Restart
     integer :: count_restart = 0                                 !when dumping: restart file number 
-    integer, parameter :: dump = 1, freq_dump = freq_slice*10    !dump = 1 means you dump, every "freq_dump" timestep
-    integer, parameter :: restart = 1                            !restart = 1 start from file
+    integer, parameter :: dump = 0, freq_dump = freq_slice*10    !dump = 1 means you dump, every "freq_dump" timestep
+    integer, parameter :: restart = 0                            !restart = 1 start from file
     integer, parameter :: restart_no = 65                         !Restart file number (from 0 to 99)
     character(len = 64), parameter :: floc='../../256x128_dE40/output/'  !Location of the restart file (when restarting only: dumping in local output/ folder)
     
+
+    !Filtering of A modes
+    integer, parameter :: filter_A=0, freq_filter_A=1!*freq_etot
+    integer, parameter :: print_A=1, freq_print_A=1*freq_etot
+    integer :: count_A=0
+    double precision, parameter :: YBJ_criterion = 1!100000.           !Tolerate modes with Nkh/fkz < YBJ_criterion.
+
+
+    !Testing the dispersive term
+    double precision, parameter :: kx_test = ktrunc_x-1, ky_test = ktrunc_x-1, kz_test = 0.5
 
 END MODULE parameters

@@ -85,7 +85,6 @@ PROGRAM main
   double complex,   dimension(iktx,ikty) :: array2di
 
   double precision, dimension(n3)   :: fr_even,fk_even
-  double precision, dimension(n3-1) :: fr_odd ,fk_odd
 
   equivalence(fr_even,fk_even)
   equivalence(fr_odd ,fk_odd )
@@ -104,7 +103,7 @@ PROGRAM main
 
   call initialize_mpi
   call init_files
-  call initialize_fftw(array2dr,array2di,fr_even,fk_even,fr_odd,fk_odd)
+  call initialize_fftw(array2dr,array2di,fr_even,fk_even)
   call init_arrays
   call init_base_state
   if(mype==0)  call validate_run
@@ -125,6 +124,14 @@ PROGRAM main
  psi_old = psik 
      qok = qk 
 
+  !For the stability test!
+  call generate_fields_stag(BRr,n3h0,BIr,n3h0,wr,n3h2) 
+  call fft_r2c(BRr,BRk,n3h0)  
+  call fft_r2c(BIr,BIk,n3h0)  
+  !----------------------!
+
+  
+
 
  !Initial diagnostics!
  !*******************!
@@ -138,11 +145,14 @@ PROGRAM main
 
  if(out_etot ==1) call diag_zentrum(uk,vk,wk,bk,wak,psik,u_rot)
 
+ if(out_we   ==1) call wave_energy(BRk,BIk,CRk,CIk)
+
  do id_field=1,nfields                                            
     if(out_slice ==1) call slices(uk,vk,bk,psik,qk,ur,vr,br,psir,qr,id_field)
  end do
 
  if(dump==1) call dump_restart(psik)
+
 
  !************************************************************************!
  !*** 1st time timestep using the projection method with Forward Euler ***!
@@ -183,6 +193,11 @@ PROGRAM main
  if(no_dispersion==1) then
     ARk=(0.D0,0.D0)
     AIk=(0.D0,0.D0)
+ end if
+
+ if(no_refraction==1) then
+    rBRk = (0.D0,0.D0)
+    rBIk = (0.D0,0.D0)
  end if
 
   qok = qk
@@ -320,6 +335,11 @@ end if
      if(no_dispersion==1) then
         ARk=(0.D0,0.D0)
         AIk=(0.D0,0.D0)
+     end if
+     
+     if(no_refraction==1) then
+        rBRk = (0.D0,0.D0)
+        rBIk = (0.D0,0.D0)
      end if
 
      if(passive_scalar==1) then
@@ -484,6 +504,8 @@ do id_field=1,nfields
 end do
 
 if(dump==1 .and. mod(iter,freq_dump)==0) call dump_restart(psik)
+
+if(out_we ==1   .and. mod(iter,freq_we   )==0)  call wave_energy(BRk,BIk,CRk,CIk)
  
 
 if(time>maxtime) EXIT
