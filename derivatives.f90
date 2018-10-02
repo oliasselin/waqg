@@ -2480,8 +2480,7 @@ subroutine spec_A(ARkt,AIkt)
 
     end DO
 
-
-    count_A = count_A + 1
+    if(print_A == 1 .and. mod(iter,freq_print_A)==0) count_A = count_A + 1
 
   end subroutine spec_A
 
