@@ -129,6 +129,8 @@ PROGRAM main
   call fft_r2c(BRr,BRk,n3h0)
   AIk = (0.D0,0.D0)
   BIk = (0.D0,0.D0)
+  CRk = (0.D0,0.D0)
+  CIk = (0.D0,0.D0)
   !----------------------!
 
   
@@ -270,7 +272,7 @@ if(fixed_flow==0) then
  !Keep the old version of psi for the stability of the Ekman term
  psi_old = psik 
 
- if(no_waves == 1) then
+ if(no_feedback == 1 .or. no_waves == 1) then
     qwk = (0.D0,0.D0)
  else
     call compute_qw(qwk,BRk,BIk,qwr,BRr,BIr)           ! Compute qw
@@ -463,7 +465,7 @@ if(fixed_flow==0) then
  !Keep the old version of psi for the stability of the Ekman term
  psi_old = psik 
 
- if(no_waves == 1) then
+ if(no_feedback == 1 .or. no_waves == 1) then
     qwk = (0.D0,0.D0)
  else
     call compute_qw(qwk,BRk,BIk,qwr,BRr,BIr)           ! Compute qw                                                                                                                    

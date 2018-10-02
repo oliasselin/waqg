@@ -3,7 +3,7 @@ MODULE parameters
    IMPLICIT NONE
 
     integer, parameter :: n1=256, n2=256, n3=128
-    integer, parameter :: npe=64
+    integer, parameter :: npe=8
 
     integer, parameter :: n1d=n1+2, n2d=n2, n3d=n3
     integer, parameter :: n3h0=n3/npe, n3h1=n3/npe+2, n3h2=n3/npe+4
@@ -40,6 +40,7 @@ MODULE parameters
     integer, parameter :: passive_scalar = 0    !1: Set A and refraction to 0 and skip the LA -> A inversion. BR and BI become two (independent) passive scalars.
     
     integer, parameter :: no_waves = 0                  !1: Wave part ignored.
+    integer, parameter :: no_feedback = 1               !1: Wave do not feedback on the flow; ): they do
     integer, parameter :: eady = 1                      !1: Eady version: add a bunch of terms
     integer, parameter :: eady_bnd = 1                  !1: Eady version: include the boundary terms (set NOT to zero only for testing purposes)
 
@@ -192,7 +193,7 @@ MODULE parameters
     integer :: iter=0
     integer :: itermax=100000000
     real :: maxtime=40                      
-    double precision, parameter :: delt=0.002*dx !Ro!delt=0.5*Bu*Ro/(2.*ktrunc_x*ktrunc_x) !0.25/ktrunc_x !0.5*Bu*Ro/(2.*ktrunc_x*ktrunc_x) 
+    double precision, parameter :: delt=0.002*dx !0.5*Bu*Ro/(2.*ktrunc_x*ktrunc_x) !0.25/ktrunc_x !0.5*Bu*Ro/(2.*ktrunc_x*ktrunc_x) 
     double precision, parameter :: gamma=1e-3                                  !Robert filter parameter
 
     !Other successful viscosity: 5e-2 * (10./ktrunc_x ) **2. 
@@ -297,11 +298,11 @@ MODULE parameters
 
     !Restart
     integer :: count_restart = 0                                 !when dumping: restart file number 
-    integer, parameter :: dump = 1, freq_dump = freq_slice*10    !dump = 1 means you dump, every "freq_dump" timestep
+    integer, parameter :: dump = 0, freq_dump = freq_slice*10    !dump = 1 means you dump, every "freq_dump" timestep
     integer, parameter :: restart = 1                            !restart = 1 start from file
     integer, parameter :: restart_no = 65                         !Restart file number (from 0 to 99)
-    character(len = 64), parameter :: floc='../../256x128_dE40/output/'  !Location of the restart file (when restarting only: dumping in local output/ folder)
-    
+    character(len = 64), parameter :: floc='../../../eady/256x128_dE40/output/'   !Location of the restart file (when restarting only: dumping in local output/ folder)
+
 
     !Filtering of A modes
     integer, parameter :: filter_A=1, freq_filter_A=1!*freq_etot
@@ -310,7 +311,5 @@ MODULE parameters
     double precision, parameter :: YBJ_criterion = 1!100000.           !Tolerate modes with Nkh/fkz < YBJ_criterion.
 
 
-    !Testing the dispersive term
-    double precision, parameter :: kx_test = ktrunc_x-1, ky_test = ktrunc_x-1, kz_test = 0.5
 
 END MODULE parameters
