@@ -158,6 +158,10 @@ PROGRAM main
     if(out_slicew ==1) call slices_waves(BRk,BIk,BRr,BIr,CRk,CIk,id_field)
  end do
 
+ do iz=1,num_spec
+    if(out_hspecw ==1) call hspec_waves(BRk,BIk,CRk,CIk,iz)
+ end do
+
  if(dump==1) call dump_restart(psik)
 
 
@@ -514,6 +518,11 @@ end do
 do id_field=1,nfieldsw
    if(out_slicew ==1 .and. mod(iter,freq_slicew)==0 .and. count_slicew(id_field)<max_slices) call slices_waves(BRk,BIk,BRr,BIr,CRk,CIk,id_field)
 end do
+
+do iz=1,num_spec
+   if(out_hspecw ==1  .and. mod(iter,freq_hspecw)==0 ) call hspec_waves(BRk,BIk,CRk,CIk,iz)
+end do
+
 
 if(dump==1 .and. mod(iter,freq_dump)==0) call dump_restart(psik)
 
