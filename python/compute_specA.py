@@ -5,7 +5,7 @@ import sys
 import numpy as np
 import matplotlib.pyplot as plt
 
-run = 'storm/test3'
+run = 'storm/test4'
 
 iky_max = 1000
 tt_max = 1000
@@ -22,12 +22,12 @@ for iky in range(1,iky_max):
     spaces_iky = (3-len(str(iky)))*' '
     path_klist = '/scratch/05518/oasselin/'+run+'/output/klist_A_ky'+spaces_iky+str(iky)+'.dat'
 
+    print(path_klist)
+
     if os.path.isfile(path_klist) and os.stat(path_klist).st_size != 0: 
 
         klist = []
         klist = np.loadtxt(path_klist)
-
-        print 'Reading file:',klist
 
         #LOOP OVER TIME STEPS
         for tt in range(tt_max):
@@ -71,6 +71,13 @@ for iky in range(1,iky_max):
 specA = specA[:kh_max+1,:kz_max+1,:ti_max+1]
 
 #Make the plot
-plt.pcolormesh(np.log(specA[:,:,1]))
-plt.axes().set_aspect('equal')
+#plt.pcolormesh(np.log(specA[:,:,0]))
+#plt.axes().set_aspect('equal')
+#plt.show()
+
+
+fig, ax = plt.subplots(1)
+
+im = ax.pcolormesh(np.log(specA[:,:,3]))
+fig.colorbar(im, ax=ax)
 plt.show()
