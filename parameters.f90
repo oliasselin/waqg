@@ -222,10 +222,10 @@ MODULE parameters
     !Output!
     !------!
 
-    integer, parameter :: out_etot   = 1, freq_etot   = INT(0.01/delt)!50!346!n3/64!n3!64!n3!50*n3/64      !Total energy                                                    
-    integer, parameter :: out_we     = 1, freq_we     = INT(0.01/delt)!50!346!n3/64!n3!64!n3!50*n3/64      !Total energy                                                    
+    integer, parameter :: out_etot   = 1, freq_etot   = INT(0.001/delt)!50!346!n3/64!n3!64!n3!50*n3/64      !Total energy                                                    
+    integer, parameter :: out_we     = 1, freq_we     = INT(0.001/delt)!50!346!n3/64!n3!64!n3!50*n3/64      !Total energy                                                    
     integer, parameter :: out_conv   = 0, freq_conv   = freq_we      !Conversion terms in the potential energy equation.
-    integer, parameter :: out_hspec  = 1, freq_hspec  = 10*freq_etot!n3/64!n3!freq_etot*10     !Horizontal energy spectrum at various heights 
+    integer, parameter :: out_hspec  = 1, freq_hspec  = 1*freq_etot!n3/64!n3!freq_etot*10     !Horizontal energy spectrum at various heights 
     integer, parameter :: out_hspecw = 1, freq_hspecw = 1*freq_etot!n3/64!n3!freq_etot*10     !Horizontal energy spectrum at various heights 
     integer, parameter :: out_hg     = 0                 !Output geostrophic horizontal spectrum as well?
     integer, parameter :: out_vspec  = 0, freq_vspec =  freq_hspec
