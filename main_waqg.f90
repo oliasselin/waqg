@@ -188,11 +188,12 @@ PROGRAM main
     call refraction_waqg(rBRk,rBIk,rBRr,rBIr,BRk,BIk,psik,BRr,BIr,psir)
  end if
 
- !Compute dissipation 
- call dissipation_q_nv(dqk,qok)
- 
+
  if(inviscid==1) then
     dqk=(0.D0,0.D0)
+ else
+    !Compute dissipation 
+    call dissipation_q_nv(dqk,qok)
  end if
 
  if(linear==1) then
@@ -330,11 +331,11 @@ end if
         call refraction_waqg(rBRk,rBIk,rBRr,rBIr,BRk,BIk,psik,BRr,BIr,psir)
      end if
  
-     !Compute dissipation from qok
-     call dissipation_q_nv(dqk,qok)
-
      if(inviscid==1) then
         dqk=(0.D0,0.D0)
+     else
+        !Compute dissipation                                                                                                                                                                                           
+        call dissipation_q_nv(dqk,qok)
      end if
 
      if(linear==1) then
