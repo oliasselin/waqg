@@ -698,16 +698,23 @@ end subroutine hspec
      end subroutine wave_energy
 
 
-     subroutine we_conversion(ARk, AIk, nBRk, nBIk, rBRk, rBIk, nBRr, nBIr, rBRr, rBIr)
+     subroutine we_conversion(ARk, AIk, BRk, BIk, CRk, CIk,  dBRk, dBIk, nBRk, nBIk, rBRk, rBIk, FRk, FIk, dBRr, dBIr, nBRr, nBIr, rBRr, rBIr, FRr, FIr)
 
        !Computes the wave potential energy conversion terms:
        !\Gamma_a = 0.25 int( nabla^2 A* J(psi,LA) + nabla^2 A J(psi,LA)* )dV = 0.5 int ( DR JR + DI JI ) dV where DR = Re(nabla^2 A) and JI = Im( J(psi,LA)   ) etc.
-       !\Gamma_a = 0.25 int( nabla^2 A* R         + nabla^2 A R*         )dV = 0.5 int ( DR RR + DI RI ) dV where DR = Re(nabla^2 A) and RI = Im( i zeta LA/2 ) etc.
+       !\Gamma_r = 0.25 int( nabla^2 A* R         + nabla^2 A R*         )dV = 0.5 int ( DR RR + DI RI ) dV where DR = Re(nabla^2 A) and RI = Im( i zeta LA/2 ) etc.
+       !\Gamma_f = 0.25 int( nabla^2 A* F         + nabla^2 A F*         )dV = 0.5 int ( DR FR + DI FI ) dV where DR = Re(nabla^2 A) and FI = Im( Forcing     ) etc.
 
        double complex,   dimension(iktx,ikty,n3h0) :: ARk, AIk
+       double complex,   dimension(iktx,ikty,n3h0) :: BRk, BIk
+       double complex,   dimension(iktx,ikty,n3h0) :: CRk, CIk
 
-       double complex,   dimension(iktx,ikty,n3h0) :: nBRk, nBIk, rBRk, rBIk
-       double precision, dimension(n1d,n2d,n3h0)   :: nBRr, nBIr, rBRr, rBIr
+       double complex,   dimension(iktx,ikty,n3h0) :: nBRk, nBIk, rBRk, rBIk, FRk, FIk
+       double precision, dimension(n1d,n2d,n3h0)   :: nBRr, nBIr, rBRr, rBIr, FRr, FIr
+
+       !Test: calculate the integral directly with dBdt
+       double complex,   dimension(iktx,ikty,n3h0) :: dBRk, dBIk
+       double precision, dimension(n1d,n2d,n3h0)   :: dBRr, dBIr
 
        !Nabla^2 A --> -kh2
        double complex,   dimension(iktx,ikty,n3h0) :: nARk, nAIk
@@ -715,21 +722,47 @@ end subroutine hspec
 
        !Store REF and ADV terms temporarily (to avoid fft back)
        double complex,   dimension(iktx,ikty,n3h0) :: tRk, tIk
+       double precision, dimension(n1d,n2d,n3h0)   :: tRr, tIr
 
-       !Conversion terms for advection and refraction.
-       real ::  ca_p,cr_p,ca_tot,cr_tot 
+       !Conversion terms for advection, refraction, forcing and dissipation
+       real ::  ca_p, ca_tot
+       real ::  cr_p, cr_tot
+       real ::  cf_p, cf_tot
+       real ::  cd_p, cd_tot
 
        equivalence(nARk,nARr)
        equivalence(nAIk,nAIr)
 
+       equivalence(tRk,tRr)
+       equivalence(tIk,tIr)
+
+       !Verification: compute potential energy in real-space from C = Az. Here are all the horizontal derivatives of C
+       double complex,   dimension(iktx,ikty,n3h0) :: CXRk, CXIk, CYRk, CYIk
+       double precision, dimension(n1d,n2d,n3h0)   :: CXRr, CXIr, CYRr, CYIr
+
+       equivalence(CXRk,CXRr)
+       equivalence(CXIk,CXIr)
+       equivalence(CYRk,CYRr)
+       equivalence(CYIk,CYIr)
+
+       real :: p_p,p_tot
+       real :: cb_p,cb_tot
+
+       p_p   = 0.
+       p_tot = 0.
+
+       cb_p   = 0.
+       cb_tot = 0.
+
        ca_p = 0.
        cr_p = 0.
+       cf_p = 0.
+       cd_p = 0.
+
        ca_tot = 0.
        cr_tot = 0.
-
-       !Start with the advective conversion term
-       tRk = nBRk
-       tIk = nBIk
+       cf_tot = 0.
+       cd_tot = 0.
 
        !Compute nabla^2 A == nA
        do izh0=1,n3h0
@@ -746,10 +779,20 @@ end subroutine hspec
          enddo
       enddo
       
-      !FFT advection and nA to real-space to compute the conversion term
+      !FFT nA to real-space to compute the conversion terms
       call fft_c2r(nARk,nARr,n3h0)
       call fft_c2r(nAIk,nAIr,n3h0)
 
+
+       !-----------------!
+       !--- Advection ---!
+       !-----------------!
+
+       !Start with the advective conversion term
+       tRk = nBRk
+       tIk = nBIk
+
+      !FFT advection to real-space to compute the conversion term
       call fft_c2r(nBRk,nBRr,n3h0)
       call fft_c2r(nBIk,nBIr,n3h0)
 
@@ -770,6 +813,11 @@ end subroutine hspec
        nBRk = tRk
        nBIk = tIk
    
+
+       !------------------!
+       !--- Refraction ---!
+       !------------------!
+
 
        !Next: refractive terms
        tRk = rBRk
@@ -797,17 +845,365 @@ end subroutine hspec
        rBRk = tRk
        rBIk = tIk
 
+
+       !---------------!
+       !--- Forcing ---!
+       !---------------!
+
+       !Start with the advective conversion term
+       tRk = FRk
+       tIk = FIk
+
+      !FFT advection to real-space to compute the conversion term
+      call fft_c2r(FRk,FRr,n3h0)
+      call fft_c2r(FIk,FIr,n3h0)
+
+      !Compute the local integral for advection conversion
+      do izh0=1,n3h0
+         do ix=1,n1d
+             do iy=1,n2d
+                if(ix<=n1) then
+
+                   cf_p = cf_p + nARr(ix,iy,izh0)*FRr(ix,iy,izh0) + nAIr(ix,iy,izh0)*FIr(ix,iy,izh0)
+
+                end if
+             end do
+          end do
+       end do
+
+       !Recover k-space advective terms
+       FRk = tRk
+       FIk = tIk
+
+       !-------------------!
+       !--- Dissipation ---!
+       !-------------------!
+
+       !Compute dissipation - nuh*nabla^{2*ilap} LA or nuh*(kh2**ilap)*Bk and store in the temporary array
+       do izh0=1,n3h0
+         do iky=1,ikty
+            ky = kya(iky)
+            do ikx=1,iktx
+               kx = kxa(ikx)
+               kh2=kx*kx+ky*ky
+               
+               tRk(ikx,iky,izh0) =  - nuh*((1.*kx)**(2.*ilap) + (1.*ky)**(2.*ilap))*BRk(ikx,iky,izh0)
+               tIk(ikx,iky,izh0) =  - nuh*((1.*kx)**(2.*ilap) + (1.*ky)**(2.*ilap))*BIk(ikx,iky,izh0)
+
+            enddo
+         enddo
+      enddo
+      
+      !FFT dissipation to real-space to compute the conversion term
+      call fft_c2r(tRk,tRr,n3h0)
+      call fft_c2r(tIk,tIr,n3h0)
+
+      !Compute the local integral for advection conversion                                                                                                                                                                        
+      do izh0=1,n3h0
+         do ix=1,n1d
+             do iy=1,n2d
+                if(ix<=n1) then
+
+                   cd_p = cd_p + nARr(ix,iy,izh0)*tRr(ix,iy,izh0) + nAIr(ix,iy,izh0)*tIr(ix,iy,izh0)
+
+                end if
+             end do
+          end do
+       end do
+
+
+       !----------------!
+       !--- d/dt WPE ---!
+       !----------------!
+
+      !FFT LA_t to real-space to compute the conversion term
+      call fft_c2r(dBRk,dBRr,n3h0)
+      call fft_c2r(dBIk,dBIr,n3h0)
+
+      !Compute the local integral for advection conversion
+      do izh0=1,n3h0
+         do ix=1,n1d
+             do iy=1,n2d
+                if(ix<=n1) then
+
+                   cb_p = cb_p + nARr(ix,iy,izh0)*dBRr(ix,iy,izh0) + nAIr(ix,iy,izh0)*dBIr(ix,iy,izh0)
+
+                end if
+             end do
+          end do
+       end do
+
+       call mpi_reduce(cb_p,cb_tot, 1,MPI_REAL, MPI_SUM,0,MPI_COMM_WORLD,ierror)
+
+       !Normalize
+       cb_tot = cb_tot*Uw_scale*Uw_scale/(2.*n1*n2*n3*Bu)
+
+       !------------------------------!
+       !--- Total potential energy ---!
+       !------------------------------!
+
+       !Compute the horizontal derivatives of C=Az
+       do izh0=1,n3h0
+         do iky=1,ikty
+            ky = kya(iky)
+            do ikx=1,iktx
+               kx = kxa(ikx)
+               kh2=kx*kx+ky*ky
+
+               CXRk(ikx,iky,izh0) =  i*kx*CRk(ikx,iky,izh0)
+               CXIk(ikx,iky,izh0) =  i*kx*CIk(ikx,iky,izh0)
+               CYRk(ikx,iky,izh0) =  i*ky*CRk(ikx,iky,izh0)
+               CYIk(ikx,iky,izh0) =  i*ky*CIk(ikx,iky,izh0)
+
+            enddo
+         enddo
+      enddo
+
+      !FFT them to real-space to compute potential energy
+      call fft_c2r(CXRk,CXRr,n3h0)
+      call fft_c2r(CXIk,CXIr,n3h0)
+      call fft_c2r(CYRk,CYRr,n3h0)
+      call fft_c2r(CYIk,CYIr,n3h0)
+
+      do izh0=1,n3h0
+         izh2=izh0+2
+         do ix=1,n1d
+             do iy=1,n2d
+                if(ix<=n1) then
+
+        p_p = p_p + 0.25*r_2(izh2)*( CXRr(ix,iy,izh0)*CXRr(ix,iy,izh0) + CXIr(ix,iy,izh0)*CXIr(ix,iy,izh0) + CYRr(ix,iy,izh0)*CYRr(ix,iy,izh0) + CYIr(ix,iy,izh0)*CYIr(ix,iy,izh0)  )
+
+                end if
+             end do
+          end do
+       end do
+
+       call mpi_reduce(p_p,p_tot, 1,MPI_REAL, MPI_SUM,0,MPI_COMM_WORLD,ierror)
+
+       !Normalize
+       p_tot = p_tot*Uw_scale*Uw_scale/(n1*n2*n3*Bu)
+
+       if(mype==0) write(unit=unit_conv4 ,fmt=*) time,p_tot,cb_tot
+
+
+       !-------------------!
+       !--- Write files ---!
+       !-------------------!
+
        !Sum over all processors
        call mpi_reduce(ca_p,ca_tot, 1,MPI_REAL, MPI_SUM,0,MPI_COMM_WORLD,ierror)
        call mpi_reduce(cr_p,cr_tot, 1,MPI_REAL, MPI_SUM,0,MPI_COMM_WORLD,ierror)
+       call mpi_reduce(cf_p,cf_tot, 1,MPI_REAL, MPI_SUM,0,MPI_COMM_WORLD,ierror)
+       call mpi_reduce(cd_p,cd_tot, 1,MPI_REAL, MPI_SUM,0,MPI_COMM_WORLD,ierror)
 
        !Normalize
        ca_tot = ca_tot*Uw_scale*Uw_scale/(2.*n1*n2*n3*Bu)
        cr_tot = cr_tot*Uw_scale*Uw_scale/(2.*n1*n2*n3*Bu)
+       cf_tot = cf_tot*Uw_scale*Uw_scale/(2.*n1*n2*n3*Bu)
+       cd_tot = cd_tot*Uw_scale*Uw_scale/(2.*n1*n2*n3*Bu)
 
-       if(mype==0) write(unit=unit_conv ,fmt=*) time,ca_tot,cr_tot
+       if(mype==0) write(unit=unit_conv1 ,fmt=*) time,ca_tot,cr_tot
+       if(mype==0) write(unit=unit_conv2 ,fmt=*) time,cf_tot,cd_tot
 
      end subroutine we_conversion
+
+
+
+
+
+
+
+
+     subroutine wke_conversion(BRk, BIk, BRr, BIr, FRk, FIk, FRr, FIr, dBRk, dBIk, dBRr, dBIr)
+
+       !Computes the wave kinetic energy conversion terms:
+       !     WKE = 0.5 int( LA* LA )dV    = 0.5 int ( BR BR + BI BI ) dV 
+       !\Gamma_d = 0.5 int( LA* D + LA D* )dV = int ( BR DR + BI DI ) dV 
+       !\Gamma_f = 0.5 int( LA* F + LA F* )dV = int ( BR FR + BI FI ) dV 
+
+       double complex,   dimension(iktx,ikty,n3h0) :: BRk, BIk, FRk, FIk
+       double precision, dimension(n1d,n2d,n3h0)   :: BRr, BIr, FRr, FIr
+
+       !Store B temporarily (to avoid fft back)                                                                                                         
+       double complex,   dimension(iktx,ikty,n3h0) :: BRmem, BImem
+
+       !Dissipation + use temporarily store forcing terms
+       double complex,   dimension(iktx,ikty,n3h0) :: dissBRk, dissBIk
+       double precision, dimension(n1d,n2d,n3h0)   :: dissBRr, dissBIr
+
+       !Test: calculate the integral directly with dBdt                                                                                                                                 
+       double complex,   dimension(iktx,ikty,n3h0) :: dBRk, dBIk
+       double precision, dimension(n1d,n2d,n3h0)   :: dBRr, dBIr
+
+       !Conversion terms for advection, refraction, forcing and dissipation
+       real ::    k_p,   k_tot
+       real ::  ckf_p, ckf_tot
+       real ::  ckd_p, ckd_tot
+       real ::   cb_p, cb_tot
+
+       equivalence(dissBRk,dissBRr)
+       equivalence(dissBIk,dissBIr)
+
+       !Initialize to zero
+         k_p = 0.
+       ckf_p = 0.
+       ckd_p = 0.
+        cb_p = 0.
+
+         k_tot = 0.
+       ckf_tot = 0.
+       ckd_tot = 0.
+        cb_tot = 0.
+
+       !Store LA = B to avoid fft-ing back
+       BRmem = BRk
+       BImem = BIk
+
+
+       !-------------------!
+       !--- Dissipation ---!
+       !-------------------!
+
+       !Compute dissipation of LA  == dissB
+       do izh0=1,n3h0
+         do iky=1,ikty
+            ky = kya(iky)
+            do ikx=1,iktx
+               kx = kxa(ikx)
+               kh2=kx*kx+ky*ky
+               
+               dissBRk(ikx,iky,izh0) = - nuh*((1.*kx)**(2.*ilap) + (1.*ky)**(2.*ilap))*BRk(ikx,iky,izh0)
+               dissBIk(ikx,iky,izh0) = - nuh*((1.*kx)**(2.*ilap) + (1.*ky)**(2.*ilap))*BIk(ikx,iky,izh0)
+               
+            enddo
+         enddo
+      enddo
+      
+      !FFT dB to real-space to compute the conversion terms
+      call fft_c2r(dissBRk,dissBRr,n3h0)
+      call fft_c2r(dissBIk,dissBIr,n3h0)
+
+      !FFT B to real-space to compute the conversion terms
+      call fft_c2r(BRk,BRr,n3h0)
+      call fft_c2r(BIk,BIr,n3h0)
+
+
+      !Compute the local integral for dissipation conversion
+      do izh0=1,n3h0
+         do ix=1,n1d
+             do iy=1,n2d
+                if(ix<=n1) then
+
+                   ckd_p = ckd_p + BRr(ix,iy,izh0)*dissBRr(ix,iy,izh0) + BIr(ix,iy,izh0)*dissBIr(ix,iy,izh0)
+
+                end if
+             end do
+          end do
+       end do
+
+
+
+       !---------------!
+       !--- Forcing ---!
+       !---------------!
+
+       !Temporarily store in ancient dissipation terms 
+       dissBRk = FRk
+       dissBIk = FIk
+
+      !FFT advection to real-space to compute the conversion term
+      call fft_c2r(FRk,FRr,n3h0)
+      call fft_c2r(FIk,FIr,n3h0)
+
+      !Compute the local integral for forcing conversion
+      do izh0=1,n3h0
+         do ix=1,n1d
+             do iy=1,n2d
+                if(ix<=n1) then
+
+                   ckf_p = ckf_p + BRr(ix,iy,izh0)*FRr(ix,iy,izh0) + BIr(ix,iy,izh0)*FIr(ix,iy,izh0)
+
+                end if
+             end do
+          end do
+       end do
+
+       !Recover k-space advective terms
+       FRk = dissBRk
+       FIk = dissBIk
+
+
+       !--------------------------------------!
+       !--- Direct integral of 0.5 LA*LA_t ---!
+       !--------------------------------------!
+
+       !Temporarily store in ancient dissipation terms 
+       dissBRk = dBRk
+       dissBIk = dBIk
+
+      !FFT advection to real-space to compute the conversion term
+      call fft_c2r(dBRk,dBRr,n3h0)
+      call fft_c2r(dBIk,dBIr,n3h0)
+
+      !Compute the local integral for forcing conversion
+      do izh0=1,n3h0
+         do ix=1,n1d
+             do iy=1,n2d
+                if(ix<=n1) then
+
+                   cb_p = cb_p + BRr(ix,iy,izh0)*dBRr(ix,iy,izh0) + BIr(ix,iy,izh0)*dBIr(ix,iy,izh0)
+
+                end if
+             end do
+          end do
+       end do
+
+       !Recover k-space advective terms
+       dBRk = dissBRk
+       dBIk = dissBIk
+
+
+       !----------------------------!
+       !--- Total Kinetic energy ---!
+       !----------------------------!
+
+      !Compute the local integral of kinetic energy
+      do izh0=1,n3h0
+         do ix=1,n1d
+             do iy=1,n2d
+                if(ix<=n1) then
+
+                   k_p = k_p + 0.5*( BRr(ix,iy,izh0)*BRr(ix,iy,izh0) + BIr(ix,iy,izh0)*BIr(ix,iy,izh0) )
+
+                end if
+             end do
+          end do
+       end do
+
+       BRk = BRmem
+       BIk = BImem
+
+       !-------------------!
+       !--- Write files ---!
+       !-------------------!
+
+       !Sum over all processors
+       call mpi_reduce(k_p  ,  k_tot, 1,MPI_REAL, MPI_SUM,0,MPI_COMM_WORLD,ierror)
+       call mpi_reduce(ckf_p,ckf_tot, 1,MPI_REAL, MPI_SUM,0,MPI_COMM_WORLD,ierror)
+       call mpi_reduce(ckd_p,ckd_tot, 1,MPI_REAL, MPI_SUM,0,MPI_COMM_WORLD,ierror)
+       call mpi_reduce(cb_p , cb_tot, 1,MPI_REAL, MPI_SUM,0,MPI_COMM_WORLD,ierror)
+
+       !Normalize
+         k_tot =   k_tot*Uw_scale*Uw_scale/(n1*n2*n3)
+       ckf_tot = ckf_tot*Uw_scale*Uw_scale/(n1*n2*n3)
+       ckd_tot = ckd_tot*Uw_scale*Uw_scale/(n1*n2*n3)
+        cb_tot =  cb_tot*Uw_scale*Uw_scale/(n1*n2*n3)
+
+       if(mype==0) write(unit=unit_conv3 ,fmt=*) time,k_tot,ckf_tot,ckd_tot,cb_tot
+
+
+     end subroutine wke_conversion
+
 
 
  SUBROUTINE enstrophy(zxk,zyk,zzk) 

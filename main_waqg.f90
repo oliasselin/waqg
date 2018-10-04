@@ -56,7 +56,8 @@ PROGRAM main
 
   double complex, dimension(iktx,ikty,2) :: sigma    !Vertial integral of A(kx,ky), 1=real part, 2=imag part
 
-  double complex,   dimension(iktx,ikty,n3h0) :: FtRk=(0.D0,0.D0), FtIk=(0.D0,0.D0)        !YBJ Forcing term (or any other term on the right-hand side of the YBJ equation, e.g. mean-flow advection of LA) Must be set to zero if no forcing present)
+  double complex,   dimension(iktx,ikty,n3h0) :: FtRk, FtIk        !YBJ Forcing term (or any other term on the right-hand side of the YBJ equation, e.g. mean-flow advection of LA) Must be set to zero if no forcing present)
+  double precision, dimension(n1d,n2d,n3h0)   :: FtRr, FtIr             
 
   equivalence(ur,uk)
   equivalence(vr,vk)
@@ -81,6 +82,9 @@ PROGRAM main
   equivalence(rBRr,rBRk)
   equivalence(rBIr,rBIk)
 
+  equivalence(FtRr,FtRk)
+  equivalence(FtIr,FtIk)
+
   double precision, dimension(n1d,n2d) :: array2dr
   double complex,   dimension(iktx,ikty) :: array2di
 
@@ -98,6 +102,13 @@ PROGRAM main
   double precision, dimension(n1d,n2d,n3h1) :: u_rotr
 
   equivalence(u_rotr,u_rot)
+
+  !Test the potential energy balance by directly diagnosing d/dt B.
+  double complex,   dimension(iktx,ikty,n3h0) :: dBRk, dBIk
+  double precision, dimension(n1d,n2d,n3h0)   :: dBRr, dBIr
+
+  equivalence(dBRr,dBRk)
+  equivalence(dBIr,dBIk)
 
   !********************** Initializing... *******************************!
 
@@ -435,6 +446,18 @@ end if
         enddo
      enddo
 
+     !Compute d/dt B at the same time that the right-hand side is computed (prior to filtering)
+     dBRk = (BRtempk - BRok)/(2.*delt)
+     dBIk = (BItempk - BIok)/(2.*delt)
+     !Switch signs for the advection due to the base-state, because it is interpreted as Forcing in the right-hand side in the conversion subroutines.
+     if(eady==1) then
+        FtRk = -FtRk
+        FtIk = -FtIk
+     end if
+     if(out_conv ==1 .and. mod(iter,freq_conv )==0)  then
+        call wke_conversion(BRk, BIk, BRr, BIr, FtRk, FtIk, FtRr, FtIr, dBRk, dBIk, dBRr, dBIr)
+        call we_conversion(ARk, AIk, BRk, BIk, CRk, CIk,  dBRk, dBIk, nBRk, nBIk, rBRk, rBIk, FtRk, FtIk, dBRr, dBIr, nBRr, nBIr, rBRr, rBIr, FtRr, FtIr)
+     end if
 
      !Apply Robert-Asselin filter to damp the leap-frog computational mode
      do izh0=1,n3h0
