@@ -3,15 +3,17 @@ import os
 import subprocess
 import sys
 import numpy as np
+import matplotlib as mpl
+mpl.use('Agg')
 import matplotlib.pyplot as plt
 import matplotlib.colors as colors 
 
-def specA(run,recompute=False):
 
+
+
+def specA(run,recompute=False,tt_max=1000):
 
     iky_max = 1000
-    tt_max = 1000
-
     
     #Has the spectrum been computed already?
     if recompute == False:
@@ -27,8 +29,6 @@ def specA(run,recompute=False):
     else:
         print('(Re)computing spectrum of A from time step = 0')
         tt_min=0
-
-
 
 
     #Un-elegantly computes the maximum kh, kz and timestep

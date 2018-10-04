@@ -9,6 +9,7 @@ def make_a_gif(run,sli,field,fixed_cbrange='',cbmin=-0.005,cbmax=0.0005,nmax=100
 #    sli = 'htop'   #htop,hmid,hbot,v
 #    field = '2'
 
+
     if field=='1':
         field_name = 'WKE'
     if field=='2':
@@ -71,7 +72,7 @@ def make_a_gif(run,sli,field,fixed_cbrange='',cbmin=-0.005,cbmax=0.0005,nmax=100
 
 
             xrange = '[0:'+str(hres-1)+']'
-            if sli =='v':
+            if sli =='v' or sli =='vw':
                 yrange = '[0:'+str(vres-1)+']'
             else:
                 yrange = '[0:'+str(hres-1)+']'
