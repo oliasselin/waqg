@@ -212,16 +212,16 @@ PROGRAM main
     rBIk = (0.D0,0.D0)
  end if
 
-  qok = qk
- BRok = BRk
- BIok = BIk
-
  if(passive_scalar==1) then
     ARk = (0.D0,0.D0)
     AIk = (0.D0,0.D0)
    rBRk = (0.D0,0.D0)
    rBIk = (0.D0,0.D0)
 end if
+
+  qok = qk
+ BRok = BRk
+ BIok = BIk
 
  !Compute q^1 and B^1 with Forward Euler  
  do izh0=1,n3h0
