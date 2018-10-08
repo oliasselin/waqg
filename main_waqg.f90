@@ -39,7 +39,6 @@ PROGRAM main
   double complex,   dimension(iktx,ikty,n3h0) :: qwk
   double precision, dimension(n1d,n2d,n3h0)   :: qwr
 
-  double complex,   dimension(iktx,ikty,n3h0) :: dqk         !dissipation
   double complex,   dimension(iktx,ikty,n3h1) :: psik        !pressure, and rhs of pressure equation!
   double precision, dimension(n1d,n2d,n3h1)   :: psir
   double complex,   dimension(iktx,ikty,n3h1) :: psi_old     !For computing w...
@@ -199,14 +198,6 @@ PROGRAM main
     call refraction_waqg(rBRk,rBIk,rBRr,rBIr,BRk,BIk,psik,BRr,BIr,psir)
  end if
 
-
- if(inviscid==1) then
-    dqk=(0.D0,0.D0)
- else
-    !Compute dissipation 
-    call dissipation_q_nv(dqk,qok)
- end if
-
  if(linear==1) then
     nqk=(0.D0,0.D0)
    nBRk=(0.D0,0.D0)
@@ -250,7 +241,7 @@ end if
           end if
 
           if (L(ikx,iky).eq.1) then
-             qk(ikx,iky,izh1) = (  qok(ikx,iky,izh1) - delt* nqk(ikx,iky,izh0)  + delt*dqk(ikx,iky,izh0) )*exp(-diss)
+             qk(ikx,iky,izh1) = (  qok(ikx,iky,izh1) - delt* nqk(ikx,iky,izh0) )*exp(-diss)
             BRk(ikx,iky,izh0) = ( BRok(ikx,iky,izh0) - delt*nBRk(ikx,iky,izh0)  - delt*(0.5/(Bu*Ro))*kh2*AIk(ikx,iky,izh0) + delt*0.5*rBIk(ikx,iky,izh0) )*exp(-diss)
             BIk(ikx,iky,izh0) = ( BIok(ikx,iky,izh0) - delt*nBIk(ikx,iky,izh0)  + delt*(0.5/(Bu*Ro))*kh2*ARk(ikx,iky,izh0) - delt*0.5*rBRk(ikx,iky,izh0) )*exp(-diss)
 
@@ -342,13 +333,6 @@ end if
         call refraction_waqg(rBRk,rBIk,rBRr,rBIr,BRk,BIk,psik,BRr,BIr,psir)
      end if
  
-     if(inviscid==1) then
-        dqk=(0.D0,0.D0)
-     else
-        !Compute dissipation                                                                                                                                                                                           
-        call dissipation_q_nv(dqk,qok)
-     end if
-
      if(linear==1) then
         nqk=(0.D0,0.D0)
         nBRk=(0.D0,0.D0)
@@ -420,7 +404,7 @@ end if
               end if
 
               if (L(ikx,iky).eq.1) then
-                 qtempk(ikx,iky,izh1) =  qok(ikx,iky,izh1)*exp(-2*diss) - 2*delt*nqk(ikx,iky,izh0)*exp(-diss)  + 2*delt*dqk(ikx,iky,izh0)*exp(-2*diss)
+                 qtempk(ikx,iky,izh1) =  qok(ikx,iky,izh1)*exp(-2*diss) - 2*delt*nqk(ikx,iky,izh0)*exp(-diss) 
                 BRtempk(ikx,iky,izh0) = BRok(ikx,iky,izh0)*exp(-2*diss) - 2*delt*(nBRk(ikx,iky,izh0) + (0.5/(Bu*Ro))*kh2*AIk(ikx,iky,izh0) - 0.5*rBIk(ikx,iky,izh0) )*exp(-diss)
                 BItempk(ikx,iky,izh0) = BIok(ikx,iky,izh0)*exp(-2*diss) - 2*delt*(nBIk(ikx,iky,izh0) - (0.5/(Bu*Ro))*kh2*ARk(ikx,iky,izh0) + 0.5*rBRk(ikx,iky,izh0) )*exp(-diss)
                 
