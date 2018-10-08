@@ -1094,7 +1094,8 @@ MODULE derivatives
             do ikx=1,iktx
                kx = kxa(ikx)
                kh2 = kx*kx + ky*ky
-               if ((L(ikx,iky).eq.1) .and. kh2 > 0) then
+!               if ((L(ikx,iky).eq.1) .and. kh2 > 0) then
+               if ((L(ikx,iky).eq.1)) then
                   sum_to_reduce(ikx,iky,1) = sum_to_reduce(ikx,iky,1) + BRk(ikx,iky,izh0)
                   sum_to_reduce(ikx,iky,2) = sum_to_reduce(ikx,iky,2) + BIk(ikx,iky,izh0)
                endif
@@ -1113,7 +1114,8 @@ MODULE derivatives
                do ikx=1,iktx
                   kx = kxa(ikx)
                   kh2 = kx*kx + ky*ky
-                  if ((L(ikx,iky).eq.1) .and. kh2 > 0) then
+!                  if ((L(ikx,iky).eq.1) .and. kh2 > 0) then
+                  if ((L(ikx,iky).eq.1)) then
                      BRk(ikx,iky,izh0) = BRk(ikx,iky,izh0) - aveB(ikx,iky,1)
                      BIk(ikx,iky,izh0) = BIk(ikx,iky,izh0) - aveB(ikx,iky,2)
                   endif
