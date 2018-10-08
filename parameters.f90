@@ -36,6 +36,10 @@ MODULE parameters
     double precision, parameter :: c_one = 1./( n_one*n_one - n_one*n_two*tanh(twopi*n_one)/tanh(twopi*n_two) )
     double precision, parameter :: c_two = 1./( n_two*n_two - n_one*n_two*tanh(twopi*n_two)/tanh(twopi*n_one) )
 
+
+    integer, parameter :: barotropize = 1       !1: Waves only feel the effects of a barotropized flow;  0: waves and flow feel the same streamfunction (regular setup)
+    integer, parameter :: bt_level = n3         !Level at which the barotropic streamfunction is defined (n3: top, 1: bottom, etc.)
+
     integer, parameter :: fixed_flow = 0        !1: Skip the psi-inversion steps
     integer, parameter :: passive_scalar = 0    !1: Set A and refraction to 0 and skip the LA -> A inversion. BR and BI become two (independent) passive scalars.
     

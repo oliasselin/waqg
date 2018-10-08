@@ -2180,4 +2180,55 @@ subroutine spec_A(ARkt,AIkt)
   end subroutine spec_A
 
 
+
+
+
+
+
+
+    SUBROUTINE  barotropize_psi(psik,psik_bt)
+
+      !This subroutine takes psik at some level, then broadcasts it to all processes to create a fake barotropic psi -> psik_bt
+      double complex, dimension(iktx,ikty,n3h1) :: psik           !Original, baroclinic streamfunction
+      double complex, dimension(iktx,ikty,n3h1) :: psik_bt        !Resulting, barotropized, streamfunction
+      double complex, dimension(iktx,ikty)      :: psik_the_one   !psik at the selected level
+      
+      integer :: proc   !mype no that contains the streamfunction to barotropize
+      integer :: izh1s  !index to locate the selected level for the bt streamfunction
+
+      psik_the_one = (0.D0,0.D0) 
+      psik_bt = (0.D0,0.D0) 
+
+      !Find the processor containing the selected level
+      proc = (bt_level-1)/n3h0             !which processor                                                                                                                  
+      izh1s = bt_level - proc*n3h0 + 1     !position in the processor (valid for n3h1 fields only)  
+       
+
+      !Define the psik to broadcast to everybody
+      if(mype==proc) then   
+         do iky=1,ikty
+            do ikx=1,iktx
+               if (L(ikx,iky).eq.1) then
+                  psik_the_one(ikx,iky) = psik(ikx,iky,izh1s)
+               endif
+            enddo
+         enddo
+      end if
+
+      !Broadcast the streamfunction to everybody                                                        
+      call mpi_bcast(psik_the_one,iktx*ikty,MPI_DOUBLE_COMPLEX,proc,MPI_COMM_WORLD,ierror)
+
+      !Define the barotropic streamfunction by using the newly available psik_the_one
+      do izh1=1,n3h1
+         do iky=1,ikty
+            do ikx=1,iktx
+               if (L(ikx,iky).eq.1) then
+                  psik_bt(ikx,iky,izh1) = psik_the_one(ikx,iky)
+               end if
+            end do
+         end do
+      end do
+
+    END SUBROUTINE barotropize_psi
+
     END MODULE derivatives
