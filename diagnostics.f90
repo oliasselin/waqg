@@ -879,7 +879,7 @@ end subroutine hspec
        !--- Dissipation ---!
        !-------------------!
 
-       !Compute dissipation - nuh*nabla^{2*ilap} LA or nuh*(kh2**ilap)*Bk and store in the temporary array
+       !Compute dissipation - nuhX*nabla^{2*ilapX} LA and store in the temporary array
        do izh0=1,n3h0
          do iky=1,ikty
             ky = kya(iky)
@@ -887,8 +887,8 @@ end subroutine hspec
                kx = kxa(ikx)
                kh2=kx*kx+ky*ky
                
-               tRk(ikx,iky,izh0) =  - nuh*((1.*kx)**(2.*ilap) + (1.*ky)**(2.*ilap))*BRk(ikx,iky,izh0)
-               tIk(ikx,iky,izh0) =  - nuh*((1.*kx)**(2.*ilap) + (1.*ky)**(2.*ilap))*BIk(ikx,iky,izh0)
+               tRk(ikx,iky,izh0) =  - ( nuh1w*((1.*kx)**(2.*ilap1w) + (1.*ky)**(2.*ilap1w)) + nuh2w*((1.*kx)**(2.*ilap2w) + (1.*ky)**(2.*ilap2w)) )*BRk(ikx,iky,izh0)
+               tIk(ikx,iky,izh0) =  - ( nuh1w*((1.*kx)**(2.*ilap1w) + (1.*ky)**(2.*ilap1w)) + nuh2w*((1.*kx)**(2.*ilap2w) + (1.*ky)**(2.*ilap2w)) )*BIk(ikx,iky,izh0)
 
             enddo
          enddo
@@ -1072,8 +1072,8 @@ end subroutine hspec
                kx = kxa(ikx)
                kh2=kx*kx+ky*ky
                
-               dissBRk(ikx,iky,izh0) = - nuh*((1.*kx)**(2.*ilap) + (1.*ky)**(2.*ilap))*BRk(ikx,iky,izh0)
-               dissBIk(ikx,iky,izh0) = - nuh*((1.*kx)**(2.*ilap) + (1.*ky)**(2.*ilap))*BIk(ikx,iky,izh0)
+               dissBRk(ikx,iky,izh0) = - ( nuh1w*((1.*kx)**(2.*ilap1w) + (1.*ky)**(2.*ilap1w)) + nuh2w*((1.*kx)**(2.*ilap2w) + (1.*ky)**(2.*ilap2w)) )*BRk(ikx,iky,izh0)
+               dissBIk(ikx,iky,izh0) = - ( nuh1w*((1.*kx)**(2.*ilap1w) + (1.*ky)**(2.*ilap1w)) + nuh2w*((1.*kx)**(2.*ilap2w) + (1.*ky)**(2.*ilap2w)) )*BIk(ikx,iky,izh0)
                
             enddo
          enddo
@@ -2130,9 +2130,6 @@ end subroutine hspec
     elseif( (normalize==1 .and.   delt >= dz/sqrt(k_init+p_init)) .or. (norm_trop==1) .and. delt >= dz/URMS  ) then   !Approximate CFL depending on the normalization process. Watch out if no normalization!  
        write(*,*) "CFL fails"
        stop
-    elseif( (ilap==1 .and. delt >= dz*dz/nuh) .or. delt >= dz*dz/nuz) then
-       write(*,*) "Dissipation unstable"
-       stop
     end if
        
  
@@ -2164,10 +2161,8 @@ end subroutine hspec
     write(unit_run,*)
     write(unit_run,*) "Viscosity"
     write(unit_run,*)
-    write(unit_run,*) "Laplacian order =",ilap
-    write(unit_run,*) "Hor. coeff=",coeff
-    write(unit_run,*) "Ver. coeff=",coeffz
-   
+    write(unit_run,*) "Laplacian orders (ilap1,ilap2,ilap1w,ilap2w)=",ilap1,ilap2,ilap1w,ilap2w
+    write(unit_run,*) "Hor. (coeff1,coeff2,coeff1w,coeff2w)=",coeff1,coeff2,coeff1w,coeff2w
 
 
     write(unit_run,*) "Stratification=",stratification
