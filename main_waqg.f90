@@ -93,10 +93,10 @@ PROGRAM main
   equivalence(fr_odd ,fk_odd )
   equivalence(array2dr,array2di)
 
-  !For implicit dissipation
-  double complex :: diss             ! nu_H * kH**(2*ilap) delt
+  !Integrating factor (includes both dissipation and mean-flow advection in the Eady problem (must be complex in the latter case). One for the flow, one for the waves (w)
+  double complex :: int_factor,int_factor_w
 
-  !Rotational part of u for slice...                                                                                                                                                                                                         
+  !Rotational part of u for slice...                                                                                      
   double complex, dimension(iktx,ikty,n3h1) :: u_rot
   double precision, dimension(n1d,n2d,n3h1) :: u_rotr
 
@@ -234,26 +234,28 @@ end if
           kx = kxa(ikx)
           kh2=kx*kx+ky*ky
 
-          if(eady==1) then
-             diss = delt* (i*kx*zash0(izh0) +  nuh*((1.*kx)**(2.*ilap) + (1.*ky)**(2.*ilap))  )     !Integrating factor includes the term Uqx
+          if(eady==1) then      !Integrating factor includes the term Uqx
+             int_factor   = delt* (i*kx*zash0(izh0) +  nuh1 *((1.*kx)**(2.*ilap1 ) + (1.*ky)**(2.*ilap1 )) + nuh2 *((1.*kx)**(2.*ilap2 ) + (1.*ky)**(2.*ilap2 ))  )
+             int_factor_w = delt* (i*kx*zash0(izh0) +  nuh1w*((1.*kx)**(2.*ilap1w) + (1.*ky)**(2.*ilap1w)) + nuh2w*((1.*kx)**(2.*ilap2w) + (1.*ky)**(2.*ilap2w))  )
           else
-             diss = nuh*delt*((1.*kx)**(2.*ilap) + (1.*ky)**(2.*ilap))          
+             int_factor   = delt* (                    nuh1 *((1.*kx)**(2.*ilap1 ) + (1.*ky)**(2.*ilap1 )) + nuh2 *((1.*kx)**(2.*ilap2 ) + (1.*ky)**(2.*ilap2 ))  )
+             int_factor_w = delt* (                    nuh1w*((1.*kx)**(2.*ilap1w) + (1.*ky)**(2.*ilap1w)) + nuh2w*((1.*kx)**(2.*ilap2w) + (1.*ky)**(2.*ilap2w))  )
           end if
 
           if (L(ikx,iky).eq.1) then
-             qk(ikx,iky,izh1) = (  qok(ikx,iky,izh1) - delt* nqk(ikx,iky,izh0) )*exp(-diss)
-            BRk(ikx,iky,izh0) = ( BRok(ikx,iky,izh0) - delt*nBRk(ikx,iky,izh0)  - delt*(0.5/(Bu*Ro))*kh2*AIk(ikx,iky,izh0) + delt*0.5*rBIk(ikx,iky,izh0) )*exp(-diss)
-            BIk(ikx,iky,izh0) = ( BIok(ikx,iky,izh0) - delt*nBIk(ikx,iky,izh0)  + delt*(0.5/(Bu*Ro))*kh2*ARk(ikx,iky,izh0) - delt*0.5*rBRk(ikx,iky,izh0) )*exp(-diss)
+             qk(ikx,iky,izh1) = (  qok(ikx,iky,izh1) - delt* nqk(ikx,iky,izh0) )*exp(-int_factor)
+            BRk(ikx,iky,izh0) = ( BRok(ikx,iky,izh0) - delt*nBRk(ikx,iky,izh0)  - delt*(0.5/(Bu*Ro))*kh2*AIk(ikx,iky,izh0) + delt*0.5*rBIk(ikx,iky,izh0) )*exp(-int_factor_w)
+            BIk(ikx,iky,izh0) = ( BIok(ikx,iky,izh0) - delt*nBIk(ikx,iky,izh0)  + delt*(0.5/(Bu*Ro))*kh2*ARk(ikx,iky,izh0) - delt*0.5*rBRk(ikx,iky,izh0) )*exp(-int_factor_w)
 
             if(eady == 1 .and. eady_bnd == 1) then  !Add bottom and top boundary terms
                !Bottom boundary: add vQy and the Ekman term                
                if(mype == 0 .and. izh0 == 1) then
-                  qk(ikx,iky,izh1) = qk(ikx,iky,izh1) + delt*(1./dz)*(i*kx*Bu*psik(ikx,iky,izh1) + (1.*kh2)*Ek*psi_old(ikx,iky,izh1) )*exp(-diss)
+                  qk(ikx,iky,izh1) = qk(ikx,iky,izh1) + delt*(1./dz)*(i*kx*Bu*psik(ikx,iky,izh1) + (1.*kh2)*Ek*psi_old(ikx,iky,izh1) )*exp(-int_factor)
                end if
 
                !Top Boundary: add vQy            
                if(mype == (npe-1) .and. izh0 == n3h0) then
-                  qk(ikx,iky,izh1) = qk(ikx,iky,izh1) - delt*(1./dz)*(i*kx*Bu)*psik(ikx,iky,izh1)*exp(-diss)
+                  qk(ikx,iky,izh1) = qk(ikx,iky,izh1) - delt*(1./dz)*(i*kx*Bu)*psik(ikx,iky,izh1)*exp(-int_factor)
                end if
             end if
 
@@ -397,26 +399,28 @@ end if
               kx = kxa(ikx)
               kh2=kx*kx+ky*ky
 
-              if(eady==1) then
-                 diss = delt* (i*kx*zash0(izh0) +  nuh*((1.*kx)**(2.*ilap) + (1.*ky)**(2.*ilap)) )     !Integrating factor includes the term Uqx
+              if(eady==1) then      !Integrating factor includes the term Uqx                                                                                       
+                 int_factor   = delt* (i*kx*zash0(izh0) +  nuh1 *((1.*kx)**(2.*ilap1 ) + (1.*ky)**(2.*ilap1 )) + nuh2 *((1.*kx)**(2.*ilap2 ) + (1.*ky)**(2.*ilap2 ))  )
+                 int_factor_w = delt* (i*kx*zash0(izh0) +  nuh1w*((1.*kx)**(2.*ilap1w) + (1.*ky)**(2.*ilap1w)) + nuh2w*((1.*kx)**(2.*ilap2w) + (1.*ky)**(2.*ilap2w))  )
               else
-                 diss = nuh*delt*((1.*kx)**(2.*ilap) + (1.*ky)**(2.*ilap))          
+                 int_factor   = delt* (                    nuh1 *((1.*kx)**(2.*ilap1 ) + (1.*ky)**(2.*ilap1 )) + nuh2 *((1.*kx)**(2.*ilap2 ) + (1.*ky)**(2.*ilap2 ))  )
+                 int_factor_w = delt* (                    nuh1w*((1.*kx)**(2.*ilap1w) + (1.*ky)**(2.*ilap1w)) + nuh2w*((1.*kx)**(2.*ilap2w) + (1.*ky)**(2.*ilap2w))  )
               end if
 
               if (L(ikx,iky).eq.1) then
-                 qtempk(ikx,iky,izh1) =  qok(ikx,iky,izh1)*exp(-2*diss) - 2*delt*nqk(ikx,iky,izh0)*exp(-diss) 
-                BRtempk(ikx,iky,izh0) = BRok(ikx,iky,izh0)*exp(-2*diss) - 2*delt*(nBRk(ikx,iky,izh0) + (0.5/(Bu*Ro))*kh2*AIk(ikx,iky,izh0) - 0.5*rBIk(ikx,iky,izh0) )*exp(-diss)
-                BItempk(ikx,iky,izh0) = BIok(ikx,iky,izh0)*exp(-2*diss) - 2*delt*(nBIk(ikx,iky,izh0) - (0.5/(Bu*Ro))*kh2*ARk(ikx,iky,izh0) + 0.5*rBRk(ikx,iky,izh0) )*exp(-diss)
+                 qtempk(ikx,iky,izh1) =  qok(ikx,iky,izh1)*exp(-2*int_factor) - 2*delt*nqk(ikx,iky,izh0)*exp(-int_factor) 
+                BRtempk(ikx,iky,izh0) = BRok(ikx,iky,izh0)*exp(-2*int_factor_w) - 2*delt*(nBRk(ikx,iky,izh0) + (0.5/(Bu*Ro))*kh2*AIk(ikx,iky,izh0) - 0.5*rBIk(ikx,iky,izh0) )*exp(-int_factor_w)
+                BItempk(ikx,iky,izh0) = BIok(ikx,iky,izh0)*exp(-2*int_factor_w) - 2*delt*(nBIk(ikx,iky,izh0) - (0.5/(Bu*Ro))*kh2*ARk(ikx,iky,izh0) + 0.5*rBRk(ikx,iky,izh0) )*exp(-int_factor_w)
                 
                 if(eady == 1 .and. eady_bnd == 1) then  !Add bottom and top boundary terms      
                    !Bottom boundary: add vQy and the Ekman term                                                                                                             
                    if(mype == 0 .and. izh0 == 1) then
-                      qtempk(ikx,iky,izh1) = qtempk(ikx,iky,izh1) + 2.*delt*(1./dz)*i*kx*Bu*psik(ikx,iky,izh1)*exp(-diss) + 2.*delt*(1./dz)*(1.*kh2)*Ek*psi_old(ikx,iky,izh1)*exp(-2*diss)
+                      qtempk(ikx,iky,izh1) = qtempk(ikx,iky,izh1) + 2.*delt*(1./dz)*i*kx*Bu*psik(ikx,iky,izh1)*exp(-int_factor) + 2.*delt*(1./dz)*(1.*kh2)*Ek*psi_old(ikx,iky,izh1)*exp(-2*int_factor)
                    end if
 
                    !Top Boundary: add vQy                                                                                                                                        
                    if(mype == (npe-1) .and. izh0 == n3h0) then
-                      qtempk(ikx,iky,izh1) = qtempk(ikx,iky,izh1) - 2.*delt*(1./dz)*(i*kx*Bu)*psik(ikx,iky,izh1)*exp(-diss)
+                      qtempk(ikx,iky,izh1) = qtempk(ikx,iky,izh1) - 2.*delt*(1./dz)*(i*kx*Bu)*psik(ikx,iky,izh1)*exp(-int_factor)
                    end if
                 end if
 
