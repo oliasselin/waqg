@@ -1,3 +1,5 @@
+t_eddy_days=(1600000/0.1)/(3600*24)
+
 set term x11
 #set terminal postscript eps size 7.,5. enhanced color font 'Helvetica,20' lw 1.5
 #set output 'plots/dpdt.eps'
@@ -44,7 +46,7 @@ set ytics nomirror
 
 
 
-#set xrange[0:10]
+set xrange[0:20]
 #set yrange[0:1]
 
 set ylabel rotate by 90# offset 1,2
@@ -52,14 +54,14 @@ set ylabel rotate by 90# offset 1,2
 set format y "%g"
 
 set ylabel '{/Helvetica-Oblique Energy density (m^2 s^{-2}) per eddy turnover time}'
-set xlabel '{/Helvetica-Oblique Eddy turnover times}'
+set xlabel '{/Helvetica-Oblique Time (days)}'
 
 
 set title "Wave potential energy variation budget"
-plot "data/dpdt_direct.dat" u 1:2     w lp ls 1 title 'd/dt WPE', \
-     "data/dpdt_direct.dat" u 1:(-$3) w lp ls 2  title 'Advection', \
-     "data/dpdt_direct.dat" u 1:(-$4) w lp ls 5  title 'Refraction', \
-     "data/dpdt_direct.dat" u 1:($5)  w lp ls 3  title 'Forcing', \
-     "data/dpdt_direct.dat" u 1:($6)  w lp ls 4 title 'Dissipation', \
+plot "data/dpdt_direct.dat" u ($1*t_eddy_days):2     w l ls 1 title 'd/dt WPE', \
+     "data/dpdt_direct.dat" u ($1*t_eddy_days):(-$3) w l ls 2  title 'Advection (perturbation)', \
+     "data/dpdt_direct.dat" u ($1*t_eddy_days):($5)  w l ls 3  title 'Advection (base-state)', \
+     "data/dpdt_direct.dat" u ($1*t_eddy_days):(-$4) w l ls 5  title 'Refraction', \
+     "data/dpdt_direct.dat" u ($1*t_eddy_days):($6)  w l ls 4 title 'Dissipation', \
      0 w l ls 9 notitle
      
