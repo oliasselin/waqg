@@ -109,6 +109,12 @@ PROGRAM main
   equivalence(dBRr,dBRk)
   equivalence(dBIr,dBIk)
 
+  !Barotropic version of the streamfunction
+  double complex,   dimension(iktx,ikty,n3h1) :: psik_bt        !pressure, and rhs of pressure equation!
+  double precision, dimension(n1d,n2d,n3h1)   :: psir_bt
+
+  equivalence(psir_bt,psik_bt)
+
   !********************** Initializing... *******************************!
 
   call initialize_mpi
@@ -192,6 +198,17 @@ PROGRAM main
     rBIk = (0.D0,0.D0)
     ARk = (0.D0,0.D0)
     AIk = (0.D0,0.D0)
+ else if(no_waves == 0 .and. barotropize == 1) then
+    call convol_q(nqk,nqr,uk,vk,qk,ur,vr,qr)
+
+    !Compute the u and v from the barotropized streamfunction (to be used in convol_waves)                                                                                          
+    call barotropize_psi(psik,psik_bt)
+    call compute_velo(uk,vk,wk,bk,psik_bt)
+    if(npe > 1) call generate_halo(uk,vk,wk,bk)
+
+    if(zero_aveB==1) call sumB(BRk,BIk)                                               !Resets the vertical sum of B to zero                                                         
+    call convol_waves(nBRk,nBIk,nBRr,nBIr,uk,vk,BRk,BIk,ur,vr,BRr,BIr)
+    call refraction_waqg(rBRk,rBIk,rBRr,rBIr,BRk,BIk,psik_bt,BRr,BIr,psir_bt)
  else
     if(zero_aveB==1) call sumB(BRk,BIk)                                               !Resets the vertical sum of B to zero
     call convol_waqg(nqk,nBRk,nBIk,nqr,nBRr,nBIr,uk,vk,qk,BRk,BIk,ur,vr,qr,BRr,BIr)
@@ -234,9 +251,12 @@ end if
           kx = kxa(ikx)
           kh2=kx*kx+ky*ky
 
-          if(eady==1) then      !Integrating factor includes the term Uqx
+          if(eady==1 .and. barotropize == 0) then      !Integrating factor includes the terms Uqx and ULAx
              int_factor   = delt* (i*kx*zash0(izh0) +  nuh1 *((1.*kx)**(2.*ilap1 ) + (1.*ky)**(2.*ilap1 )) + nuh2 *((1.*kx)**(2.*ilap2 ) + (1.*ky)**(2.*ilap2 ))  )
              int_factor_w = delt* (i*kx*zash0(izh0) +  nuh1w*((1.*kx)**(2.*ilap1w) + (1.*ky)**(2.*ilap1w)) + nuh2w*((1.*kx)**(2.*ilap2w) + (1.*ky)**(2.*ilap2w))  )
+          else if(eady==1 .and. barotropize == 1) then      !Integrating factor includes the term Uqx but NOT the U LAx term
+             int_factor   = delt* (i*kx*zash0(izh0) +  nuh1 *((1.*kx)**(2.*ilap1 ) + (1.*ky)**(2.*ilap1 )) + nuh2 *((1.*kx)**(2.*ilap2 ) + (1.*ky)**(2.*ilap2 ))  )
+             int_factor_w = delt* (                    nuh1w*((1.*kx)**(2.*ilap1w) + (1.*ky)**(2.*ilap1w)) + nuh2w*((1.*kx)**(2.*ilap2w) + (1.*ky)**(2.*ilap2w))  )
           else
              int_factor   = delt* (                    nuh1 *((1.*kx)**(2.*ilap1 ) + (1.*ky)**(2.*ilap1 )) + nuh2 *((1.*kx)**(2.*ilap2 ) + (1.*ky)**(2.*ilap2 ))  )
              int_factor_w = delt* (                    nuh1w*((1.*kx)**(2.*ilap1w) + (1.*ky)**(2.*ilap1w)) + nuh2w*((1.*kx)**(2.*ilap2w) + (1.*ky)**(2.*ilap2w))  )
@@ -329,12 +349,23 @@ end if
         rBIk = (0.D0,0.D0)
         ARk = (0.D0,0.D0)
         AIk = (0.D0,0.D0)
+     else if(no_waves == 0 .and. barotropize == 1) then
+        call convol_q(nqk,nqr,uk,vk,qk,ur,vr,qr)
+        
+        !Compute the u and v from the barotropized streamfunction (to be used in convol_waves)                                                                         
+        call barotropize_psi(psik,psik_bt)
+        call compute_velo(uk,vk,wk,bk,psik_bt)
+        if(npe > 1) call generate_halo(uk,vk,wk,bk)
+        
+        if(zero_aveB==1) call sumB(BRk,BIk)                           !Resets the vertical sum of B to zero                                                                         
+        call convol_waves(nBRk,nBIk,nBRr,nBIr,uk,vk,BRk,BIk,ur,vr,BRr,BIr)
+        call refraction_waqg(rBRk,rBIk,rBRr,rBIr,BRk,BIk,psik_bt,BRr,BIr,psir_bt)
      else
         if(zero_aveB==1) call sumB(BRk,BIk)                           !Resets the vertical sum of B to zero
         call convol_waqg(nqk,nBRk,nBIk,nqr,nBRr,nBIr,uk,vk,qk,BRk,BIk,ur,vr,qr,BRr,BIr)
         call refraction_waqg(rBRk,rBIk,rBRr,rBIr,BRk,BIk,psik,BRr,BIr,psir)
      end if
- 
+     
      if(linear==1) then
         nqk=(0.D0,0.D0)
         nBRk=(0.D0,0.D0)
@@ -360,7 +391,7 @@ end if
 
      if(passive_scalar/=1 .and. no_dispersion/=1 .and. no_waves/=1) then     !This was moved to the right place on October 1st, 2018 (see diary on the same day for details)
         ! --- Recover A from B --- !
-        if(eady==1) then !Include the mean-flow advection in the right-hand side, J(Psi,LA) --> i*k_x*z*LA
+        if(eady==1 .and. barotropize == 0) then !Include the mean-flow advection in the right-hand side, J(Psi,LA) --> i*k_x*z*LA
            do izh0=1,n3h0
               do iky=1,ikty
                  do ikx=1,iktx
@@ -399,9 +430,12 @@ end if
               kx = kxa(ikx)
               kh2=kx*kx+ky*ky
 
-              if(eady==1) then      !Integrating factor includes the term Uqx                                                                                       
+              if(eady==1 .and. barotropize == 0) then           !Integrating factor includes the terms Uqx and ULAx                                      
                  int_factor   = delt* (i*kx*zash0(izh0) +  nuh1 *((1.*kx)**(2.*ilap1 ) + (1.*ky)**(2.*ilap1 )) + nuh2 *((1.*kx)**(2.*ilap2 ) + (1.*ky)**(2.*ilap2 ))  )
                  int_factor_w = delt* (i*kx*zash0(izh0) +  nuh1w*((1.*kx)**(2.*ilap1w) + (1.*ky)**(2.*ilap1w)) + nuh2w*((1.*kx)**(2.*ilap2w) + (1.*ky)**(2.*ilap2w))  )
+              else if(eady==1 .and. barotropize == 1) then      !Integrating factor includes the term Uqx but NOT the U LAx term                                                    
+                 int_factor   = delt* (i*kx*zash0(izh0) +  nuh1 *((1.*kx)**(2.*ilap1 ) + (1.*ky)**(2.*ilap1 )) + nuh2 *((1.*kx)**(2.*ilap2 ) + (1.*ky)**(2.*ilap2 ))  )
+                 int_factor_w = delt* (                    nuh1w*((1.*kx)**(2.*ilap1w) + (1.*ky)**(2.*ilap1w)) + nuh2w*((1.*kx)**(2.*ilap2w) + (1.*ky)**(2.*ilap2w))  )
               else
                  int_factor   = delt* (                    nuh1 *((1.*kx)**(2.*ilap1 ) + (1.*ky)**(2.*ilap1 )) + nuh2 *((1.*kx)**(2.*ilap2 ) + (1.*ky)**(2.*ilap2 ))  )
                  int_factor_w = delt* (                    nuh1w*((1.*kx)**(2.*ilap1w) + (1.*ky)**(2.*ilap1w)) + nuh2w*((1.*kx)**(2.*ilap2w) + (1.*ky)**(2.*ilap2w))  )

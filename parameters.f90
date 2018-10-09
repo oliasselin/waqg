@@ -36,7 +36,6 @@ MODULE parameters
     double precision, parameter :: c_one = 1./( n_one*n_one - n_one*n_two*tanh(twopi*n_one)/tanh(twopi*n_two) )
     double precision, parameter :: c_two = 1./( n_two*n_two - n_one*n_two*tanh(twopi*n_two)/tanh(twopi*n_one) )
 
-
     integer, parameter :: barotropize = 1       !1: Waves only feel the effects of a barotropized flow;  0: waves and flow feel the same streamfunction (regular setup)
     integer, parameter :: bt_level = n3         !Level at which the barotropic streamfunction is defined (n3: top, 1: bottom, etc.)
 
@@ -207,14 +206,14 @@ MODULE parameters
     !Assumes dissipation operator takes the form [ nuh1X*nabla^(2*ilap1X) + nuh2X*nabla^(2*ilap2X) ]. Suffix w is acting on waves.
 
     double precision, parameter :: coeff1  = 1.
-    double precision, parameter :: coeff2  = 0.
-    double precision, parameter :: coeff1w = 1.
-    double precision, parameter :: coeff2w = 0.
+    double precision, parameter :: coeff2  = 10.
+    double precision, parameter :: coeff1w = 0.
+    double precision, parameter :: coeff2w = 10.
 
     integer, parameter :: ilap1  = 2
-    integer, parameter :: ilap2  = 2
+    integer, parameter :: ilap2  = 6
     integer, parameter :: ilap1w = 2
-    integer, parameter :: ilap2w = 2
+    integer, parameter :: ilap2w = 6
     
     double precision, parameter :: nuh1   =  coeff1  * (64./(1.*n1)) **(4./3.) * (3./n1)**(2*(ilap1 -1))   !Dissipation operator 1, flow        
     double precision, parameter :: nuh2   =  coeff2  * (64./(1.*n1)) **(4./3.) * (3./n1)**(2*(ilap2 -1))   !Dissipation operator 2, flow             

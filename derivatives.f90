@@ -806,6 +806,135 @@ MODULE derivatives
 
 
 
+    SUBROUTINE  convol_waves(nBRk,nBIk,nBRr,nBIr,uk,vk,BRk,BIk,ur,vr,BRr,BIr)
+      
+      !Stand-alone subroutine to compute the advection for waves only. Should be used with velocity fields computed from psi_bt.
+
+      ! this subroutine computes ((u.grad)LA) = d/dxj(uj LA) in the divergence form on the staggered grid.
+      ! Notice that this routine outputs the r-space velocity fields of the barotropized field
+                                                                    
+      double complex, dimension(iktx,ikty,n3h2) :: uk,vk   
+      double complex, dimension(iktx,ikty,n3h0) :: BRk, BIk
+      double complex, dimension(iktx,ikty,n3h0) :: nBRk, nBIk
+
+      double complex, dimension(iktx,ikty,n3h0) :: BRmem   
+      double complex, dimension(iktx,ikty,n3h0) :: BImem   
+
+      double precision, dimension(n1d,n2d,n3h2) :: ur,vr
+      double precision, dimension(n1d,n2d,n3h0) :: BRr, BIr
+      double precision, dimension(n1d,n2d,n3h0) :: nBRr, nBIr
+
+
+      !Terms to be differentiated
+      double complex,   dimension(iktx,ikty,n3h0) :: utermk,vtermk
+      double precision, dimension(n1d,n2d,n3h0)   :: utermr,vtermr
+
+      equivalence(utermr,utermk)
+      equivalence(vtermr,vtermk)
+
+      !I think we don't need to keep a copy of u in qg, right?
+      call fft_c2r(uk,ur,n3h2)
+      call fft_c2r(vk,vr,n3h2)
+     
+      BRmem = BRk
+      BImem = BIk
+
+      call fft_c2r(BRk,BRr,n3h0)
+      call fft_c2r(BIk,BIr,n3h0)
+      
+
+      ! ---- J(psi,BR) ---- !
+
+      utermr=0.
+      vtermr=0.
+
+      do izh0=1,n3h0
+         izh1=izh0+1
+         izh2=izh0+2
+         do ix=1,n1d
+             do iy=1,n2d
+                if(ix<=n1) then
+
+                   utermr(ix,iy,izh0) = ur(ix,iy,izh2)*BRr(ix,iy,izh0)
+                   vtermr(ix,iy,izh0) = vr(ix,iy,izh2)*BRr(ix,iy,izh0)
+
+                end if
+             end do
+          end do
+       end do
+
+      !Move to k-space
+
+      call fft_r2c(utermr,utermk,n3h0)
+      call fft_r2c(vtermr,vtermk,n3h0)
+
+      !nqk = ikx utermk + iky vtermk
+
+      do izh0=1,n3h0 
+         do iky=1,ikty
+            ky = kya(iky)
+            do ikx=1,iktx
+               kx = kxa(ikx)
+               if (L(ikx,iky).eq.1) then                                                               
+                  nBRk(ikx,iky,izh0) =  i*kx*utermk(ikx,iky,izh0)  +  i*ky*vtermk(ikx,iky,izh0)
+               else
+                  nBRk(ikx,iky,izh0) = (0.D0,0.D0)
+               endif
+            enddo
+         enddo
+      enddo
+
+      BRk = BRmem
+
+
+      ! ---- J(psi,BI) ---- !
+
+      utermr=0.
+      vtermr=0.
+
+      do izh0=1,n3h0
+         izh1=izh0+1
+         izh2=izh0+2
+         do ix=1,n1d
+             do iy=1,n2d
+                if(ix<=n1) then
+
+                   utermr(ix,iy,izh0) = ur(ix,iy,izh2)*BIr(ix,iy,izh0)
+                   vtermr(ix,iy,izh0) = vr(ix,iy,izh2)*BIr(ix,iy,izh0)
+
+                end if
+             end do
+          end do
+       end do
+
+      !Move to k-space
+
+      call fft_r2c(utermr,utermk,n3h0)
+      call fft_r2c(vtermr,vtermk,n3h0)
+
+      !nqk = ikx utermk + iky vtermk
+
+      do izh0=1,n3h0 
+         do iky=1,ikty
+            ky = kya(iky)
+            do ikx=1,iktx
+               kx = kxa(ikx)
+               if (L(ikx,iky).eq.1) then                                                               
+                  nBIk(ikx,iky,izh0) =  i*kx*utermk(ikx,iky,izh0)  +  i*ky*vtermk(ikx,iky,izh0)
+               else
+                  nBIk(ikx,iky,izh0) = (0.D0,0.D0)
+               endif
+            enddo
+         enddo
+      enddo
+
+      BIk = BImem
+
+    END SUBROUTINE convol_waves
+
+
+
+
 
 
     SUBROUTINE  refraction_waqg(rBRk,rBIk,rBRr,rBIr,BRk,BIk,psik,BRr,BIr,psir)
