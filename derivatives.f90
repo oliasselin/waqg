@@ -806,6 +806,135 @@ MODULE derivatives
 
 
 
+    SUBROUTINE  convol_waves(nBRk,nBIk,nBRr,nBIr,uk,vk,BRk,BIk,ur,vr,BRr,BIr)
+      
+      !Stand-alone subroutine to compute the advection for waves only. Should be used with velocity fields computed from psi_bt.
+
+      ! this subroutine computes ((u.grad)LA) = d/dxj(uj LA) in the divergence form on the staggered grid.
+      ! Notice that this routine outputs the r-space velocity fields of the barotropized field
+                                                                    
+      double complex, dimension(iktx,ikty,n3h2) :: uk,vk   
+      double complex, dimension(iktx,ikty,n3h0) :: BRk, BIk
+      double complex, dimension(iktx,ikty,n3h0) :: nBRk, nBIk
+
+      double complex, dimension(iktx,ikty,n3h0) :: BRmem   
+      double complex, dimension(iktx,ikty,n3h0) :: BImem   
+
+      double precision, dimension(n1d,n2d,n3h2) :: ur,vr
+      double precision, dimension(n1d,n2d,n3h0) :: BRr, BIr
+      double precision, dimension(n1d,n2d,n3h0) :: nBRr, nBIr
+
+
+      !Terms to be differentiated
+      double complex,   dimension(iktx,ikty,n3h0) :: utermk,vtermk
+      double precision, dimension(n1d,n2d,n3h0)   :: utermr,vtermr
+
+      equivalence(utermr,utermk)
+      equivalence(vtermr,vtermk)
+
+      !I think we don't need to keep a copy of u in qg, right?
+      call fft_c2r(uk,ur,n3h2)
+      call fft_c2r(vk,vr,n3h2)
+     
+      BRmem = BRk
+      BImem = BIk
+
+      call fft_c2r(BRk,BRr,n3h0)
+      call fft_c2r(BIk,BIr,n3h0)
+      
+
+      ! ---- J(psi,BR) ---- !
+
+      utermr=0.
+      vtermr=0.
+
+      do izh0=1,n3h0
+         izh1=izh0+1
+         izh2=izh0+2
+         do ix=1,n1d
+             do iy=1,n2d
+                if(ix<=n1) then
+
+                   utermr(ix,iy,izh0) = ur(ix,iy,izh2)*BRr(ix,iy,izh0)
+                   vtermr(ix,iy,izh0) = vr(ix,iy,izh2)*BRr(ix,iy,izh0)
+
+                end if
+             end do
+          end do
+       end do
+
+      !Move to k-space
+
+      call fft_r2c(utermr,utermk,n3h0)
+      call fft_r2c(vtermr,vtermk,n3h0)
+
+      !nqk = ikx utermk + iky vtermk
+
+      do izh0=1,n3h0 
+         do iky=1,ikty
+            ky = kya(iky)
+            do ikx=1,iktx
+               kx = kxa(ikx)
+               if (L(ikx,iky).eq.1) then                                                               
+                  nBRk(ikx,iky,izh0) =  i*kx*utermk(ikx,iky,izh0)  +  i*ky*vtermk(ikx,iky,izh0)
+               else
+                  nBRk(ikx,iky,izh0) = (0.D0,0.D0)
+               endif
+            enddo
+         enddo
+      enddo
+
+      BRk = BRmem
+
+
+      ! ---- J(psi,BI) ---- !
+
+      utermr=0.
+      vtermr=0.
+
+      do izh0=1,n3h0
+         izh1=izh0+1
+         izh2=izh0+2
+         do ix=1,n1d
+             do iy=1,n2d
+                if(ix<=n1) then
+
+                   utermr(ix,iy,izh0) = ur(ix,iy,izh2)*BIr(ix,iy,izh0)
+                   vtermr(ix,iy,izh0) = vr(ix,iy,izh2)*BIr(ix,iy,izh0)
+
+                end if
+             end do
+          end do
+       end do
+
+      !Move to k-space
+
+      call fft_r2c(utermr,utermk,n3h0)
+      call fft_r2c(vtermr,vtermk,n3h0)
+
+      !nqk = ikx utermk + iky vtermk
+
+      do izh0=1,n3h0 
+         do iky=1,ikty
+            ky = kya(iky)
+            do ikx=1,iktx
+               kx = kxa(ikx)
+               if (L(ikx,iky).eq.1) then                                                               
+                  nBIk(ikx,iky,izh0) =  i*kx*utermk(ikx,iky,izh0)  +  i*ky*vtermk(ikx,iky,izh0)
+               else
+                  nBIk(ikx,iky,izh0) = (0.D0,0.D0)
+               endif
+            enddo
+         enddo
+      enddo
+
+      BIk = BImem
+
+    END SUBROUTINE convol_waves
+
+
+
+
 
 
     SUBROUTINE  refraction_waqg(rBRk,rBIk,rBRr,rBIr,BRk,BIk,psik,BRr,BIr,psir)
@@ -2179,5 +2308,56 @@ subroutine spec_A(ARkt,AIkt)
 
   end subroutine spec_A
 
+
+
+
+
+
+
+
+    SUBROUTINE  barotropize_psi(psik,psik_bt)
+
+      !This subroutine takes psik at some level, then broadcasts it to all processes to create a fake barotropic psi -> psik_bt
+      double complex, dimension(iktx,ikty,n3h1) :: psik           !Original, baroclinic streamfunction
+      double complex, dimension(iktx,ikty,n3h1) :: psik_bt        !Resulting, barotropized, streamfunction
+      double complex, dimension(iktx,ikty)      :: psik_the_one   !psik at the selected level
+      
+      integer :: proc   !mype no that contains the streamfunction to barotropize
+      integer :: izh1s  !index to locate the selected level for the bt streamfunction
+
+      psik_the_one = (0.D0,0.D0) 
+      psik_bt = (0.D0,0.D0) 
+
+      !Find the processor containing the selected level
+      proc = (bt_level-1)/n3h0             !which processor                                                                                                                  
+      izh1s = bt_level - proc*n3h0 + 1     !position in the processor (valid for n3h1 fields only)  
+       
+
+      !Define the psik to broadcast to everybody
+      if(mype==proc) then   
+         do iky=1,ikty
+            do ikx=1,iktx
+               if (L(ikx,iky).eq.1) then
+                  psik_the_one(ikx,iky) = psik(ikx,iky,izh1s)
+               endif
+            enddo
+         enddo
+      end if
+
+      !Broadcast the streamfunction to everybody                                                        
+      call mpi_bcast(psik_the_one,iktx*ikty,MPI_DOUBLE_COMPLEX,proc,MPI_COMM_WORLD,ierror)
+
+      !Define the barotropic streamfunction by using the newly available psik_the_one
+      do izh1=1,n3h1
+         do iky=1,ikty
+            do ikx=1,iktx
+               if (L(ikx,iky).eq.1) then
+                  psik_bt(ikx,iky,izh1) = psik_the_one(ikx,iky)
+               end if
+            end do
+         end do
+      end do
+
+    END SUBROUTINE barotropize_psi
 
     END MODULE derivatives
