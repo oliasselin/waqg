@@ -208,7 +208,7 @@ MODULE parameters
     double precision, parameter :: coeff1  = 1.
     double precision, parameter :: coeff2  = 10.
     double precision, parameter :: coeff1w = 0.
-    double precision, parameter :: coeff2w = 10.
+    double precision, parameter :: coeff2w = 0.!10.
 
     integer, parameter :: ilap1  = 2
     integer, parameter :: ilap2  = 6
