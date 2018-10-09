@@ -3934,14 +3934,18 @@ SUBROUTINE cond_wz(wak)
   subroutine read_restart(field)
 
     double complex, dimension(iktx,ikty,n3h1) :: field
+    double complex, dimension(iktx_read,ikty_read) :: field_to_read
     
+    integer :: iky_read
     integer :: unit
     integer :: level
     character(len = 64) :: fname                !future file name                                                                                                   
     character(len = 64) :: fname1                !future file name                                                                                                   
     character(len = 64) :: fname2                !future file name                                                                                                   
 
-    
+    !Initialize the field to zero
+    field = (0.D0,0.D0)
+
     if(restart_no<10) then
        write (fname1, "(A9,I1)") "restart_0",restart_no
     elseif(restart_no>=10 .and. restart<100) then
@@ -3980,14 +3984,31 @@ SUBROUTINE cond_wz(wak)
 
        open (unit=unit_dump,file=fname,action="read",status="old")
 
-       do iky=1,ikty
-          do ikx=1,iktx
-             read(unit=unit_dump,fmt=335) field(ikx,iky,izh1)
+       do iky=1,ikty_read
+          do ikx=1,iktx_read
+             read(unit=unit_dump,fmt=335) field_to_read(ikx,iky)
           end do
        end do
 335    format(1x,E24.17,1x,E24.17)
        close (unit=unit_dump)      
     
+       !Project onto the actual field: only works if increasing resotion from restart to the future simulation
+       do ikx=1,iktx_read
+          do iky=1,ikty_read/2
+             if (L(ikx,iky).eq.1) then
+                field(ikx,iky,izh1) = field_to_read(ikx,iky)
+             end if
+          end do
+
+          do iky_read=ikty_read/2+1,ikty_read
+             iky=n2+(iky_read-ikty_read)
+             if (L(ikx,iky).eq.1) then
+                field(ikx,iky,izh1) = field_to_read(ikx,iky_read)
+             end if
+          end do
+       end do
+
+
     end do
 
 

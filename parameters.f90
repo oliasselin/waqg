@@ -2,8 +2,8 @@ MODULE parameters
 
    IMPLICIT NONE
 
-    integer, parameter :: n1=256, n2=256, n3=128
-    integer, parameter :: npe=8
+    integer, parameter :: n1=512, n2=512, n3=128
+    integer, parameter :: npe=32
 
     integer, parameter :: n1d=n1+2, n2d=n2, n3d=n3
     integer, parameter :: n3h0=n3/npe, n3h1=n3/npe+2, n3h2=n3/npe+4
@@ -36,13 +36,13 @@ MODULE parameters
     double precision, parameter :: c_one = 1./( n_one*n_one - n_one*n_two*tanh(twopi*n_one)/tanh(twopi*n_two) )
     double precision, parameter :: c_two = 1./( n_two*n_two - n_one*n_two*tanh(twopi*n_two)/tanh(twopi*n_one) )
 
-    integer, parameter :: barotropize = 1       !1: Waves only feel the effects of a barotropized flow;  0: waves and flow feel the same streamfunction (regular setup)
+    integer, parameter :: barotropize = 0       !1: Waves only feel the effects of a barotropized flow;  0: waves and flow feel the same streamfunction (regular setup)
     integer, parameter :: bt_level = n3         !Level at which the barotropic streamfunction is defined (n3: top, 1: bottom, etc.)
 
     integer, parameter :: fixed_flow = 0        !1: Skip the psi-inversion steps
     integer, parameter :: passive_scalar = 0    !1: Set A and refraction to 0 and skip the LA -> A inversion. BR and BI become two (independent) passive scalars.
     
-    integer, parameter :: no_waves = 0                  !1: Wave part ignored.
+    integer, parameter :: no_waves = 1                  !1: Wave part ignored.
     integer, parameter :: no_feedback = 1               !1: Wave do not feedback on the flow; ): they do
     integer, parameter :: eady = 1                      !1: Eady version: add a bunch of terms
     integer, parameter :: eady_bnd = 1                  !1: Eady version: include the boundary terms (set NOT to zero only for testing purposes)
@@ -224,10 +224,10 @@ MODULE parameters
     !------!
 
     integer, parameter :: out_etot   = 1, freq_etot   = INT(0.001/delt)!50!346!n3/64!n3!64!n3!50*n3/64      !Total energy                                                    
-    integer, parameter :: out_we     = 1, freq_we     = INT(0.001/delt)!50!346!n3/64!n3!64!n3!50*n3/64      !Total energy                                                    
-    integer, parameter :: out_conv   = 1, freq_conv   = freq_we      !Conversion terms in the potential energy equation.
+    integer, parameter :: out_we     = 0, freq_we     = INT(0.001/delt)!50!346!n3/64!n3!64!n3!50*n3/64      !Total energy                                                    
+    integer, parameter :: out_conv   = 0, freq_conv   = freq_we      !Conversion terms in the potential energy equation.
     integer, parameter :: out_hspec  = 1, freq_hspec  = 1*freq_etot!n3/64!n3!freq_etot*10     !Horizontal energy spectrum at various heights 
-    integer, parameter :: out_hspecw = 1, freq_hspecw = 1*freq_etot!n3/64!n3!freq_etot*10     !Horizontal energy spectrum at various heights 
+    integer, parameter :: out_hspecw = 0, freq_hspecw = 1*freq_etot!n3/64!n3!freq_etot*10     !Horizontal energy spectrum at various heights 
     integer, parameter :: out_hg     = 0                 !Output geostrophic horizontal spectrum as well?
     integer, parameter :: out_vspec  = 0, freq_vspec =  freq_hspec
     integer, parameter :: out_vbuoy  = 0, freq_vbuoy =  freq_hspec
@@ -293,16 +293,19 @@ MODULE parameters
     integer :: id_field                       !dummy index to differenciate fields plotted  
 
     integer, parameter :: out_slice   = 1, freq_slice =  1*freq_etot
-    integer, parameter :: out_slicew  = 1, freq_slicew=  1*freq_etot
+    integer, parameter :: out_slicew  = 0, freq_slicew=  1*freq_etot
     integer, parameter :: out_eta     = 0, freq_eta   =  freq_hspec
     integer, parameter :: out_tspec   = 0
 
-    !Restart
+    !Restart --- restart file can have a different horizontal resolution, but it must have the same vertical resolution
     integer :: count_restart = 0                                 !when dumping: restart file number 
-    integer, parameter :: dump = 0, freq_dump = freq_slice*10    !dump = 1 means you dump, every "freq_dump" timestep
+    integer, parameter :: dump = 1, freq_dump = freq_slice*1    !dump = 1 means you dump, every "freq_dump" timestep
     integer, parameter :: restart = 1                            !restart = 1 start from file
     integer, parameter :: restart_no = 65                         !Restart file number (from 0 to 99)
     character(len = 64), parameter :: floc='../../../eady/256x128_dE40/output/'   !Location of the restart file (when restarting only: dumping in local output/ folder)
+
+    integer, parameter :: n1_read = 256, n2_read = 256                 !Resolution of the file to read
+    integer, parameter :: iktx_read= n1_read/2+1, ikty_read=n2_read    !Corresponding truncation wavenumbers
 
 
     !Filtering of A modes
