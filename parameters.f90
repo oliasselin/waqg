@@ -2,8 +2,8 @@ MODULE parameters
 
    IMPLICIT NONE
 
-    integer, parameter :: n1=256, n2=256, n3=128
-    integer, parameter :: npe=8
+    integer, parameter :: n1=512, n2=512, n3=128
+    integer, parameter :: npe=64
 
     integer, parameter :: n1d=n1+2, n2d=n2, n3d=n3
     integer, parameter :: n3h0=n3/npe, n3h1=n3/npe+2, n3h2=n3/npe+4
@@ -36,7 +36,7 @@ MODULE parameters
     double precision, parameter :: c_one = 1./( n_one*n_one - n_one*n_two*tanh(twopi*n_one)/tanh(twopi*n_two) )
     double precision, parameter :: c_two = 1./( n_two*n_two - n_one*n_two*tanh(twopi*n_two)/tanh(twopi*n_one) )
 
-    integer, parameter :: barotropize = 1       !1: Waves only feel the effects of a barotropized flow;  0: waves and flow feel the same streamfunction (regular setup)
+    integer, parameter :: barotropize = 0       !1: Waves only feel the effects of a barotropized flow;  0: waves and flow feel the same streamfunction (regular setup)
     integer, parameter :: bt_level = n3         !Level at which the barotropic streamfunction is defined (n3: top, 1: bottom, etc.)
 
     integer, parameter :: fixed_flow = 0        !1: Skip the psi-inversion steps
@@ -208,7 +208,7 @@ MODULE parameters
     double precision, parameter :: coeff1  = 1.
     double precision, parameter :: coeff2  = 10.
     double precision, parameter :: coeff1w = 0.
-    double precision, parameter :: coeff2w = 0.!10.
+    double precision, parameter :: coeff2w = 10.
 
     integer, parameter :: ilap1  = 2
     integer, parameter :: ilap2  = 6
@@ -301,8 +301,8 @@ MODULE parameters
     integer :: count_restart = 0                                 !when dumping: restart file number 
     integer, parameter :: dump = 0, freq_dump = freq_slice*10    !dump = 1 means you dump, every "freq_dump" timestep
     integer, parameter :: restart = 1                            !restart = 1 start from file
-    integer, parameter :: restart_no = 65                         !Restart file number (from 0 to 99)
-    character(len = 64), parameter :: floc='../../../eady/256x128_dE40/output/'   !Location of the restart file (when restarting only: dumping in local output/ folder)
+    integer, parameter :: restart_no = 15                         !Restart file number (from 0 to 99)
+    character(len = 64), parameter :: floc='../../../restart/512/'   !Location of the restart file (when restarting only: dumping in local output/ folder)
 
 
     !Filtering of A modes
