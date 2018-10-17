@@ -1,11 +1,11 @@
 #!/bin/bash
 
-number_of_nodes=4
-number_of_tasks=64
-ntasks_per_node=16
+number_of_nodes=1
+number_of_tasks=8
+ntasks_per_node=8
 
-sourdir=/oasis/scratch/comet/oasselin/temp_project/eady/256x128_fn21h610_dE80_from_restart90/source/
-datadir=/oasis/scratch/comet/oasselin/temp_project/eady/256x128_fn21h610_dE80_from_restart90/output/
+sourdir=/oasis/scratch/comet/oasselin/temp_project/expeady/test/source/
+datadir=/oasis/scratch/comet/oasselin/temp_project/expeady/test/output/
 
 mkdir -p $sourdir
 mkdir -p $datadir
@@ -16,14 +16,14 @@ cd $sourdir
 cat > EXEC_STEP << EXEC
 #!/bin/sh 
 
-#SBATCH --job-name="eady_256x128"
-#SBATCH --output="/home/oasselin/monitor/eady_256x128.o"
-#SBATCH --error="/home/oasselin/monitor/eady_256x128.e"
+#SBATCH --job-name="expeady"
+#SBATCH --output="/home/oasselin/monitor/expeady.o"
+#SBATCH --error="/home/oasselin/monitor/expeady.e"
 #SBATCH --partition=compute ##debug
 #SBATCH --nodes=$number_of_nodes
 #SBATCH --ntasks-per-node=$ntasks_per_node
 #SBATCH --export=ALL
-#SBATCH -t 36:00:00
+#SBATCH -t 01:00:00
 
 #This job runs with 2 nodes, 24 cores per node for a total of 48 cores.
 #ibrun in verbose mode will give binding detail
@@ -44,7 +44,7 @@ cat > COMPILE_STEP << COMPILE
                                                                                                                                                        
 
 cd $sourdir
-cp $HOME/eady/*.f90 .
+cp $HOME/expeady/*.f90 .
 
 PARA=parameters.f90
 MAIN=main_waqg.f90
@@ -67,5 +67,5 @@ COMPILE
 chmod 755 COMPILE_STEP
 ./COMPILE_STEP
 ##chmod 755 EXEC_STEP                                                                                                                                       
-sbatch EXEC_STEP
+#sbatch EXEC_STEP
 ##./EXEC_STEP                                                                                                                                               
