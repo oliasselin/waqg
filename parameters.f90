@@ -47,6 +47,8 @@ MODULE parameters
     integer, parameter :: eady = 1                      !1: Eady version: add a bunch of terms
     integer, parameter :: eady_bnd = 1                  !1: Eady version: include the boundary terms (set NOT to zero only for testing purposes)
 
+
+
     integer, parameter :: no_dispersion=0
     integer, parameter :: no_refraction=0
     integer, parameter :: linear=0                      !1: set the nonlinear terms (advection) to 0. 
@@ -77,7 +79,7 @@ MODULE parameters
     integer, parameter :: enveloppe = 0                    !1: Enveloppe allowing b=0 at the boundaries
     double precision, parameter :: z_env   = twopi/8!twopi/3.!twopi/8         !Center of the tanh enveloppe
     double precision, parameter :: sig_env = twopi/24!twopi/6.!twopi/24      !Width  of the tanh enveloppe
-    double precision, parameter :: z0  = L3/2                   !Middle of the domain / Position of the tropopause (between 0 and L3)
+    double precision, parameter :: z0  = L3!L3/2           !Exponential N: ~exp[(z-z0)*N2_scale]        !Middle of the domain / Position of the tropopause (between 0 and L3)
 
     
     !Normalization at the tropopause!
@@ -102,6 +104,8 @@ MODULE parameters
 
     integer, parameter :: tropopause=1, exponential=2, constant_N=3
     integer, parameter :: stratification = constant_N
+!    integer, parameter :: stratification = exponential
+    integer, parameter :: expeady = 0!1                   !1: Eady with an exponential N and U profile (requires eady=eady_bnd=1 too)
 
     !Stratification = tropopause!
     integer, parameter :: fraction=128                   !If h#=150m, then fraction=133.333333~128
@@ -111,10 +115,9 @@ MODULE parameters
     double precision, parameter :: gamma_N1=(sqrt(N_2_stra)-sqrt(N_2_trop))/(sqrt(N_2_stra)+sqrt(N_2_trop))       !This is alpha for N~1+alpha tanh(z/h)
 
     !Stratification = exponential!
-    double precision, parameter :: N2_scale = 0.75D0   !N^2 ~ exp(N2_scale*(z-z0) 
-
-    !Stratification = constant_N!
-    double precision, parameter :: N0  =  0.002          !Actual N is s^-1, not squared.    
+    double precision, parameter :: N2_scale = 5.D0   !N^2 ~ exp(N2_scale*(z-z0)), thus H/h = 4000/800 = 5 
+!    double precision, parameter :: N0  =  0.005   !0.002      !Actual N is s^-1, not squared.  If ExpEady==1 ==> N0 = Nmax. We want Nmax/f = 50.  
+    double precision, parameter :: N0  =  0.002!0.005   !0.002      !Actual N is s^-1, not squared.  If ExpEady==1 ==> N0 = Nmax. We want Nmax/f = 50.  
 
    ! USEFUL INDEX !                                                                                                                          
    ! ------------ !                                                                                                                         
@@ -299,11 +302,11 @@ MODULE parameters
 
     !Restart
     integer :: count_restart = 0                                 !when dumping: restart file number 
-    integer, parameter :: dump = 1, freq_dump = freq_slice*10    !dump = 1 means you dump, every "freq_dump" timestep
+    integer, parameter :: dump = 0, freq_dump = freq_slice*10    !dump = 1 means you dump, every "freq_dump" timestep
     integer, parameter :: restart = 1                            !restart = 1 start from file
     integer, parameter :: restart_no = 90                         !Restart file number (from 0 to 99)
 !    character(len = 64), parameter :: floc='../../../restart/512/'   !Location of the restart file (when restarting only: dumping in local output/ folder)
-    character(len = 64), parameter :: floc='../../256x128_fn21h610_dE80/output/'   !Location of the restart file (when restarting only: dumping in local output/ folder)
+    character(len = 64), parameter :: floc='../../../eady/256x128_fn21h610_dE80/output/'   !Location of the restart file (when restarting only: dumping in local output/ folder)
 
 
     !Filtering of A modes
