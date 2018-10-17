@@ -47,8 +47,6 @@ MODULE parameters
     integer, parameter :: eady = 1                      !1: Eady version: add a bunch of terms
     integer, parameter :: eady_bnd = 1                  !1: Eady version: include the boundary terms (set NOT to zero only for testing purposes)
 
-
-
     integer, parameter :: no_dispersion=0
     integer, parameter :: no_refraction=0
     integer, parameter :: linear=0                      !1: set the nonlinear terms (advection) to 0. 
@@ -68,7 +66,7 @@ MODULE parameters
     !Eady only
     integer, parameter :: ave_k=10              !Average wavenumber                                                                                          
     real, parameter ::    var_k=10.              !Variance of of the gaussian in wavenumbers                                                                                          
-    double precision, parameter :: psi_0=1.     
+    double precision, parameter :: psi_0=0.05!1.     
 
 
     integer, parameter :: generic=1 
@@ -103,9 +101,9 @@ MODULE parameters
     !----------!
 
     integer, parameter :: tropopause=1, exponential=2, constant_N=3
-    integer, parameter :: stratification = constant_N
-!    integer, parameter :: stratification = exponential
-    integer, parameter :: expeady = 0!1                   !1: Eady with an exponential N and U profile (requires eady=eady_bnd=1 too)
+!    integer, parameter :: stratification = constant_N
+    integer, parameter :: stratification = exponential
+    integer, parameter :: expeady = 1                   !1: Eady with an exponential N and U profile (requires eady=eady_bnd=1 too)
 
     !Stratification = tropopause!
     integer, parameter :: fraction=128                   !If h#=150m, then fraction=133.333333~128
@@ -116,8 +114,8 @@ MODULE parameters
 
     !Stratification = exponential!
     double precision, parameter :: N2_scale = 5.D0   !N^2 ~ exp(N2_scale*(z-z0)), thus H/h = 4000/800 = 5 
-!    double precision, parameter :: N0  =  0.005   !0.002      !Actual N is s^-1, not squared.  If ExpEady==1 ==> N0 = Nmax. We want Nmax/f = 50.  
-    double precision, parameter :: N0  =  0.002!0.005   !0.002      !Actual N is s^-1, not squared.  If ExpEady==1 ==> N0 = Nmax. We want Nmax/f = 50.  
+    double precision, parameter :: N0  =  0.005   !0.002      !Actual N is s^-1, not squared.  If ExpEady==1 ==> N0 = Nmax. We want Nmax/f = 50.  
+!    double precision, parameter :: N0  =  0.002!0.005   !0.002      !Actual N is s^-1, not squared.  If ExpEady==1 ==> N0 = Nmax. We want Nmax/f = 50.  
 
    ! USEFUL INDEX !                                                                                                                          
    ! ------------ !                                                                                                                         
@@ -178,7 +176,7 @@ MODULE parameters
     double precision, parameter :: H_scale=dom_z/L3          !Actual H in m ( z_real = H z' where z' in [0:L3]  is the nondim z.)
     double precision, parameter :: L_scale=dom_x/L1          !Actual L in m ( x_real = L x' where x' in [0:2pi] is the nondim x.)
     double precision, parameter :: cor=0.0001!0.00000000001!0.0005 !0.0001                           !Actual f = 0.0001 s^-1 (real value of planet Earth)
-    double precision, parameter :: U_scale=0.1/(twopi)                        !Actual U in m/s (u_real = U u' where u' is the nondim velocity ur implemented in the code)
+    double precision, parameter :: U_scale=0.1                        !Actual U in m/s (u_real = U u' where u' is the nondim velocity ur implemented in the code)
     double precision, parameter :: Uw_scale=1.                       !Characteristic magnitude of wave velocity (wave counterpart to U_scale for flow)
     double precision, parameter :: Ar2 = (H_scale/L_scale)**2                                   !(1./64.)**2!(1./10.)**2 !0.01     !Aspect ratio squared = (H/L)^2     
     double precision, parameter :: Ro  = U_scale/(cor*L_scale)                                  !Rossby number  U/fL
@@ -186,7 +184,7 @@ MODULE parameters
     double precision, parameter :: W2F = (Uw_scale/U_scale)**2                                  ! wave to flow velocity magnitude squared
     double precision, parameter :: Bu  = Fr*Fr/(Ro*Ro)                                          ! (Fr/Ro)^2 = Burger number 
 
-    double precision, parameter :: delta_E = 80                                                 !Depth of the Ekman layer: 63 m
+    double precision, parameter :: delta_E = 40                                                 !Depth of the Ekman layer: 63 m
     double precision, parameter :: Ek  = delta_E/(Ro*H_scale)                                   !Ekman term = delta_E/(Ro H)
 
 
@@ -198,7 +196,7 @@ MODULE parameters
     integer :: iter=0
     integer :: itermax=1000000000
     real :: maxtime=100                      
-    double precision, parameter :: delt=0.002*dx !0.5*Bu*Ro/(2.*ktrunc_x*ktrunc_x) !0.25/ktrunc_x !0.5*Bu*Ro/(2.*ktrunc_x*ktrunc_x) 
+    double precision, parameter :: delt=0.1*dx !0.5*Bu*Ro/(2.*ktrunc_x*ktrunc_x) !0.25/ktrunc_x !0.5*Bu*Ro/(2.*ktrunc_x*ktrunc_x) 
     double precision, parameter :: gamma=1e-3                                  !Robert filter parameter
 
 
@@ -302,8 +300,8 @@ MODULE parameters
 
     !Restart
     integer :: count_restart = 0                                 !when dumping: restart file number 
-    integer, parameter :: dump = 0, freq_dump = freq_slice*10    !dump = 1 means you dump, every "freq_dump" timestep
-    integer, parameter :: restart = 1                            !restart = 1 start from file
+    integer, parameter :: dump = 1, freq_dump = freq_slice*10    !dump = 1 means you dump, every "freq_dump" timestep
+    integer, parameter :: restart = 0                            !restart = 1 start from file
     integer, parameter :: restart_no = 90                         !Restart file number (from 0 to 99)
 !    character(len = 64), parameter :: floc='../../../restart/512/'   !Location of the restart file (when restarting only: dumping in local output/ folder)
     character(len = 64), parameter :: floc='../../../eady/256x128_fn21h610_dE80/output/'   !Location of the restart file (when restarting only: dumping in local output/ folder)
