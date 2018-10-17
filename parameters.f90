@@ -2,7 +2,7 @@ MODULE parameters
 
    IMPLICIT NONE
 
-    integer, parameter :: n1=512, n2=512, n3=128
+    integer, parameter :: n1=256, n2=256, n3=128
     integer, parameter :: npe=64
 
     integer, parameter :: n1d=n1+2, n2d=n2, n3d=n3
@@ -42,7 +42,7 @@ MODULE parameters
     integer, parameter :: fixed_flow = 0        !1: Skip the psi-inversion steps
     integer, parameter :: passive_scalar = 0    !1: Set A and refraction to 0 and skip the LA -> A inversion. BR and BI become two (independent) passive scalars.
     
-    integer, parameter :: no_waves = 0                  !1: Wave part ignored.
+    integer, parameter :: no_waves = 1                  !1: Wave part ignored.
     integer, parameter :: no_feedback = 1               !1: Wave do not feedback on the flow; ): they do
     integer, parameter :: eady = 1                      !1: Eady version: add a bunch of terms
     integer, parameter :: eady_bnd = 1                  !1: Eady version: include the boundary terms (set NOT to zero only for testing purposes)
@@ -183,7 +183,7 @@ MODULE parameters
     double precision, parameter :: W2F = (Uw_scale/U_scale)**2                                  ! wave to flow velocity magnitude squared
     double precision, parameter :: Bu  = Fr*Fr/(Ro*Ro)                                          ! (Fr/Ro)^2 = Burger number 
 
-    double precision, parameter :: delta_E = 40                                                 !Depth of the Ekman layer: 63 m
+    double precision, parameter :: delta_E = 80                                                 !Depth of the Ekman layer: 63 m
     double precision, parameter :: Ek  = delta_E/(Ro*H_scale)                                   !Ekman term = delta_E/(Ro H)
 
 
@@ -193,8 +193,8 @@ MODULE parameters
 
     real :: time=0.
     integer :: iter=0
-    integer :: itermax=100000000
-    real :: maxtime=40                      
+    integer :: itermax=1000000000
+    real :: maxtime=100                      
     double precision, parameter :: delt=0.002*dx !0.5*Bu*Ro/(2.*ktrunc_x*ktrunc_x) !0.25/ktrunc_x !0.5*Bu*Ro/(2.*ktrunc_x*ktrunc_x) 
     double precision, parameter :: gamma=1e-3                                  !Robert filter parameter
 
@@ -223,11 +223,11 @@ MODULE parameters
     !Output!
     !------!
 
-    integer, parameter :: out_etot   = 1, freq_etot   = INT(0.001/delt)!50!346!n3/64!n3!64!n3!50*n3/64      !Total energy                                                    
-    integer, parameter :: out_we     = 1, freq_we     = INT(0.001/delt)!50!346!n3/64!n3!64!n3!50*n3/64      !Total energy                                                    
-    integer, parameter :: out_conv   = 1, freq_conv   = freq_we      !Conversion terms in the potential energy equation.
+    integer, parameter :: out_etot   = 1, freq_etot   = INT(0.01/delt)!50!346!n3/64!n3!64!n3!50*n3/64      !Total energy                                                    
+    integer, parameter :: out_we     = 0, freq_we     = INT(0.001/delt)!50!346!n3/64!n3!64!n3!50*n3/64      !Total energy                                                    
+    integer, parameter :: out_conv   = 0, freq_conv   = freq_we      !Conversion terms in the potential energy equation.
     integer, parameter :: out_hspec  = 1, freq_hspec  = 1*freq_etot!n3/64!n3!freq_etot*10     !Horizontal energy spectrum at various heights 
-    integer, parameter :: out_hspecw = 1, freq_hspecw = 1*freq_etot!n3/64!n3!freq_etot*10     !Horizontal energy spectrum at various heights 
+    integer, parameter :: out_hspecw = 0, freq_hspecw = 1*freq_etot!n3/64!n3!freq_etot*10     !Horizontal energy spectrum at various heights 
     integer, parameter :: out_hg     = 0                 !Output geostrophic horizontal spectrum as well?
     integer, parameter :: out_vspec  = 0, freq_vspec =  freq_hspec
     integer, parameter :: out_vbuoy  = 0, freq_vbuoy =  freq_hspec
@@ -299,15 +299,16 @@ MODULE parameters
 
     !Restart
     integer :: count_restart = 0                                 !when dumping: restart file number 
-    integer, parameter :: dump = 0, freq_dump = freq_slice*10    !dump = 1 means you dump, every "freq_dump" timestep
+    integer, parameter :: dump = 1, freq_dump = freq_slice*10    !dump = 1 means you dump, every "freq_dump" timestep
     integer, parameter :: restart = 1                            !restart = 1 start from file
-    integer, parameter :: restart_no = 15                         !Restart file number (from 0 to 99)
-    character(len = 64), parameter :: floc='../../../restart/512/'   !Location of the restart file (when restarting only: dumping in local output/ folder)
+    integer, parameter :: restart_no = 90                         !Restart file number (from 0 to 99)
+!    character(len = 64), parameter :: floc='../../../restart/512/'   !Location of the restart file (when restarting only: dumping in local output/ folder)
+    character(len = 64), parameter :: floc='../../256x128_fn21h610_dE80/output/'   !Location of the restart file (when restarting only: dumping in local output/ folder)
 
 
     !Filtering of A modes
-    integer, parameter :: filter_A=1, freq_filter_A=1!*freq_etot
-    integer, parameter :: print_A=1, freq_print_A=1*freq_etot
+    integer, parameter :: filter_A=0, freq_filter_A=1!*freq_etot
+    integer, parameter :: print_A=0, freq_print_A=1*freq_etot
     integer :: count_A=0
     double precision, parameter :: YBJ_criterion = 1!100000.           !Tolerate modes with Nkh/fkz < YBJ_criterion.
 
