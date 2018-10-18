@@ -66,7 +66,7 @@ MODULE parameters
     !Eady only
     integer, parameter :: ave_k=10              !Average wavenumber                                                                                          
     real, parameter ::    var_k=10.              !Variance of of the gaussian in wavenumbers                                                                                          
-    double precision, parameter :: psi_0=0.05!1.     
+    double precision, parameter :: psi_0=0.1!1.     
 
 
     integer, parameter :: generic=1 
@@ -113,9 +113,8 @@ MODULE parameters
     double precision, parameter :: gamma_N1=(sqrt(N_2_stra)-sqrt(N_2_trop))/(sqrt(N_2_stra)+sqrt(N_2_trop))       !This is alpha for N~1+alpha tanh(z/h)
 
     !Stratification = exponential!
-    double precision, parameter :: N2_scale = 5.D0   !N^2 ~ exp(N2_scale*(z-z0)), thus H/h = 4000/800 = 5 
-    double precision, parameter :: N0  =  0.005   !0.002      !Actual N is s^-1, not squared.  If ExpEady==1 ==> N0 = Nmax. We want Nmax/f = 50.  
-!    double precision, parameter :: N0  =  0.002!0.005   !0.002      !Actual N is s^-1, not squared.  If ExpEady==1 ==> N0 = Nmax. We want Nmax/f = 50.  
+    double precision, parameter :: N2_scale = 5/twopi   !N^2 ~ exp(N2_scale*(z-z0)), thus xi=H/h = 4000/(2pi*800) = 5/2pi 
+    double precision, parameter :: N0  =  0.006   !0.002      !Actual N is s^-1, not squared.  If ExpEady==1 ==> N0 = Nmax. We want Nmax/f = 60.  
 
    ! USEFUL INDEX !                                                                                                                          
    ! ------------ !                                                                                                                         
@@ -196,7 +195,7 @@ MODULE parameters
     integer :: iter=0
     integer :: itermax=1000000000
     real :: maxtime=100                      
-    double precision, parameter :: delt=0.1*dx !0.5*Bu*Ro/(2.*ktrunc_x*ktrunc_x) !0.25/ktrunc_x !0.5*Bu*Ro/(2.*ktrunc_x*ktrunc_x) 
+    double precision, parameter :: delt=0.01*dx !0.5*Bu*Ro/(2.*ktrunc_x*ktrunc_x) !0.25/ktrunc_x !0.5*Bu*Ro/(2.*ktrunc_x*ktrunc_x) 
     double precision, parameter :: gamma=1e-3                                  !Robert filter parameter
 
 
@@ -224,7 +223,7 @@ MODULE parameters
     !Output!
     !------!
 
-    integer, parameter :: out_etot   = 1, freq_etot   = INT(0.01/delt)!50!346!n3/64!n3!64!n3!50*n3/64      !Total energy                                                    
+    integer, parameter :: out_etot   = 1, freq_etot   = INT(0.1/delt)!50!346!n3/64!n3!64!n3!50*n3/64      !Total energy                                                    
     integer, parameter :: out_we     = 0, freq_we     = INT(0.001/delt)!50!346!n3/64!n3!64!n3!50*n3/64      !Total energy                                                    
     integer, parameter :: out_conv   = 0, freq_conv   = freq_we      !Conversion terms in the potential energy equation.
     integer, parameter :: out_hspec  = 1, freq_hspec  = 1*freq_etot!n3/64!n3!freq_etot*10     !Horizontal energy spectrum at various heights 
@@ -294,7 +293,7 @@ MODULE parameters
     integer :: id_field                       !dummy index to differenciate fields plotted  
 
     integer, parameter :: out_slice   = 1, freq_slice =  1*freq_etot
-    integer, parameter :: out_slicew  = 1, freq_slicew=  1*freq_etot
+    integer, parameter :: out_slicew  = 0, freq_slicew=  1*freq_etot
     integer, parameter :: out_eta     = 0, freq_eta   =  freq_hspec
     integer, parameter :: out_tspec   = 0
 
@@ -304,7 +303,7 @@ MODULE parameters
     integer, parameter :: restart = 0                            !restart = 1 start from file
     integer, parameter :: restart_no = 90                         !Restart file number (from 0 to 99)
 !    character(len = 64), parameter :: floc='../../../restart/512/'   !Location of the restart file (when restarting only: dumping in local output/ folder)
-    character(len = 64), parameter :: floc='../../../eady/256x128_fn21h610_dE80/output/'   !Location of the restart file (when restarting only: dumping in local output/ folder)
+    character(len = 64), parameter :: floc='../../dE40_psi0.05_dt0.1/output/'   !Location of the restart file (when restarting only: dumping in local output/ folder)
 
 
     !Filtering of A modes
