@@ -183,7 +183,7 @@ MODULE parameters
     double precision, parameter :: W2F = (Uw_scale/U_scale)**2                                  ! wave to flow velocity magnitude squared
     double precision, parameter :: Bu  = Fr*Fr/(Ro*Ro)                                          ! (Fr/Ro)^2 = Burger number 
 
-    double precision, parameter :: delta_E = 40                                                 !Depth of the Ekman layer: 63 m
+    double precision, parameter :: delta_E = 60                                                 !Depth of the Ekman layer: 63 m
     double precision, parameter :: Ek  = delta_E/(Ro*H_scale)                                   !Ekman term = delta_E/(Ro H)
 
 
@@ -205,7 +205,7 @@ MODULE parameters
 
     !Assumes dissipation operator takes the form [ nuh1X*nabla^(2*ilap1X) + nuh2X*nabla^(2*ilap2X) ]. Suffix w is acting on waves.
 
-    double precision, parameter :: coeff1  = 1.
+    double precision, parameter :: coeff1  = 0.01
     double precision, parameter :: coeff2  = 10.
     double precision, parameter :: coeff1w = 0.
     double precision, parameter :: coeff2w = 10.
@@ -223,7 +223,7 @@ MODULE parameters
     !Output!
     !------!
 
-    integer, parameter :: out_etot   = 1, freq_etot   = INT(0.1/delt)!50!346!n3/64!n3!64!n3!50*n3/64      !Total energy                                                    
+    integer, parameter :: out_etot   = 1, freq_etot   = INT(1./delt)!50!346!n3/64!n3!64!n3!50*n3/64      !Total energy                                                    
     integer, parameter :: out_we     = 0, freq_we     = INT(0.001/delt)!50!346!n3/64!n3!64!n3!50*n3/64      !Total energy                                                    
     integer, parameter :: out_conv   = 0, freq_conv   = freq_we      !Conversion terms in the potential energy equation.
     integer, parameter :: out_hspec  = 1, freq_hspec  = 1*freq_etot!n3/64!n3!freq_etot*10     !Horizontal energy spectrum at various heights 
@@ -300,10 +300,10 @@ MODULE parameters
     !Restart
     integer :: count_restart = 0                                 !when dumping: restart file number 
     integer, parameter :: dump = 1, freq_dump = freq_slice*10    !dump = 1 means you dump, every "freq_dump" timestep
-    integer, parameter :: restart = 0                            !restart = 1 start from file
-    integer, parameter :: restart_no = 90                         !Restart file number (from 0 to 99)
+    integer, parameter :: restart = 1                            !restart = 1 start from file
+    integer, parameter :: restart_no = 10                         !Restart file number (from 0 to 99)
 !    character(len = 64), parameter :: floc='../../../restart/512/'   !Location of the restart file (when restarting only: dumping in local output/ folder)
-    character(len = 64), parameter :: floc='../../dE40_psi0.05_dt0.1/output/'   !Location of the restart file (when restarting only: dumping in local output/ folder)
+    character(len = 64), parameter :: floc='../../dE60_c0.01_dt0.01/output/'   !Location of the restart file (when restarting only: dumping in local output/ folder)
 
 
     !Filtering of A modes
