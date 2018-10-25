@@ -36,7 +36,7 @@ MODULE parameters
     double precision, parameter :: c_one = 1./( n_one*n_one - n_one*n_two*tanh(twopi*n_one)/tanh(twopi*n_two) )
     double precision, parameter :: c_two = 1./( n_two*n_two - n_one*n_two*tanh(twopi*n_two)/tanh(twopi*n_one) )
 
-    integer, parameter :: barotropize = 0       !1: Waves only feel the effects of a barotropized flow;  0: waves and flow feel the same streamfunction (regular setup)
+    integer, parameter :: barotropize = 1       !1: Waves only feel the effects of a barotropized flow;  0: waves and flow feel the same streamfunction (regular setup)
     integer, parameter :: bt_level = n3         !Level at which the barotropic streamfunction is defined (n3: top, 1: bottom, etc.)
 
     integer, parameter :: fixed_flow = 0        !1: Skip the psi-inversion steps
@@ -176,7 +176,7 @@ MODULE parameters
     double precision, parameter :: L_scale=dom_x/L1          !Actual L in m ( x_real = L x' where x' in [0:2pi] is the nondim x.)
     double precision, parameter :: cor=0.0001!0.00000000001!0.0005 !0.0001                           !Actual f = 0.0001 s^-1 (real value of planet Earth)
     double precision, parameter :: U_scale=0.1                        !Actual U in m/s (u_real = U u' where u' is the nondim velocity ur implemented in the code)
-    double precision, parameter :: Uw_scale=1.                       !Characteristic magnitude of wave velocity (wave counterpart to U_scale for flow)
+    double precision, parameter :: Uw_scale=0.1                       !Characteristic magnitude of wave velocity (wave counterpart to U_scale for flow)
     double precision, parameter :: Ar2 = (H_scale/L_scale)**2                                   !(1./64.)**2!(1./10.)**2 !0.01     !Aspect ratio squared = (H/L)^2     
     double precision, parameter :: Ro  = U_scale/(cor*L_scale)                                  !Rossby number  U/fL
     double precision, parameter :: Fr  = U_scale/(N0*H_scale)                                   !Froude number  U/N(z0)H
@@ -195,7 +195,7 @@ MODULE parameters
     integer :: iter=0
     integer :: itermax=1000000000
     real :: maxtime=100                      
-    double precision, parameter :: delt=0.01*dx !0.5*Bu*Ro/(2.*ktrunc_x*ktrunc_x) !0.25/ktrunc_x !0.5*Bu*Ro/(2.*ktrunc_x*ktrunc_x) 
+    double precision, parameter :: delt=0.5*Bu*Ro/(2.*ktrunc_x*ktrunc_x) !0.25/ktrunc_x !0.5*Bu*Ro/(2.*ktrunc_x*ktrunc_x) 
     double precision, parameter :: gamma=1e-3                                  !Robert filter parameter
 
 
@@ -223,11 +223,11 @@ MODULE parameters
     !Output!
     !------!
 
-    integer, parameter :: out_etot   = 1, freq_etot   = INT(1./delt)!50!346!n3/64!n3!64!n3!50*n3/64      !Total energy                                                    
-    integer, parameter :: out_we     = 0, freq_we     = INT(0.001/delt)!50!346!n3/64!n3!64!n3!50*n3/64      !Total energy                                                    
+    integer, parameter :: out_etot   = 1, freq_etot   = INT(0.01/delt)!50!346!n3/64!n3!64!n3!50*n3/64      !Total energy                                                    
+    integer, parameter :: out_we     = 1, freq_we     = INT(0.01/delt)!50!346!n3/64!n3!64!n3!50*n3/64      !Total energy                                                    
     integer, parameter :: out_conv   = 0, freq_conv   = freq_we      !Conversion terms in the potential energy equation.
     integer, parameter :: out_hspec  = 1, freq_hspec  = 1*freq_etot!n3/64!n3!freq_etot*10     !Horizontal energy spectrum at various heights 
-    integer, parameter :: out_hspecw = 0, freq_hspecw = 1*freq_etot!n3/64!n3!freq_etot*10     !Horizontal energy spectrum at various heights 
+    integer, parameter :: out_hspecw = 1, freq_hspecw = 1*freq_etot!n3/64!n3!freq_etot*10     !Horizontal energy spectrum at various heights 
     integer, parameter :: out_hg     = 0                 !Output geostrophic horizontal spectrum as well?
     integer, parameter :: out_vspec  = 0, freq_vspec =  freq_hspec
     integer, parameter :: out_vbuoy  = 0, freq_vbuoy =  freq_hspec
@@ -293,13 +293,13 @@ MODULE parameters
     integer :: id_field                       !dummy index to differenciate fields plotted  
 
     integer, parameter :: out_slice   = 1, freq_slice =  1*freq_etot
-    integer, parameter :: out_slicew  = 0, freq_slicew=  1*freq_etot
+    integer, parameter :: out_slicew  = 1, freq_slicew=  1*freq_etot
     integer, parameter :: out_eta     = 0, freq_eta   =  freq_hspec
     integer, parameter :: out_tspec   = 0
 
     !Restart
     integer :: count_restart = 0                                 !when dumping: restart file number 
-    integer, parameter :: dump = 1, freq_dump = freq_slice*10    !dump = 1 means you dump, every "freq_dump" timestep
+    integer, parameter :: dump = 0, freq_dump = freq_slice*10    !dump = 1 means you dump, every "freq_dump" timestep
     integer, parameter :: restart = 1                            !restart = 1 start from file
     integer, parameter :: restart_no = 10                         !Restart file number (from 0 to 99)
 !    character(len = 64), parameter :: floc='../../../restart/512/'   !Location of the restart file (when restarting only: dumping in local output/ folder)
