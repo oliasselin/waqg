@@ -2,7 +2,7 @@ MODULE parameters
 
    IMPLICIT NONE
 
-    integer, parameter :: n1=512, n2=512, n3=128
+    integer, parameter :: n1=256, n2=256, n3=128
     integer, parameter :: npe=64
 
     integer, parameter :: n1d=n1+2, n2d=n2, n3d=n3
@@ -42,7 +42,7 @@ MODULE parameters
     integer, parameter :: fixed_flow = 0        !1: Skip the psi-inversion steps
     integer, parameter :: passive_scalar = 0    !1: Set A and refraction to 0 and skip the LA -> A inversion. BR and BI become two (independent) passive scalars.
     
-    integer, parameter :: no_waves = 0                  !1: Wave part ignored.
+    integer, parameter :: no_waves = 1                  !1: Wave part ignored.
     integer, parameter :: no_feedback = 1               !1: Wave do not feedback on the flow; ): they do
     integer, parameter :: eady = 1                      !1: Eady version: add a bunch of terms
     integer, parameter :: eady_bnd = 1                  !1: Eady version: include the boundary terms (set NOT to zero only for testing purposes)
@@ -66,7 +66,7 @@ MODULE parameters
     !Eady only
     integer, parameter :: ave_k=10              !Average wavenumber                                                                                          
     real, parameter ::    var_k=10.              !Variance of of the gaussian in wavenumbers                                                                                          
-    double precision, parameter :: psi_0=1.     
+    double precision, parameter :: psi_0=0.1!1.     
 
 
     integer, parameter :: generic=1 
@@ -77,7 +77,7 @@ MODULE parameters
     integer, parameter :: enveloppe = 0                    !1: Enveloppe allowing b=0 at the boundaries
     double precision, parameter :: z_env   = twopi/8!twopi/3.!twopi/8         !Center of the tanh enveloppe
     double precision, parameter :: sig_env = twopi/24!twopi/6.!twopi/24      !Width  of the tanh enveloppe
-    double precision, parameter :: z0  = L3/2                   !Middle of the domain / Position of the tropopause (between 0 and L3)
+    double precision, parameter :: z0  = L3!L3/2           !Exponential N: ~exp[(z-z0)*N2_scale]        !Middle of the domain / Position of the tropopause (between 0 and L3)
 
     
     !Normalization at the tropopause!
@@ -101,7 +101,9 @@ MODULE parameters
     !----------!
 
     integer, parameter :: tropopause=1, exponential=2, constant_N=3
-    integer, parameter :: stratification = constant_N
+!    integer, parameter :: stratification = constant_N
+    integer, parameter :: stratification = exponential
+    integer, parameter :: expeady = 1                   !1: Eady with an exponential N and U profile (requires eady=eady_bnd=1 too)
 
     !Stratification = tropopause!
     integer, parameter :: fraction=128                   !If h#=150m, then fraction=133.333333~128
@@ -111,10 +113,8 @@ MODULE parameters
     double precision, parameter :: gamma_N1=(sqrt(N_2_stra)-sqrt(N_2_trop))/(sqrt(N_2_stra)+sqrt(N_2_trop))       !This is alpha for N~1+alpha tanh(z/h)
 
     !Stratification = exponential!
-    double precision, parameter :: N2_scale = 0.75D0   !N^2 ~ exp(N2_scale*(z-z0) 
-
-    !Stratification = constant_N!
-    double precision, parameter :: N0  =  0.002          !Actual N is s^-1, not squared.    
+    double precision, parameter :: N2_scale = 5/twopi   !N^2 ~ exp(N2_scale*(z-z0)), thus xi=H/h = 4000/(2pi*800) = 5/2pi 
+    double precision, parameter :: N0  =  0.006   !0.002      !Actual N is s^-1, not squared.  If ExpEady==1 ==> N0 = Nmax. We want Nmax/f = 60.  
 
    ! USEFUL INDEX !                                                                                                                          
    ! ------------ !                                                                                                                         
@@ -175,7 +175,7 @@ MODULE parameters
     double precision, parameter :: H_scale=dom_z/L3          !Actual H in m ( z_real = H z' where z' in [0:L3]  is the nondim z.)
     double precision, parameter :: L_scale=dom_x/L1          !Actual L in m ( x_real = L x' where x' in [0:2pi] is the nondim x.)
     double precision, parameter :: cor=0.0001!0.00000000001!0.0005 !0.0001                           !Actual f = 0.0001 s^-1 (real value of planet Earth)
-    double precision, parameter :: U_scale=0.1/(twopi)                        !Actual U in m/s (u_real = U u' where u' is the nondim velocity ur implemented in the code)
+    double precision, parameter :: U_scale=0.1                        !Actual U in m/s (u_real = U u' where u' is the nondim velocity ur implemented in the code)
     double precision, parameter :: Uw_scale=1.                       !Characteristic magnitude of wave velocity (wave counterpart to U_scale for flow)
     double precision, parameter :: Ar2 = (H_scale/L_scale)**2                                   !(1./64.)**2!(1./10.)**2 !0.01     !Aspect ratio squared = (H/L)^2     
     double precision, parameter :: Ro  = U_scale/(cor*L_scale)                                  !Rossby number  U/fL
@@ -183,7 +183,7 @@ MODULE parameters
     double precision, parameter :: W2F = (Uw_scale/U_scale)**2                                  ! wave to flow velocity magnitude squared
     double precision, parameter :: Bu  = Fr*Fr/(Ro*Ro)                                          ! (Fr/Ro)^2 = Burger number 
 
-    double precision, parameter :: delta_E = 40                                                 !Depth of the Ekman layer: 63 m
+    double precision, parameter :: delta_E = 60                                                 !Depth of the Ekman layer: 63 m
     double precision, parameter :: Ek  = delta_E/(Ro*H_scale)                                   !Ekman term = delta_E/(Ro H)
 
 
@@ -193,9 +193,9 @@ MODULE parameters
 
     real :: time=0.
     integer :: iter=0
-    integer :: itermax=100000000
-    real :: maxtime=40                      
-    double precision, parameter :: delt=0.002*dx !0.5*Bu*Ro/(2.*ktrunc_x*ktrunc_x) !0.25/ktrunc_x !0.5*Bu*Ro/(2.*ktrunc_x*ktrunc_x) 
+    integer :: itermax=1000000000
+    real :: maxtime=100                      
+    double precision, parameter :: delt=0.01*dx !0.5*Bu*Ro/(2.*ktrunc_x*ktrunc_x) !0.25/ktrunc_x !0.5*Bu*Ro/(2.*ktrunc_x*ktrunc_x) 
     double precision, parameter :: gamma=1e-3                                  !Robert filter parameter
 
 
@@ -205,7 +205,7 @@ MODULE parameters
 
     !Assumes dissipation operator takes the form [ nuh1X*nabla^(2*ilap1X) + nuh2X*nabla^(2*ilap2X) ]. Suffix w is acting on waves.
 
-    double precision, parameter :: coeff1  = 1.
+    double precision, parameter :: coeff1  = 0.01
     double precision, parameter :: coeff2  = 10.
     double precision, parameter :: coeff1w = 0.
     double precision, parameter :: coeff2w = 10.
@@ -223,11 +223,11 @@ MODULE parameters
     !Output!
     !------!
 
-    integer, parameter :: out_etot   = 1, freq_etot   = INT(0.001/delt)!50!346!n3/64!n3!64!n3!50*n3/64      !Total energy                                                    
-    integer, parameter :: out_we     = 1, freq_we     = INT(0.001/delt)!50!346!n3/64!n3!64!n3!50*n3/64      !Total energy                                                    
-    integer, parameter :: out_conv   = 1, freq_conv   = freq_we      !Conversion terms in the potential energy equation.
+    integer, parameter :: out_etot   = 1, freq_etot   = INT(1./delt)!50!346!n3/64!n3!64!n3!50*n3/64      !Total energy                                                    
+    integer, parameter :: out_we     = 0, freq_we     = INT(0.001/delt)!50!346!n3/64!n3!64!n3!50*n3/64      !Total energy                                                    
+    integer, parameter :: out_conv   = 0, freq_conv   = freq_we      !Conversion terms in the potential energy equation.
     integer, parameter :: out_hspec  = 1, freq_hspec  = 1*freq_etot!n3/64!n3!freq_etot*10     !Horizontal energy spectrum at various heights 
-    integer, parameter :: out_hspecw = 1, freq_hspecw = 1*freq_etot!n3/64!n3!freq_etot*10     !Horizontal energy spectrum at various heights 
+    integer, parameter :: out_hspecw = 0, freq_hspecw = 1*freq_etot!n3/64!n3!freq_etot*10     !Horizontal energy spectrum at various heights 
     integer, parameter :: out_hg     = 0                 !Output geostrophic horizontal spectrum as well?
     integer, parameter :: out_vspec  = 0, freq_vspec =  freq_hspec
     integer, parameter :: out_vbuoy  = 0, freq_vbuoy =  freq_hspec
@@ -293,21 +293,22 @@ MODULE parameters
     integer :: id_field                       !dummy index to differenciate fields plotted  
 
     integer, parameter :: out_slice   = 1, freq_slice =  1*freq_etot
-    integer, parameter :: out_slicew  = 1, freq_slicew=  1*freq_etot
+    integer, parameter :: out_slicew  = 0, freq_slicew=  1*freq_etot
     integer, parameter :: out_eta     = 0, freq_eta   =  freq_hspec
     integer, parameter :: out_tspec   = 0
 
     !Restart
     integer :: count_restart = 0                                 !when dumping: restart file number 
-    integer, parameter :: dump = 0, freq_dump = freq_slice*10    !dump = 1 means you dump, every "freq_dump" timestep
+    integer, parameter :: dump = 1, freq_dump = freq_slice*10    !dump = 1 means you dump, every "freq_dump" timestep
     integer, parameter :: restart = 1                            !restart = 1 start from file
-    integer, parameter :: restart_no = 15                         !Restart file number (from 0 to 99)
-    character(len = 64), parameter :: floc='../../../restart/512/'   !Location of the restart file (when restarting only: dumping in local output/ folder)
+    integer, parameter :: restart_no = 10                         !Restart file number (from 0 to 99)
+!    character(len = 64), parameter :: floc='../../../restart/512/'   !Location of the restart file (when restarting only: dumping in local output/ folder)
+    character(len = 64), parameter :: floc='../../dE60_c0.01_dt0.01/output/'   !Location of the restart file (when restarting only: dumping in local output/ folder)
 
 
     !Filtering of A modes
-    integer, parameter :: filter_A=1, freq_filter_A=1!*freq_etot
-    integer, parameter :: print_A=1, freq_print_A=1*freq_etot
+    integer, parameter :: filter_A=0, freq_filter_A=1!*freq_etot
+    integer, parameter :: print_A=0, freq_print_A=1*freq_etot
     integer :: count_A=0
     double precision, parameter :: YBJ_criterion = 1!100000.           !Tolerate modes with Nkh/fkz < YBJ_criterion.
 

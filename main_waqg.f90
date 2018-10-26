@@ -251,15 +251,21 @@ end if
           kx = kxa(ikx)
           kh2=kx*kx+ky*ky
 
-          if(eady==1 .and. barotropize == 0) then      !Integrating factor includes the terms Uqx and ULAx
-             int_factor   = delt* (i*kx*zash0(izh0) +  nuh1 *((1.*kx)**(2.*ilap1 ) + (1.*ky)**(2.*ilap1 )) + nuh2 *((1.*kx)**(2.*ilap2 ) + (1.*ky)**(2.*ilap2 ))  )
-             int_factor_w = delt* (i*kx*zash0(izh0) +  nuh1w*((1.*kx)**(2.*ilap1w) + (1.*ky)**(2.*ilap1w)) + nuh2w*((1.*kx)**(2.*ilap2w) + (1.*ky)**(2.*ilap2w))  )
-          else if(eady==1 .and. barotropize == 1) then      !Integrating factor includes the term Uqx but NOT the U LAx term
-             int_factor   = delt* (i*kx*zash0(izh0) +  nuh1 *((1.*kx)**(2.*ilap1 ) + (1.*ky)**(2.*ilap1 )) + nuh2 *((1.*kx)**(2.*ilap2 ) + (1.*ky)**(2.*ilap2 ))  )
-             int_factor_w = delt* (                    nuh1w*((1.*kx)**(2.*ilap1w) + (1.*ky)**(2.*ilap1w)) + nuh2w*((1.*kx)**(2.*ilap2w) + (1.*ky)**(2.*ilap2w))  )
+          if(eady==1 .and. expeady == 0 .and. barotropize == 0) then      !Integrating factor includes the terms Uqx and ULAx
+             int_factor   = delt* (i*kx*zash0(izh0)                    +  nuh1 *((1.*kx)**(2.*ilap1 ) + (1.*ky)**(2.*ilap1 )) + nuh2 *((1.*kx)**(2.*ilap2 ) + (1.*ky)**(2.*ilap2 ))  )
+             int_factor_w = delt* (i*kx*zash0(izh0)                    +  nuh1w*((1.*kx)**(2.*ilap1w) + (1.*ky)**(2.*ilap1w)) + nuh2w*((1.*kx)**(2.*ilap2w) + (1.*ky)**(2.*ilap2w))  )
+          elseif(eady==1 .and. expeady == 1 .and. barotropize == 0) then      !Integrating factor includes the terms U exp() qx and U exp() LAx
+             int_factor   = delt* (i*kx*exp(N2_scale*(zash0(izh0)-z0)) +  nuh1 *((1.*kx)**(2.*ilap1 ) + (1.*ky)**(2.*ilap1 )) + nuh2 *((1.*kx)**(2.*ilap2 ) + (1.*ky)**(2.*ilap2 ))  )
+             int_factor_w = delt* (i*kx*exp(N2_scale*(zash0(izh0)-z0)) +  nuh1w*((1.*kx)**(2.*ilap1w) + (1.*ky)**(2.*ilap1w)) + nuh2w*((1.*kx)**(2.*ilap2w) + (1.*ky)**(2.*ilap2w))  )
+          else if(eady==1 .and. expeady == 0 .and. barotropize == 1) then      !Integrating factor includes the term Uqx but NOT the U LAx term
+             int_factor   = delt* (i*kx*zash0(izh0)                    +  nuh1 *((1.*kx)**(2.*ilap1 ) + (1.*ky)**(2.*ilap1 )) + nuh2 *((1.*kx)**(2.*ilap2 ) + (1.*ky)**(2.*ilap2 ))  )
+             int_factor_w = delt* (                                       nuh1w*((1.*kx)**(2.*ilap1w) + (1.*ky)**(2.*ilap1w)) + nuh2w*((1.*kx)**(2.*ilap2w) + (1.*ky)**(2.*ilap2w))  )
+          elseif(eady==1 .and. expeady == 1 .and. barotropize == 1) then      !Integrating factor includes the terms U exp() qx but not U exp() LAx
+             int_factor   = delt* (i*kx*exp(N2_scale*(zash0(izh0)-z0)) +  nuh1 *((1.*kx)**(2.*ilap1 ) + (1.*ky)**(2.*ilap1 )) + nuh2 *((1.*kx)**(2.*ilap2 ) + (1.*ky)**(2.*ilap2 ))  )
+             int_factor_w = delt* (                                       nuh1w*((1.*kx)**(2.*ilap1w) + (1.*ky)**(2.*ilap1w)) + nuh2w*((1.*kx)**(2.*ilap2w) + (1.*ky)**(2.*ilap2w))  )
           else
-             int_factor   = delt* (                    nuh1 *((1.*kx)**(2.*ilap1 ) + (1.*ky)**(2.*ilap1 )) + nuh2 *((1.*kx)**(2.*ilap2 ) + (1.*ky)**(2.*ilap2 ))  )
-             int_factor_w = delt* (                    nuh1w*((1.*kx)**(2.*ilap1w) + (1.*ky)**(2.*ilap1w)) + nuh2w*((1.*kx)**(2.*ilap2w) + (1.*ky)**(2.*ilap2w))  )
+             int_factor   = delt* (                                       nuh1 *((1.*kx)**(2.*ilap1 ) + (1.*ky)**(2.*ilap1 )) + nuh2 *((1.*kx)**(2.*ilap2 ) + (1.*ky)**(2.*ilap2 ))  )
+             int_factor_w = delt* (                                       nuh1w*((1.*kx)**(2.*ilap1w) + (1.*ky)**(2.*ilap1w)) + nuh2w*((1.*kx)**(2.*ilap2w) + (1.*ky)**(2.*ilap2w))  )
           end if
 
           if (L(ikx,iky).eq.1) then
@@ -270,12 +276,20 @@ end if
             if(eady == 1 .and. eady_bnd == 1) then  !Add bottom and top boundary terms
                !Bottom boundary: add vQy and the Ekman term                
                if(mype == 0 .and. izh0 == 1) then
-                  qk(ikx,iky,izh1) = qk(ikx,iky,izh1) + delt*(1./dz)*(i*kx*Bu*psik(ikx,iky,izh1) + (1.*kh2)*Ek*psi_old(ikx,iky,izh1) )*exp(-int_factor)
+                  if(expeady==1) then    !Expeady => extra H/h factor in the temperature term                                                                                        
+                     qk(ikx,iky,izh1) = qk(ikx,iky,izh1) + delt*(1./dz)*(i*kx*N2_scale*Bu*psik(ikx,iky,izh1) + (1.*kh2)*Ek*psi_old(ikx,iky,izh1) )*exp(-int_factor)
+                  else
+                     qk(ikx,iky,izh1) = qk(ikx,iky,izh1) + delt*(1./dz)*(i*kx*         Bu*psik(ikx,iky,izh1) + (1.*kh2)*Ek*psi_old(ikx,iky,izh1) )*exp(-int_factor)
+                  end if
                end if
 
                !Top Boundary: add vQy            
                if(mype == (npe-1) .and. izh0 == n3h0) then
-                  qk(ikx,iky,izh1) = qk(ikx,iky,izh1) - delt*(1./dz)*(i*kx*Bu)*psik(ikx,iky,izh1)*exp(-int_factor)
+                  if(expeady==1) then    !Expeady => extra H/h factor in the temperature term                        
+                     qk(ikx,iky,izh1) = qk(ikx,iky,izh1) - delt*(1./dz)*(i*kx*N2_scale*Bu)*psik(ikx,iky,izh1)*exp(-int_factor)
+                  else
+                     qk(ikx,iky,izh1) = qk(ikx,iky,izh1) - delt*(1./dz)*(i*kx*         Bu)*psik(ikx,iky,izh1)*exp(-int_factor)
+                  end if
                end if
             end if
 
@@ -397,9 +411,16 @@ end if
                  do ikx=1,iktx
                     kx = kxa(ikx)
 
-                    if (L(ikx,iky).eq.1) then
-                       FtRk(ikx,iky,izh0)=i*kx*zash0(izh0)*BRk(ikx,iky,izh0)
-                       FtIk(ikx,iky,izh0)=i*kx*zash0(izh0)*BIk(ikx,iky,izh0)
+                    if(expeady==1) then
+                       if (L(ikx,iky).eq.1) then
+                          FtRk(ikx,iky,izh0)=i*kx*exp(N2_scale*(zash0(izh0)-z0))*BRk(ikx,iky,izh0)
+                          FtIk(ikx,iky,izh0)=i*kx*exp(N2_scale*(zash0(izh0)-z0))*BIk(ikx,iky,izh0)
+                       end if
+                    else   !Regular linear shear
+                       if (L(ikx,iky).eq.1) then
+                          FtRk(ikx,iky,izh0)=i*kx*zash0(izh0)*BRk(ikx,iky,izh0)
+                          FtIk(ikx,iky,izh0)=i*kx*zash0(izh0)*BIk(ikx,iky,izh0)
+                       end if
                     end if
 
                  end do
@@ -430,16 +451,23 @@ end if
               kx = kxa(ikx)
               kh2=kx*kx+ky*ky
 
-              if(eady==1 .and. barotropize == 0) then           !Integrating factor includes the terms Uqx and ULAx                                      
-                 int_factor   = delt* (i*kx*zash0(izh0) +  nuh1 *((1.*kx)**(2.*ilap1 ) + (1.*ky)**(2.*ilap1 )) + nuh2 *((1.*kx)**(2.*ilap2 ) + (1.*ky)**(2.*ilap2 ))  )
-                 int_factor_w = delt* (i*kx*zash0(izh0) +  nuh1w*((1.*kx)**(2.*ilap1w) + (1.*ky)**(2.*ilap1w)) + nuh2w*((1.*kx)**(2.*ilap2w) + (1.*ky)**(2.*ilap2w))  )
-              else if(eady==1 .and. barotropize == 1) then      !Integrating factor includes the term Uqx but NOT the U LAx term                                                    
-                 int_factor   = delt* (i*kx*zash0(izh0) +  nuh1 *((1.*kx)**(2.*ilap1 ) + (1.*ky)**(2.*ilap1 )) + nuh2 *((1.*kx)**(2.*ilap2 ) + (1.*ky)**(2.*ilap2 ))  )
-                 int_factor_w = delt* (                    nuh1w*((1.*kx)**(2.*ilap1w) + (1.*ky)**(2.*ilap1w)) + nuh2w*((1.*kx)**(2.*ilap2w) + (1.*ky)**(2.*ilap2w))  )
+              if(eady==1 .and. expeady == 0 .and. barotropize == 0) then      !Integrating factor includes the terms Uqx and ULAx
+                 int_factor   = delt* (i*kx*zash0(izh0)                    +  nuh1 *((1.*kx)**(2.*ilap1 ) + (1.*ky)**(2.*ilap1 )) + nuh2 *((1.*kx)**(2.*ilap2 ) + (1.*ky)**(2.*ilap2 ))  )
+                 int_factor_w = delt* (i*kx*zash0(izh0)                    +  nuh1w*((1.*kx)**(2.*ilap1w) + (1.*ky)**(2.*ilap1w)) + nuh2w*((1.*kx)**(2.*ilap2w) + (1.*ky)**(2.*ilap2w))  )
+              elseif(eady==1 .and. expeady == 1 .and. barotropize == 0) then      !Integrating factor includes the terms U exp() qx and U exp() LAx
+                 int_factor   = delt* (i*kx*exp(N2_scale*(zash0(izh0)-z0)) +  nuh1 *((1.*kx)**(2.*ilap1 ) + (1.*ky)**(2.*ilap1 )) + nuh2 *((1.*kx)**(2.*ilap2 ) + (1.*ky)**(2.*ilap2 ))  )
+                 int_factor_w = delt* (i*kx*exp(N2_scale*(zash0(izh0)-z0)) +  nuh1w*((1.*kx)**(2.*ilap1w) + (1.*ky)**(2.*ilap1w)) + nuh2w*((1.*kx)**(2.*ilap2w) + (1.*ky)**(2.*ilap2w))  )
+              else if(eady==1 .and. expeady == 0 .and. barotropize == 1) then      !Integrating factor includes the term Uqx but NOT the U LAx term
+                 int_factor   = delt* (i*kx*zash0(izh0)                    +  nuh1 *((1.*kx)**(2.*ilap1 ) + (1.*ky)**(2.*ilap1 )) + nuh2 *((1.*kx)**(2.*ilap2 ) + (1.*ky)**(2.*ilap2 ))  )
+                 int_factor_w = delt* (                                       nuh1w*((1.*kx)**(2.*ilap1w) + (1.*ky)**(2.*ilap1w)) + nuh2w*((1.*kx)**(2.*ilap2w) + (1.*ky)**(2.*ilap2w))  )
+              elseif(eady==1 .and. expeady == 1 .and. barotropize == 1) then      !Integrating factor includes the terms U exp() qx but not U exp() LAx
+                 int_factor   = delt* (i*kx*exp(N2_scale*(zash0(izh0)-z0)) +  nuh1 *((1.*kx)**(2.*ilap1 ) + (1.*ky)**(2.*ilap1 )) + nuh2 *((1.*kx)**(2.*ilap2 ) + (1.*ky)**(2.*ilap2 ))  )
+                 int_factor_w = delt* (                                       nuh1w*((1.*kx)**(2.*ilap1w) + (1.*ky)**(2.*ilap1w)) + nuh2w*((1.*kx)**(2.*ilap2w) + (1.*ky)**(2.*ilap2w))  )
               else
-                 int_factor   = delt* (                    nuh1 *((1.*kx)**(2.*ilap1 ) + (1.*ky)**(2.*ilap1 )) + nuh2 *((1.*kx)**(2.*ilap2 ) + (1.*ky)**(2.*ilap2 ))  )
-                 int_factor_w = delt* (                    nuh1w*((1.*kx)**(2.*ilap1w) + (1.*ky)**(2.*ilap1w)) + nuh2w*((1.*kx)**(2.*ilap2w) + (1.*ky)**(2.*ilap2w))  )
+                 int_factor   = delt* (                                       nuh1 *((1.*kx)**(2.*ilap1 ) + (1.*ky)**(2.*ilap1 )) + nuh2 *((1.*kx)**(2.*ilap2 ) + (1.*ky)**(2.*ilap2 ))  )
+                 int_factor_w = delt* (                                       nuh1w*((1.*kx)**(2.*ilap1w) + (1.*ky)**(2.*ilap1w)) + nuh2w*((1.*kx)**(2.*ilap2w) + (1.*ky)**(2.*ilap2w))  )
               end if
+
 
               if (L(ikx,iky).eq.1) then
                  qtempk(ikx,iky,izh1) =  qok(ikx,iky,izh1)*exp(-2*int_factor) - 2*delt*nqk(ikx,iky,izh0)*exp(-int_factor) 
@@ -449,12 +477,20 @@ end if
                 if(eady == 1 .and. eady_bnd == 1) then  !Add bottom and top boundary terms      
                    !Bottom boundary: add vQy and the Ekman term                                                                                                             
                    if(mype == 0 .and. izh0 == 1) then
-                      qtempk(ikx,iky,izh1) = qtempk(ikx,iky,izh1) + 2.*delt*(1./dz)*i*kx*Bu*psik(ikx,iky,izh1)*exp(-int_factor) + 2.*delt*(1./dz)*(1.*kh2)*Ek*psi_old(ikx,iky,izh1)*exp(-2*int_factor)
+                      if(expeady==1) then    !Expeady => extra H/h factor in the temperature term
+                         qtempk(ikx,iky,izh1) = qtempk(ikx,iky,izh1) + 2.*delt*(1./dz)*i*kx*N2_scale*Bu*psik(ikx,iky,izh1)*exp(-int_factor) + 2.*delt*(1./dz)*(1.*kh2)*Ek*psi_old(ikx,iky,izh1)*exp(-2*int_factor)
+                      else
+                         qtempk(ikx,iky,izh1) = qtempk(ikx,iky,izh1) + 2.*delt*(1./dz)*i*kx*         Bu*psik(ikx,iky,izh1)*exp(-int_factor) + 2.*delt*(1./dz)*(1.*kh2)*Ek*psi_old(ikx,iky,izh1)*exp(-2*int_factor)
+                      end if
                    end if
 
                    !Top Boundary: add vQy                                                                                                                                        
                    if(mype == (npe-1) .and. izh0 == n3h0) then
-                      qtempk(ikx,iky,izh1) = qtempk(ikx,iky,izh1) - 2.*delt*(1./dz)*(i*kx*Bu)*psik(ikx,iky,izh1)*exp(-int_factor)
+                      if(expeady==1) then    !Expeady => extra H/h factor in the temperature term 
+                         qtempk(ikx,iky,izh1) = qtempk(ikx,iky,izh1) - 2.*delt*(1./dz)*(i*kx*N2_scale*Bu)*psik(ikx,iky,izh1)*exp(-int_factor)
+                      else
+                         qtempk(ikx,iky,izh1) = qtempk(ikx,iky,izh1) - 2.*delt*(1./dz)*(i*kx*         Bu)*psik(ikx,iky,izh1)*exp(-int_factor)
+                      end if
                    end if
                 end if
 
