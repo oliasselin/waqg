@@ -1063,7 +1063,7 @@ MODULE derivatives
       BRxk = (0.D0,0.D0)
       BRyk = (0.D0,0.D0)
       BIxk = (0.D0,0.D0)
-      BRyk = (0.D0,0.D0)
+      BIyk = (0.D0,0.D0)
 
       do izh0=1,n3h0 
          do iky=1,ikty
