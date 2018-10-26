@@ -1877,12 +1877,15 @@ end subroutine hspec
 
 
 
-  subroutine slices_waves(BRk,BIk,BRr,BIr,CRk,CIk,id_field)
+  subroutine slices_waves(BRk,BIk,BRr,BIr,CRk,CIk,qwk,qwr,id_field)
 
     double complex, dimension(iktx,ikty,n3h0) :: BRk,BIk
     double precision,    dimension(n1d,n2d,n3h0) :: BRr, BIr
 
     double complex, dimension(iktx,ikty,n3h0) :: CRk,CIk
+
+    double complex,   dimension(iktx,ikty,n3h0) :: qwk
+    double precision, dimension(n1d,n2d,n3h0)   :: qwr
 
     !Temp arrays for convenience
     double complex, dimension(iktx,ikty,n3h0) :: Rmemk, Imemk
@@ -1955,7 +1958,9 @@ end subroutine hspec
              end do
           end do
        end do
-       
+    elseif(id_field==5) then
+       call fft_c2r(qwk,qwr,n3h0)
+       field = (U_scale/L_scale)*qwr       
     end if
 
 

@@ -171,7 +171,7 @@ PROGRAM main
  end do
 
  do id_field=1,nfieldsw                                            
-    if(out_slicew ==1) call slices_waves(BRk,BIk,BRr,BIr,CRk,CIk,id_field)
+    if(out_slicew ==1) call slices_waves(BRk,BIk,BRr,BIr,CRk,CIk,qwk,qwr,id_field)
  end do
 
  do iz=1,num_spec
@@ -598,7 +598,7 @@ end do
 
 
 do id_field=1,nfieldsw
-   if(out_slicew ==1 .and. mod(iter,freq_slicew)==0 .and. count_slicew(id_field)<max_slices) call slices_waves(BRk,BIk,BRr,BIr,CRk,CIk,id_field)
+   if(out_slicew ==1 .and. mod(iter,freq_slicew)==0 .and. count_slicew(id_field)<max_slices) call slices_waves(BRk,BIk,BRr,BIr,CRk,CIk,qwk,qwr,id_field)
 end do
 
 do iz=1,num_spec
