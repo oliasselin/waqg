@@ -1,11 +1,11 @@
 #!/bin/bash
 
-number_of_nodes=4
-number_of_tasks=64
-ntasks_per_node=16
+number_of_nodes=1
+number_of_tasks=8
+ntasks_per_node=8
 
-sourdir=/oasis/scratch/comet/oasselin/temp_project/expeady/storm_bt_dE60/source/
-datadir=/oasis/scratch/comet/oasselin/temp_project/expeady/storm_bt_dE60/output/
+sourdir=/oasis/scratch/comet/oasselin/temp_project/expeady/feedback_test_tiny_Uw/source/
+datadir=/oasis/scratch/comet/oasselin/temp_project/expeady/feedback_test_tiny_Uw/output/
 
 mkdir -p $sourdir
 mkdir -p $datadir
@@ -16,14 +16,14 @@ cd $sourdir
 cat > EXEC_STEP << EXEC
 #!/bin/sh 
 
-#SBATCH --job-name="storm_XE"
-#SBATCH --output="/home/oasselin/monitor/storm_XE.o%j"
-#SBATCH --error="/home/oasselin/monitor/expeady.e%j"
+#SBATCH --job-name="feedback_test"
+#SBATCH --output="/home/oasselin/monitor/feedback_test.o%j"
+#SBATCH --error="/home/oasselin/monitor/feedback_test.e%j"
 #SBATCH --partition=compute ##debug
 #SBATCH --nodes=$number_of_nodes
 #SBATCH --ntasks-per-node=$ntasks_per_node
 #SBATCH --export=ALL
-#SBATCH -t 20:00:00
+#SBATCH -t 00:10:00
 
 #This job runs with 2 nodes, 24 cores per node for a total of 48 cores.
 #ibrun in verbose mode will give binding detail

@@ -171,7 +171,7 @@ PROGRAM main
  end do
 
  do id_field=1,nfieldsw                                            
-    if(out_slicew ==1) call slices_waves(BRk,BIk,BRr,BIr,CRk,CIk,id_field)
+    if(out_slicew ==1) call slices_waves2(BRk,BIk,BRr,BIr,CRk,CIk,qwk,qwr,id_field)
  end do
 
  do iz=1,num_spec
@@ -344,7 +344,13 @@ end if
 
 end if
 
+do id_field=1,nfields
+   if(out_slice ==1) call slices(uk,vk,bk,psik,qk,ur,vr,br,psir,qr,id_field)
+end do
 
+do id_field=1,nfieldsw
+   if(out_slicew ==1) call slices_waves2(BRk,BIk,BRr,BIr,CRk,CIk,qwk,qwr,id_field)
+end do
 
  !********************************************************************************!
  !*** Subsequent timesteps using the projection method + leapfrog timestepping ***!
@@ -598,8 +604,9 @@ end do
 
 
 do id_field=1,nfieldsw
-   if(out_slicew ==1 .and. mod(iter,freq_slicew)==0 .and. count_slicew(id_field)<max_slices) call slices_waves(BRk,BIk,BRr,BIr,CRk,CIk,id_field)
+   if(out_slicew ==1 .and. mod(iter,freq_slicew)==0 .and. count_slicew(id_field)<max_slices)  call slices_waves2(BRk,BIk,BRr,BIr,CRk,CIk,qwk,qwr,id_field)
 end do
+
 
 do iz=1,num_spec
    if(out_hspecw ==1  .and. mod(iter,freq_hspecw)==0 ) call hspec_waves(BRk,BIk,CRk,CIk,iz)

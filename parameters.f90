@@ -3,7 +3,7 @@ MODULE parameters
    IMPLICIT NONE
 
     integer, parameter :: n1=256, n2=256, n3=128
-    integer, parameter :: npe=64
+    integer, parameter :: npe=8
 
     integer, parameter :: n1d=n1+2, n2d=n2, n3d=n3
     integer, parameter :: n3h0=n3/npe, n3h1=n3/npe+2, n3h2=n3/npe+4
@@ -36,14 +36,14 @@ MODULE parameters
     double precision, parameter :: c_one = 1./( n_one*n_one - n_one*n_two*tanh(twopi*n_one)/tanh(twopi*n_two) )
     double precision, parameter :: c_two = 1./( n_two*n_two - n_one*n_two*tanh(twopi*n_two)/tanh(twopi*n_one) )
 
-    integer, parameter :: barotropize = 1       !1: Waves only feel the effects of a barotropized flow;  0: waves and flow feel the same streamfunction (regular setup)
+    integer, parameter :: barotropize = 0       !1: Waves only feel the effects of a barotropized flow;  0: waves and flow feel the same streamfunction (regular setup)
     integer, parameter :: bt_level = n3         !Level at which the barotropic streamfunction is defined (n3: top, 1: bottom, etc.)
 
     integer, parameter :: fixed_flow = 0        !1: Skip the psi-inversion steps
     integer, parameter :: passive_scalar = 0    !1: Set A and refraction to 0 and skip the LA -> A inversion. BR and BI become two (independent) passive scalars.
     
     integer, parameter :: no_waves = 0                  !1: Wave part ignored.
-    integer, parameter :: no_feedback = 1               !1: Wave do not feedback on the flow; ): they do
+    integer, parameter :: no_feedback = 0               !1: Wave do not feedback on the flow; ): they do
     integer, parameter :: eady = 1                      !1: Eady version: add a bunch of terms
     integer, parameter :: eady_bnd = 1                  !1: Eady version: include the boundary terms (set NOT to zero only for testing purposes)
 
@@ -176,7 +176,7 @@ MODULE parameters
     double precision, parameter :: L_scale=dom_x/L1          !Actual L in m ( x_real = L x' where x' in [0:2pi] is the nondim x.)
     double precision, parameter :: cor=0.0001!0.00000000001!0.0005 !0.0001                           !Actual f = 0.0001 s^-1 (real value of planet Earth)
     double precision, parameter :: U_scale=0.1                        !Actual U in m/s (u_real = U u' where u' is the nondim velocity ur implemented in the code)
-    double precision, parameter :: Uw_scale=0.1                       !Characteristic magnitude of wave velocity (wave counterpart to U_scale for flow)
+    double precision, parameter :: Uw_scale=0.0001                       !Characteristic magnitude of wave velocity (wave counterpart to U_scale for flow)
     double precision, parameter :: Ar2 = (H_scale/L_scale)**2                                   !(1./64.)**2!(1./10.)**2 !0.01     !Aspect ratio squared = (H/L)^2     
     double precision, parameter :: Ro  = U_scale/(cor*L_scale)                                  !Rossby number  U/fL
     double precision, parameter :: Fr  = U_scale/(N0*H_scale)                                   !Froude number  U/N(z0)H
@@ -223,8 +223,8 @@ MODULE parameters
     !Output!
     !------!
 
-    integer, parameter :: out_etot   = 1, freq_etot   = INT(0.01/delt)!50!346!n3/64!n3!64!n3!50*n3/64      !Total energy                                                    
-    integer, parameter :: out_we     = 1, freq_we     = INT(0.01/delt)!50!346!n3/64!n3!64!n3!50*n3/64      !Total energy                                                    
+    integer, parameter :: out_etot   = 1, freq_etot   = 1!INT(0.01/delt)!50!346!n3/64!n3!64!n3!50*n3/64      !Total energy                                                    
+    integer, parameter :: out_we     = 1, freq_we     = 1!INT(0.01/delt)!50!346!n3/64!n3!64!n3!50*n3/64      !Total energy                                                    
     integer, parameter :: out_conv   = 0, freq_conv   = freq_we      !Conversion terms in the potential energy equation.
     integer, parameter :: out_hspec  = 1, freq_hspec  = 1*freq_etot!n3/64!n3!freq_etot*10     !Horizontal energy spectrum at various heights 
     integer, parameter :: out_hspecw = 1, freq_hspecw = 1*freq_etot!n3/64!n3!freq_etot*10     !Horizontal energy spectrum at various heights 
@@ -272,14 +272,14 @@ MODULE parameters
     !Slices
     integer, parameter :: max_slices = 999     
     integer, parameter :: nfields  = 7         !Don't forget to change tag_slice_xz(nfields) accordingly in "mpi.f90"
-    integer, parameter :: nfieldsw = 4         !Don't forget to change tag_slice_xz(nfields) accordingly in "mpi.f90"
+    integer, parameter :: nfieldsw = 5         !Don't forget to change tag_slice_xz(nfields) accordingly in "mpi.f90"
     integer :: count_slice(nfields) = 0       !number of slices
     integer :: count_slicew(nfieldsw) = 0       !number of slices
     integer :: zval=n3/2                      !z-level at which we wish to plo a slice                                                                                                                               
     integer :: yval=n2/2
     integer :: xval=n1/2
     integer :: hlvl(nfields)=[2,2,1,1,2,1,1]                                   
-    integer :: hlvlw(nfieldsw)=[0,0,0,0]                                   
+    integer :: hlvlw(nfieldsw)=[0,0,0,0,0]                                   
 
     integer, parameter :: bot_height = 1
     integer, parameter :: mid_height = n3/2
