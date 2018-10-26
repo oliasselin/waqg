@@ -1,13 +1,15 @@
 from make_a_gif import make_a_gif
 
-folder = 'eady/'
-run_list = ['256x128_dE40_r65_dt0.002_wr']
+scratch_location='/oasis/scratch/comet/oasselin/temp_project/'
+home_location='/home/oasselin/'
+folder = 'storm/'
+run_list = ['bc_fn21h610_wn20610_512']
 field_list = ['7']
-sli_list = ['htop','v']
+sli_list = ['htop']
 
-print('Launching the gifmaker for in folder '+folder+' for '+str(len(run_list))+' runs.')
+print('Launching the gifmaker for '+str(len(field_list))+' field(s) in folder '+folder+' for '+str(len(run_list))+' run(s).')
 
 for name in run_list:
     for field in field_list:
         for sli in sli_list:
-            make_a_gif(run=folder+name,sli=sli,field=field,nmax=950,fixed_cbrange='minmax',cbmin=-0.3,cbmax=0.3,hres=256,vres=128)
+            make_a_gif(run=folder+name,sli=sli,field=field,nmax=2,fixed_cbrange='minmax',cbmin=-1.,cbmax=1.,hres=512,vres=128,timestep=0.001,scratch_location=scratch_location,home_location=home_location)

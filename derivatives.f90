@@ -806,6 +806,135 @@ MODULE derivatives
 
 
 
+    SUBROUTINE  convol_waves(nBRk,nBIk,nBRr,nBIr,uk,vk,BRk,BIk,ur,vr,BRr,BIr)
+      
+      !Stand-alone subroutine to compute the advection for waves only. Should be used with velocity fields computed from psi_bt.
+
+      ! this subroutine computes ((u.grad)LA) = d/dxj(uj LA) in the divergence form on the staggered grid.
+      ! Notice that this routine outputs the r-space velocity fields of the barotropized field
+                                                                    
+      double complex, dimension(iktx,ikty,n3h2) :: uk,vk   
+      double complex, dimension(iktx,ikty,n3h0) :: BRk, BIk
+      double complex, dimension(iktx,ikty,n3h0) :: nBRk, nBIk
+
+      double complex, dimension(iktx,ikty,n3h0) :: BRmem   
+      double complex, dimension(iktx,ikty,n3h0) :: BImem   
+
+      double precision, dimension(n1d,n2d,n3h2) :: ur,vr
+      double precision, dimension(n1d,n2d,n3h0) :: BRr, BIr
+      double precision, dimension(n1d,n2d,n3h0) :: nBRr, nBIr
+
+
+      !Terms to be differentiated
+      double complex,   dimension(iktx,ikty,n3h0) :: utermk,vtermk
+      double precision, dimension(n1d,n2d,n3h0)   :: utermr,vtermr
+
+      equivalence(utermr,utermk)
+      equivalence(vtermr,vtermk)
+
+      !I think we don't need to keep a copy of u in qg, right?
+      call fft_c2r(uk,ur,n3h2)
+      call fft_c2r(vk,vr,n3h2)
+     
+      BRmem = BRk
+      BImem = BIk
+
+      call fft_c2r(BRk,BRr,n3h0)
+      call fft_c2r(BIk,BIr,n3h0)
+      
+
+      ! ---- J(psi,BR) ---- !
+
+      utermr=0.
+      vtermr=0.
+
+      do izh0=1,n3h0
+         izh1=izh0+1
+         izh2=izh0+2
+         do ix=1,n1d
+             do iy=1,n2d
+                if(ix<=n1) then
+
+                   utermr(ix,iy,izh0) = ur(ix,iy,izh2)*BRr(ix,iy,izh0)
+                   vtermr(ix,iy,izh0) = vr(ix,iy,izh2)*BRr(ix,iy,izh0)
+
+                end if
+             end do
+          end do
+       end do
+
+      !Move to k-space
+
+      call fft_r2c(utermr,utermk,n3h0)
+      call fft_r2c(vtermr,vtermk,n3h0)
+
+      !nqk = ikx utermk + iky vtermk
+
+      do izh0=1,n3h0 
+         do iky=1,ikty
+            ky = kya(iky)
+            do ikx=1,iktx
+               kx = kxa(ikx)
+               if (L(ikx,iky).eq.1) then                                                               
+                  nBRk(ikx,iky,izh0) =  i*kx*utermk(ikx,iky,izh0)  +  i*ky*vtermk(ikx,iky,izh0)
+               else
+                  nBRk(ikx,iky,izh0) = (0.D0,0.D0)
+               endif
+            enddo
+         enddo
+      enddo
+
+      BRk = BRmem
+
+
+      ! ---- J(psi,BI) ---- !
+
+      utermr=0.
+      vtermr=0.
+
+      do izh0=1,n3h0
+         izh1=izh0+1
+         izh2=izh0+2
+         do ix=1,n1d
+             do iy=1,n2d
+                if(ix<=n1) then
+
+                   utermr(ix,iy,izh0) = ur(ix,iy,izh2)*BIr(ix,iy,izh0)
+                   vtermr(ix,iy,izh0) = vr(ix,iy,izh2)*BIr(ix,iy,izh0)
+
+                end if
+             end do
+          end do
+       end do
+
+      !Move to k-space
+
+      call fft_r2c(utermr,utermk,n3h0)
+      call fft_r2c(vtermr,vtermk,n3h0)
+
+      !nqk = ikx utermk + iky vtermk
+
+      do izh0=1,n3h0 
+         do iky=1,ikty
+            ky = kya(iky)
+            do ikx=1,iktx
+               kx = kxa(ikx)
+               if (L(ikx,iky).eq.1) then                                                               
+                  nBIk(ikx,iky,izh0) =  i*kx*utermk(ikx,iky,izh0)  +  i*ky*vtermk(ikx,iky,izh0)
+               else
+                  nBIk(ikx,iky,izh0) = (0.D0,0.D0)
+               endif
+            enddo
+         enddo
+      enddo
+
+      BIk = BImem
+
+    END SUBROUTINE convol_waves
+
+
+
+
 
 
     SUBROUTINE  refraction_waqg(rBRk,rBIk,rBRr,rBIr,BRk,BIk,psik,BRr,BIr,psir)
@@ -1094,7 +1223,8 @@ MODULE derivatives
             do ikx=1,iktx
                kx = kxa(ikx)
                kh2 = kx*kx + ky*ky
-               if ((L(ikx,iky).eq.1) .and. kh2 > 0) then
+!               if ((L(ikx,iky).eq.1) .and. kh2 > 0) then
+               if ((L(ikx,iky).eq.1)) then
                   sum_to_reduce(ikx,iky,1) = sum_to_reduce(ikx,iky,1) + BRk(ikx,iky,izh0)
                   sum_to_reduce(ikx,iky,2) = sum_to_reduce(ikx,iky,2) + BIk(ikx,iky,izh0)
                endif
@@ -1113,7 +1243,8 @@ MODULE derivatives
                do ikx=1,iktx
                   kx = kxa(ikx)
                   kh2 = kx*kx + ky*ky
-                  if ((L(ikx,iky).eq.1) .and. kh2 > 0) then
+!                  if ((L(ikx,iky).eq.1) .and. kh2 > 0) then
+                  if ((L(ikx,iky).eq.1)) then
                      BRk(ikx,iky,izh0) = BRk(ikx,iky,izh0) - aveB(ikx,iky,1)
                      BIk(ikx,iky,izh0) = BIk(ikx,iky,izh0) - aveB(ikx,iky,2)
                   endif
@@ -1882,313 +2013,6 @@ MODULE derivatives
     END SUBROUTINE gradient
 
 
-    SUBROUTINE  dissipation(duk,dvk,dwk,dtk,uok,vok,wok,tok)  !WRONG WITH HYPERVISC
-      ! this subroutine computes ((u.grad)u)i = d/dxj(uj ui) in the divergence form on a staggered grid.                                                                                                                                    
-      double complex, dimension(iktx,ikty,n3h2) :: uok,vok,wok,tok
-      double complex, dimension(iktx,ikty,n3h1) :: duk,dvk,dwk,dtk
-
-
-      do izh1=1,n3h1
-         izh2=izh1+1
-         do iky=1,ikty
-            ky = kya(iky)
-            do ikx=1,iktx
-               kx = kxa(ikx)
-               kh2=kx*kx+ky*ky
-               kh2=kh2**ilap !Hyperviscosity  THIS WON'T WORK FOR kh2>1e9
-               if (L(ikx,iky).eq.1) then
-                  duk(ikx,iky,izh1) =  nuz *(uok(ikx,iky,izh2+1) + uok(ikx,iky,izh2-1))/(dz*dz)  - (2.* nuz/(dz*dz) + nuh *kh2)*uok(ikx,iky,izh2) 
-                  dvk(ikx,iky,izh1) =  nuz *(vok(ikx,iky,izh2+1) + vok(ikx,iky,izh2-1))/(dz*dz)  - (2.* nuz/(dz*dz) + nuh *kh2)*vok(ikx,iky,izh2) 
-                  dwk(ikx,iky,izh1) =  nuz *(wok(ikx,iky,izh2+1) + wok(ikx,iky,izh2-1))/(dz*dz)  - (2.* nuz/(dz*dz) + nuh *kh2)*wok(ikx,iky,izh2) 
-                  dtk(ikx,iky,izh1) =  nutz*(tok(ikx,iky,izh2+1) + tok(ikx,iky,izh2-1))/(dz*dz)  - (2.*nutz/(dz*dz) + nuth*kh2)*tok(ikx,iky,izh2) 
-               else
-                  duk(ikx,iky,izh1) = (0.D0,0.D0)
-                  dvk(ikx,iky,izh1) = (0.D0,0.D0)
-                  dwk(ikx,iky,izh1) = (0.D0,0.D0)
-                  dtk(ikx,iky,izh1) = (0.D0,0.D0)
-               endif
-           enddo
-        enddo
-     enddo
-
-     if(mype==0) then
-
-         do iky=1,ikty
-            ky = kya(iky)
-            do ikx=1,iktx
-               kx = kxa(ikx)
-               kh2=kx*kx+ky*ky
-               kh2=kh2**ilap !Hyperviscosity
-               if (L(ikx,iky).eq.1) then
-                  duk(ikx,iky,izbot1) =  nuz *( uok(ikx,iky,izbot2+1) )/(dz*dz)  - (nuz/(dz*dz) + nuh*kh2)*uok(ikx,iky,izbot2)
-                  dvk(ikx,iky,izbot1) =  nuz *( vok(ikx,iky,izbot2+1) )/(dz*dz)  - (nuz/(dz*dz) + nuh*kh2)*vok(ikx,iky,izbot2)
-                  dwk(ikx,iky,izbot1) =  nuz *( wok(ikx,iky,izbot2+1) )/(dz*dz)  - (2.* nuz/(dz*dz) + nuh *kh2)*wok(ikx,iky,izbot2)
-                  dtk(ikx,iky,izbot1) =  nutz*( tok(ikx,iky,izbot2+1) )/(dz*dz)  - (2.*nutz/(dz*dz) + nuth*kh2)*tok(ikx,iky,izbot2)
-               else
-                  duk(ikx,iky,izbot1) = (0.D0,0.D0)
-                  dvk(ikx,iky,izbot1) = (0.D0,0.D0)
-                  dwk(ikx,iky,izbot1) = (0.D0,0.D0)
-                  dtk(ikx,iky,izbot1) = (0.D0,0.D0)
-               endif
-           enddo
-        enddo
-
-
-     else if(mype==(npe-1)) then
-
-         do iky=1,ikty
-            ky = kya(iky)
-            do ikx=1,iktx
-               kx = kxa(ikx)
-               kh2=kx*kx+ky*ky
-               kh2=kh2**ilap !Hyperviscosity
-               if (L(ikx,iky).eq.1) then
-
-                  dwk(ikx,iky,iztop1-1) =  nuz *( wok(ikx,iky,iztop2-2) )/(dz*dz)  - (2.* nuz/(dz*dz) + nuh *kh2)*wok(ikx,iky,iztop2-1)   !Not necessary, double safety
-                  dtk(ikx,iky,iztop1-1) =  nutz*( tok(ikx,iky,iztop2-2) )/(dz*dz)  - (2.*nutz/(dz*dz) + nuth*kh2)*tok(ikx,iky,iztop2-1)   !Not necessary, double safety
-
-                  duk(ikx,iky,iztop1) =  nuz*( uok(ikx,iky,iztop2-1) )/(dz*dz)  - (nuz/(dz*dz) + nuh*kh2)*uok(ikx,iky,iztop2)
-                  dvk(ikx,iky,iztop1) =  nuz*( vok(ikx,iky,iztop2-1) )/(dz*dz)  - (nuz/(dz*dz) + nuh*kh2)*vok(ikx,iky,iztop2)
-                  dwk(ikx,iky,iztop1) =  (0.D0,0.D0)
-                  dtk(ikx,iky,iztop1) =  (0.D0,0.D0)
-
-               else
-                  
-                  dwk(ikx,iky,iztop1-1) = (0.D0,0.D0)
-                  dtk(ikx,iky,iztop1-1) = (0.D0,0.D0)
-
-                  duk(ikx,iky,iztop1) = (0.D0,0.D0)
-                  dvk(ikx,iky,iztop1) = (0.D0,0.D0)
-                  dwk(ikx,iky,iztop1) = (0.D0,0.D0)
-                  dtk(ikx,iky,iztop1) = (0.D0,0.D0)
-
-               endif
-           enddo
-        enddo
-
-     end if
-
-
-    END SUBROUTINE dissipation
-
-
-
-
-
-    SUBROUTINE  dissipation_q(dqk,qok)  !WRONG WITH HYPERVISC
-
-      ! This subroutine computes the dissipation of q, assuming that just like u,v,psi, q is symmetric about the top and bot (dq/dz=0) so Q_N+1 = Q_N and Q_0 = Q_1.
-
-      double complex, dimension(iktx,ikty,n3h1) :: qok
-      double complex, dimension(iktx,ikty,n3h0) :: dqk
-
-
-      do izh0=1,n3h0
-         izh1=izh0+1
-         do iky=1,ikty
-            ky = kya(iky)
-            do ikx=1,iktx
-               kx = kxa(ikx)
-               kh2=kx*kx+ky*ky
-               kh2=kh2**ilap !Hyperviscosity
-               if (L(ikx,iky).eq.1) then
-                  dqk(ikx,iky,izh0) =  nuz *(qok(ikx,iky,izh1+1) + qok(ikx,iky,izh1-1))/(dz*dz)  - (2.* nuz/(dz*dz) + nuh *kh2)*qok(ikx,iky,izh1) 
-               else
-                  dqk(ikx,iky,izh0) = (0.D0,0.D0)
-               endif
-           enddo
-        enddo
-     enddo
-
-     if(mype==0) then
-
-         do iky=1,ikty
-            ky = kya(iky)
-            do ikx=1,iktx
-               kx = kxa(ikx)
-               kh2=kx*kx+ky*ky
-               kh2=kh2**ilap !Hyperviscosity
-               if (L(ikx,iky).eq.1) then
-                  dqk(ikx,iky,1) =  nuz *( qok(ikx,iky,izbot1+1) )/(dz*dz)  - (nuz/(dz*dz) + nuh*kh2)*qok(ikx,iky,izbot1)
-               else
-                  dqk(ikx,iky,1) = (0.D0,0.D0)
-               endif
-           enddo
-        enddo
-
-
-     else if(mype==(npe-1)) then
-
-         do iky=1,ikty
-            ky = kya(iky)
-            do ikx=1,iktx
-               kx = kxa(ikx)
-               kh2=kx*kx+ky*ky
-               kh2=kh2**ilap !Hyperviscosity
-               if (L(ikx,iky).eq.1) then
-                  dqk(ikx,iky,n3h0) =  nuz*( qok(ikx,iky,iztop1-1) )/(dz*dz)  - (nuz/(dz*dz) + nuh*kh2)*qok(ikx,iky,iztop1)
-               else
-                  dqk(ikx,iky,n3h0) = (0.D0,0.D0)
-               endif
-           enddo
-        enddo
-
-     end if
-
-
-   END SUBROUTINE dissipation_q
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    SUBROUTINE  dissipation_nv(duk,dvk,dwk,dbk,uok,vok,wok,bok)
-      ! this subroutine computes ((u.grad)u)i = d/dxj(uj ui) in the divergence form on a staggered grid.                                                                                                                                    
-      double complex, dimension(iktx,ikty,n3h2) :: uok,vok,wok,bok
-      double complex, dimension(iktx,ikty,n3h1) :: duk,dvk,dwk,dbk
-
-
-      do izh1=1,n3h1
-         izh2=izh1+1
-         do iky=1,ikty
-            do ikx=1,iktx
-               if (L(ikx,iky).eq.1) then
-                  duk(ikx,iky,izh1) =  nuz *(uok(ikx,iky,izh2+1) - 2.*uok(ikx,iky,izh2) + uok(ikx,iky,izh2-1))/(dz*dz)  
-                  dvk(ikx,iky,izh1) =  nuz *(vok(ikx,iky,izh2+1) - 2.*vok(ikx,iky,izh2) + vok(ikx,iky,izh2-1))/(dz*dz) 
-                  dwk(ikx,iky,izh1) =  nuz *(wok(ikx,iky,izh2+1) - 2.*wok(ikx,iky,izh2) + wok(ikx,iky,izh2-1))/(dz*dz) 
-                  dbk(ikx,iky,izh1) =  nutz*(bok(ikx,iky,izh2+1) - 2.*bok(ikx,iky,izh2) + bok(ikx,iky,izh2-1))/(dz*dz) 
-!                  dtk(ikx,iky,izh1) =  nutz*(tok(ikx,iky,izh2+1) - 2.*tok(ikx,iky,izh2) + tok(ikx,iky,izh2-1))/(dz*dz)  
-               else
-                  duk(ikx,iky,izh1) = (0.D0,0.D0)
-                  dvk(ikx,iky,izh1) = (0.D0,0.D0)
-                  dwk(ikx,iky,izh1) = (0.D0,0.D0)
-                  dbk(ikx,iky,izh1) = (0.D0,0.D0)
-!                  dtk(ikx,iky,izh1) = (0.D0,0.D0)
-               endif
-           enddo
-        enddo
-     enddo
-
-     if(mype==0) then
-
-         do iky=1,ikty
-            do ikx=1,iktx
-               if (L(ikx,iky).eq.1) then
-                  duk(ikx,iky,izbot1) =  nuz *( uok(ikx,iky,izbot2+1) - uok(ikx,iky,izbot2) )/(dz*dz)  
-                  dvk(ikx,iky,izbot1) =  nuz *( vok(ikx,iky,izbot2+1) - vok(ikx,iky,izbot2) )/(dz*dz)  
-                  dwk(ikx,iky,izbot1) =  nuz *( wok(ikx,iky,izbot2+1) - 2.*wok(ikx,iky,izbot2) )/(dz*dz)
-                  dbk(ikx,iky,izbot1) =  nutz*( bok(ikx,iky,izbot2+1) - bok(ikx,iky,izbot2) )/(dz*dz)    
-!                  dtk(ikx,iky,izbot1) =  nutz*( tok(ikx,iky,izbot2+1) - 2.*tok(ikx,iky,izbot2) )/(dz*dz)  
-               else
-                  duk(ikx,iky,izbot1) = (0.D0,0.D0)
-                  dvk(ikx,iky,izbot1) = (0.D0,0.D0)
-                  dwk(ikx,iky,izbot1) = (0.D0,0.D0)
-                  dbk(ikx,iky,izbot1) = (0.D0,0.D0)
-!                  dtk(ikx,iky,izbot1) = (0.D0,0.D0)
-               endif
-           enddo
-        enddo
-
-
-     else if(mype==(npe-1)) then
-
-         do iky=1,ikty
-            do ikx=1,iktx
-               if (L(ikx,iky).eq.1) then
-
-                  dwk(ikx,iky,iztop1-1) =  nuz *( wok(ikx,iky,iztop2-2) -2.*wok(ikx,iky,iztop2-1) )/(dz*dz)    !Not necessary, double safety
-!                  dtk(ikx,iky,iztop1-1) =  nutz*( tok(ikx,iky,iztop2-2) -2.*tok(ikx,iky,iztop2-1) )/(dz*dz)    !Not necessary, double safety
-
-                  duk(ikx,iky,iztop1) =  nuz*( uok(ikx,iky,iztop2-1) - uok(ikx,iky,iztop2) )/(dz*dz) 
-                  dvk(ikx,iky,iztop1) =  nuz*( vok(ikx,iky,iztop2-1) - vok(ikx,iky,iztop2) )/(dz*dz) 
-                  dwk(ikx,iky,iztop1) =  (0.D0,0.D0)
-                  dbk(ikx,iky,iztop1) = nutz*( bok(ikx,iky,iztop2-1) - bok(ikx,iky,iztop2) )/(dz*dz) 
-!                  dtk(ikx,iky,iztop1) =  (0.D0,0.D0)
-
-               else
-                  
-                  dwk(ikx,iky,iztop1-1) = (0.D0,0.D0)
-!                  dtk(ikx,iky,iztop1-1) = (0.D0,0.D0)
-
-                  duk(ikx,iky,iztop1) = (0.D0,0.D0)
-                  dvk(ikx,iky,iztop1) = (0.D0,0.D0)
-                  dwk(ikx,iky,iztop1) = (0.D0,0.D0)
-                  dbk(ikx,iky,iztop1) = (0.D0,0.D0)
-!                  dtk(ikx,iky,iztop1) = (0.D0,0.D0)
-               endif
-           enddo
-        enddo
-
-     end if
-
-
-   END SUBROUTINE dissipation_nv
-
-
-
-
-
-    SUBROUTINE  dissipation_q_nv(dqk,qok)
-
-      ! This subroutine computes the VERTICAL dissipation of q at ts n-1 (lagged), assuming that just like u,v,psi, q is symmetric about the top and bot (dq/dz=0) so Q_N+1 = Q_N and Q_0 = Q_1.
-
-      double complex, dimension(iktx,ikty,n3h1) :: qok
-      double complex, dimension(iktx,ikty,n3h0) :: dqk
-
-
-      do izh0=1,n3h0
-         izh1=izh0+1
-         do iky=1,ikty
-            do ikx=1,iktx
-               if (L(ikx,iky).eq.1) then
-                  dqk(ikx,iky,izh0) =  nuz *(qok(ikx,iky,izh1+1) -2.*qok(ikx,iky,izh1) + qok(ikx,iky,izh1-1))/(dz*dz)  
-               else
-                  dqk(ikx,iky,izh0) = (0.D0,0.D0)
-               endif
-           enddo
-        enddo
-     enddo
-
-     if(mype==0) then
-
-         do iky=1,ikty
-            do ikx=1,iktx
-               if (L(ikx,iky).eq.1) then
-                  dqk(ikx,iky,1) =  nuz *( qok(ikx,iky,izbot1+1) - qok(ikx,iky,izbot1) )/(dz*dz)  
-               else
-                  dqk(ikx,iky,1) = (0.D0,0.D0)
-               endif
-           enddo
-        enddo
-
-
-     else if(mype==(npe-1)) then
-
-         do iky=1,ikty
-            do ikx=1,iktx
-               if (L(ikx,iky).eq.1) then
-                  dqk(ikx,iky,n3h0) =  nuz*( qok(ikx,iky,iztop1-1) - qok(ikx,iky,iztop1) )/(dz*dz)  
-               else
-                  dqk(ikx,iky,n3h0) = (0.D0,0.D0)
-               endif
-           enddo
-        enddo
-
-     end if
-
-
-   END SUBROUTINE dissipation_q_nv
-
 
 
     subroutine vort(uk,vk,wk,zxk,zyk,zzk)
@@ -2480,10 +2304,60 @@ subroutine spec_A(ARkt,AIkt)
 
     end DO
 
-
-    count_A = count_A + 1
+    if(print_A == 1 .and. mod(iter,freq_print_A)==0) count_A = count_A + 1
 
   end subroutine spec_A
 
+
+
+
+
+
+
+
+    SUBROUTINE  barotropize_psi(psik,psik_bt)
+
+      !This subroutine takes psik at some level, then broadcasts it to all processes to create a fake barotropic psi -> psik_bt
+      double complex, dimension(iktx,ikty,n3h1) :: psik           !Original, baroclinic streamfunction
+      double complex, dimension(iktx,ikty,n3h1) :: psik_bt        !Resulting, barotropized, streamfunction
+      double complex, dimension(iktx,ikty)      :: psik_the_one   !psik at the selected level
+      
+      integer :: proc   !mype no that contains the streamfunction to barotropize
+      integer :: izh1s  !index to locate the selected level for the bt streamfunction
+
+      psik_the_one = (0.D0,0.D0) 
+      psik_bt = (0.D0,0.D0) 
+
+      !Find the processor containing the selected level
+      proc = (bt_level-1)/n3h0             !which processor                                                                                                                  
+      izh1s = bt_level - proc*n3h0 + 1     !position in the processor (valid for n3h1 fields only)  
+       
+
+      !Define the psik to broadcast to everybody
+      if(mype==proc) then   
+         do iky=1,ikty
+            do ikx=1,iktx
+               if (L(ikx,iky).eq.1) then
+                  psik_the_one(ikx,iky) = psik(ikx,iky,izh1s)
+               endif
+            enddo
+         enddo
+      end if
+
+      !Broadcast the streamfunction to everybody                                                        
+      call mpi_bcast(psik_the_one,iktx*ikty,MPI_DOUBLE_COMPLEX,proc,MPI_COMM_WORLD,ierror)
+
+      !Define the barotropic streamfunction by using the newly available psik_the_one
+      do izh1=1,n3h1
+         do iky=1,ikty
+            do ikx=1,iktx
+               if (L(ikx,iky).eq.1) then
+                  psik_bt(ikx,iky,izh1) = psik_the_one(ikx,iky)
+               end if
+            end do
+         end do
+      end do
+
+    END SUBROUTINE barotropize_psi
 
     END MODULE derivatives

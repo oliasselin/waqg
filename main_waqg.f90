@@ -39,7 +39,6 @@ PROGRAM main
   double complex,   dimension(iktx,ikty,n3h0) :: qwk
   double precision, dimension(n1d,n2d,n3h0)   :: qwr
 
-  double complex,   dimension(iktx,ikty,n3h0) :: dqk         !dissipation
   double complex,   dimension(iktx,ikty,n3h1) :: psik        !pressure, and rhs of pressure equation!
   double precision, dimension(n1d,n2d,n3h1)   :: psir
   double complex,   dimension(iktx,ikty,n3h1) :: psi_old     !For computing w...
@@ -56,7 +55,8 @@ PROGRAM main
 
   double complex, dimension(iktx,ikty,2) :: sigma    !Vertial integral of A(kx,ky), 1=real part, 2=imag part
 
-  double complex,   dimension(iktx,ikty,n3h0) :: FtRk=(0.D0,0.D0), FtIk=(0.D0,0.D0)        !YBJ Forcing term (or any other term on the right-hand side of the YBJ equation, e.g. mean-flow advection of LA) Must be set to zero if no forcing present)
+  double complex,   dimension(iktx,ikty,n3h0) :: FtRk, FtIk        !YBJ Forcing term (or any other term on the right-hand side of the YBJ equation, e.g. mean-flow advection of LA) Must be set to zero if no forcing present)
+  double precision, dimension(n1d,n2d,n3h0)   :: FtRr, FtIr             
 
   equivalence(ur,uk)
   equivalence(vr,vk)
@@ -81,6 +81,9 @@ PROGRAM main
   equivalence(rBRr,rBRk)
   equivalence(rBIr,rBIk)
 
+  equivalence(FtRr,FtRk)
+  equivalence(FtIr,FtIk)
+
   double precision, dimension(n1d,n2d) :: array2dr
   double complex,   dimension(iktx,ikty) :: array2di
 
@@ -90,14 +93,27 @@ PROGRAM main
   equivalence(fr_odd ,fk_odd )
   equivalence(array2dr,array2di)
 
-  !For implicit dissipation
-  double complex :: diss             ! nu_H * kH**(2*ilap) delt
+  !Integrating factor (includes both dissipation and mean-flow advection in the Eady problem (must be complex in the latter case). One for the flow, one for the waves (w)
+  double complex :: int_factor,int_factor_w
 
-  !Rotational part of u for slice...                                                                                                                                                                                                         
+  !Rotational part of u for slice...                                                                                      
   double complex, dimension(iktx,ikty,n3h1) :: u_rot
   double precision, dimension(n1d,n2d,n3h1) :: u_rotr
 
   equivalence(u_rotr,u_rot)
+
+  !Test the potential energy balance by directly diagnosing d/dt B.
+  double complex,   dimension(iktx,ikty,n3h0) :: dBRk, dBIk
+  double precision, dimension(n1d,n2d,n3h0)   :: dBRr, dBIr
+
+  equivalence(dBRr,dBRk)
+  equivalence(dBIr,dBIk)
+
+  !Barotropic version of the streamfunction
+  double complex,   dimension(iktx,ikty,n3h1) :: psik_bt        !pressure, and rhs of pressure equation!
+  double precision, dimension(n1d,n2d,n3h1)   :: psir_bt
+
+  equivalence(psir_bt,psik_bt)
 
   !********************** Initializing... *******************************!
 
@@ -119,15 +135,18 @@ PROGRAM main
   call compute_velo(uk,vk,wk,bk,psik)
   if(npe > 1) call generate_halo(uk,vk,wk,bk)
   if(npe > 1) call generate_halo_q(qk) 
-
  
  psi_old = psik 
      qok = qk 
 
-  !For the stability test!
-  call generate_fields_stag(BRr,n3h0,BIr,n3h0,wr,n3h2) 
-  call fft_r2c(BRr,BRk,n3h0)  
-  call fft_r2c(BIr,BIk,n3h0)  
+  !**Initialize a storm**!
+  call generate_fields_stag(wr,n3h2,ARr,n3h0,BRr,n3h0) 
+  call fft_r2c(ARr,ARk,n3h0)
+  call fft_r2c(BRr,BRk,n3h0)
+  AIk = (0.D0,0.D0)
+  BIk = (0.D0,0.D0)
+  CRk = (0.D0,0.D0)
+  CIk = (0.D0,0.D0)
   !----------------------!
 
   
@@ -151,6 +170,14 @@ PROGRAM main
     if(out_slice ==1) call slices(uk,vk,bk,psik,qk,ur,vr,br,psir,qr,id_field)
  end do
 
+ do id_field=1,nfieldsw                                            
+    if(out_slicew ==1) call slices_waves(BRk,BIk,BRr,BIr,CRk,CIk,id_field)
+ end do
+
+ do iz=1,num_spec
+    if(out_hspecw ==1) call hspec_waves(BRk,BIk,CRk,CIk,iz)
+ end do
+
  if(dump==1) call dump_restart(psik)
 
 
@@ -171,17 +198,21 @@ PROGRAM main
     rBIk = (0.D0,0.D0)
     ARk = (0.D0,0.D0)
     AIk = (0.D0,0.D0)
+ else if(no_waves == 0 .and. barotropize == 1) then
+    call convol_q(nqk,nqr,uk,vk,qk,ur,vr,qr)
+
+    !Compute the u and v from the barotropized streamfunction (to be used in convol_waves)                                                                                          
+    call barotropize_psi(psik,psik_bt)
+    call compute_velo(uk,vk,wk,bk,psik_bt)
+    if(npe > 1) call generate_halo(uk,vk,wk,bk)
+
+    if(zero_aveB==1) call sumB(BRk,BIk)                                               !Resets the vertical sum of B to zero                                                         
+    call convol_waves(nBRk,nBIk,nBRr,nBIr,uk,vk,BRk,BIk,ur,vr,BRr,BIr)
+    call refraction_waqg(rBRk,rBIk,rBRr,rBIr,BRk,BIk,psik_bt,BRr,BIr,psir_bt)
  else
-    if(zero_aveB==1) call sumB(BRk,BIk)                           !Resets the vertical sum of B to zero
+    if(zero_aveB==1) call sumB(BRk,BIk)                                               !Resets the vertical sum of B to zero
     call convol_waqg(nqk,nBRk,nBIk,nqr,nBRr,nBIr,uk,vk,qk,BRk,BIk,ur,vr,qr,BRr,BIr)
     call refraction_waqg(rBRk,rBIk,rBRr,rBIr,BRk,BIk,psik,BRr,BIr,psir)
- end if
-
- !Compute dissipation 
- call dissipation_q_nv(dqk,qok)
- 
- if(inviscid==1) then
-    dqk=(0.D0,0.D0)
  end if
 
  if(linear==1) then
@@ -200,16 +231,16 @@ PROGRAM main
     rBIk = (0.D0,0.D0)
  end if
 
-  qok = qk
- BRok = BRk
- BIok = BIk
-
  if(passive_scalar==1) then
     ARk = (0.D0,0.D0)
     AIk = (0.D0,0.D0)
    rBRk = (0.D0,0.D0)
    rBIk = (0.D0,0.D0)
 end if
+
+  qok = qk
+ BRok = BRk
+ BIok = BIk
 
  !Compute q^1 and B^1 with Forward Euler  
  do izh0=1,n3h0
@@ -220,26 +251,45 @@ end if
           kx = kxa(ikx)
           kh2=kx*kx+ky*ky
 
-          if(eady==1) then
-             diss = delt* (i*kx*zash0(izh0) +  nuh*((1.*kx)**(2.*ilap) + (1.*ky)**(2.*ilap))  )     !Integrating factor includes the term Uqx
+          if(eady==1 .and. expeady == 0 .and. barotropize == 0) then      !Integrating factor includes the terms Uqx and ULAx
+             int_factor   = delt* (i*kx*zash0(izh0)                    +  nuh1 *((1.*kx)**(2.*ilap1 ) + (1.*ky)**(2.*ilap1 )) + nuh2 *((1.*kx)**(2.*ilap2 ) + (1.*ky)**(2.*ilap2 ))  )
+             int_factor_w = delt* (i*kx*zash0(izh0)                    +  nuh1w*((1.*kx)**(2.*ilap1w) + (1.*ky)**(2.*ilap1w)) + nuh2w*((1.*kx)**(2.*ilap2w) + (1.*ky)**(2.*ilap2w))  )
+          elseif(eady==1 .and. expeady == 1 .and. barotropize == 0) then      !Integrating factor includes the terms U exp() qx and U exp() LAx
+             int_factor   = delt* (i*kx*exp(N2_scale*(zash0(izh0)-z0)) +  nuh1 *((1.*kx)**(2.*ilap1 ) + (1.*ky)**(2.*ilap1 )) + nuh2 *((1.*kx)**(2.*ilap2 ) + (1.*ky)**(2.*ilap2 ))  )
+             int_factor_w = delt* (i*kx*exp(N2_scale*(zash0(izh0)-z0)) +  nuh1w*((1.*kx)**(2.*ilap1w) + (1.*ky)**(2.*ilap1w)) + nuh2w*((1.*kx)**(2.*ilap2w) + (1.*ky)**(2.*ilap2w))  )
+          else if(eady==1 .and. expeady == 0 .and. barotropize == 1) then      !Integrating factor includes the term Uqx but NOT the U LAx term
+             int_factor   = delt* (i*kx*zash0(izh0)                    +  nuh1 *((1.*kx)**(2.*ilap1 ) + (1.*ky)**(2.*ilap1 )) + nuh2 *((1.*kx)**(2.*ilap2 ) + (1.*ky)**(2.*ilap2 ))  )
+             int_factor_w = delt* (                                       nuh1w*((1.*kx)**(2.*ilap1w) + (1.*ky)**(2.*ilap1w)) + nuh2w*((1.*kx)**(2.*ilap2w) + (1.*ky)**(2.*ilap2w))  )
+          elseif(eady==1 .and. expeady == 1 .and. barotropize == 1) then      !Integrating factor includes the terms U exp() qx but not U exp() LAx
+             int_factor   = delt* (i*kx*exp(N2_scale*(zash0(izh0)-z0)) +  nuh1 *((1.*kx)**(2.*ilap1 ) + (1.*ky)**(2.*ilap1 )) + nuh2 *((1.*kx)**(2.*ilap2 ) + (1.*ky)**(2.*ilap2 ))  )
+             int_factor_w = delt* (                                       nuh1w*((1.*kx)**(2.*ilap1w) + (1.*ky)**(2.*ilap1w)) + nuh2w*((1.*kx)**(2.*ilap2w) + (1.*ky)**(2.*ilap2w))  )
           else
-             diss = nuh*delt*((1.*kx)**(2.*ilap) + (1.*ky)**(2.*ilap))          
+             int_factor   = delt* (                                       nuh1 *((1.*kx)**(2.*ilap1 ) + (1.*ky)**(2.*ilap1 )) + nuh2 *((1.*kx)**(2.*ilap2 ) + (1.*ky)**(2.*ilap2 ))  )
+             int_factor_w = delt* (                                       nuh1w*((1.*kx)**(2.*ilap1w) + (1.*ky)**(2.*ilap1w)) + nuh2w*((1.*kx)**(2.*ilap2w) + (1.*ky)**(2.*ilap2w))  )
           end if
 
           if (L(ikx,iky).eq.1) then
-             qk(ikx,iky,izh1) = (  qok(ikx,iky,izh1) - delt* nqk(ikx,iky,izh0)  + delt*dqk(ikx,iky,izh0) )*exp(-diss)
-            BRk(ikx,iky,izh0) = ( BRok(ikx,iky,izh0) - delt*nBRk(ikx,iky,izh0)  - delt*(0.5/(Bu*Ro))*kh2*AIk(ikx,iky,izh0) + delt*0.5*rBIk(ikx,iky,izh0) )*exp(-diss)
-            BIk(ikx,iky,izh0) = ( BIok(ikx,iky,izh0) - delt*nBIk(ikx,iky,izh0)  + delt*(0.5/(Bu*Ro))*kh2*ARk(ikx,iky,izh0) - delt*0.5*rBRk(ikx,iky,izh0) )*exp(-diss)
+             qk(ikx,iky,izh1) = (  qok(ikx,iky,izh1) - delt* nqk(ikx,iky,izh0) )*exp(-int_factor)
+            BRk(ikx,iky,izh0) = ( BRok(ikx,iky,izh0) - delt*nBRk(ikx,iky,izh0)  - delt*(0.5/(Bu*Ro))*kh2*AIk(ikx,iky,izh0) + delt*0.5*rBIk(ikx,iky,izh0) )*exp(-int_factor_w)
+            BIk(ikx,iky,izh0) = ( BIok(ikx,iky,izh0) - delt*nBIk(ikx,iky,izh0)  + delt*(0.5/(Bu*Ro))*kh2*ARk(ikx,iky,izh0) - delt*0.5*rBRk(ikx,iky,izh0) )*exp(-int_factor_w)
 
             if(eady == 1 .and. eady_bnd == 1) then  !Add bottom and top boundary terms
                !Bottom boundary: add vQy and the Ekman term                
                if(mype == 0 .and. izh0 == 1) then
-                  qk(ikx,iky,izh1) = qk(ikx,iky,izh1) + delt*(1./dz)*(i*kx*Bu*psik(ikx,iky,izh1) + (1.*kh2)*Ek*psi_old(ikx,iky,izh1) )*exp(-diss)
+                  if(expeady==1) then    !Expeady => extra H/h factor in the temperature term                                                                                        
+                     qk(ikx,iky,izh1) = qk(ikx,iky,izh1) + delt*(1./dz)*(i*kx*N2_scale*Bu*psik(ikx,iky,izh1) + (1.*kh2)*Ek*psi_old(ikx,iky,izh1) )*exp(-int_factor)
+                  else
+                     qk(ikx,iky,izh1) = qk(ikx,iky,izh1) + delt*(1./dz)*(i*kx*         Bu*psik(ikx,iky,izh1) + (1.*kh2)*Ek*psi_old(ikx,iky,izh1) )*exp(-int_factor)
+                  end if
                end if
 
                !Top Boundary: add vQy            
                if(mype == (npe-1) .and. izh0 == n3h0) then
-                  qk(ikx,iky,izh1) = qk(ikx,iky,izh1) - delt*(1./dz)*(i*kx*Bu)*psik(ikx,iky,izh1)*exp(-diss)
+                  if(expeady==1) then    !Expeady => extra H/h factor in the temperature term                        
+                     qk(ikx,iky,izh1) = qk(ikx,iky,izh1) - delt*(1./dz)*(i*kx*N2_scale*Bu)*psik(ikx,iky,izh1)*exp(-int_factor)
+                  else
+                     qk(ikx,iky,izh1) = qk(ikx,iky,izh1) - delt*(1./dz)*(i*kx*         Bu)*psik(ikx,iky,izh1)*exp(-int_factor)
+                  end if
                end if
             end if
 
@@ -265,7 +315,7 @@ if(fixed_flow==0) then
  !Keep the old version of psi for the stability of the Ekman term
  psi_old = psik 
 
- if(no_waves == 1) then
+ if(no_feedback == 1 .or. no_waves == 1) then
     qwk = (0.D0,0.D0)
  else
     call compute_qw(qwk,BRk,BIk,qwr,BRr,BIr)           ! Compute qw
@@ -313,19 +363,23 @@ end if
         rBIk = (0.D0,0.D0)
         ARk = (0.D0,0.D0)
         AIk = (0.D0,0.D0)
+     else if(no_waves == 0 .and. barotropize == 1) then
+        call convol_q(nqk,nqr,uk,vk,qk,ur,vr,qr)
+        
+        !Compute the u and v from the barotropized streamfunction (to be used in convol_waves)                                                                         
+        call barotropize_psi(psik,psik_bt)
+        call compute_velo(uk,vk,wk,bk,psik_bt)
+        if(npe > 1) call generate_halo(uk,vk,wk,bk)
+        
+        if(zero_aveB==1) call sumB(BRk,BIk)                           !Resets the vertical sum of B to zero                                                                         
+        call convol_waves(nBRk,nBIk,nBRr,nBIr,uk,vk,BRk,BIk,ur,vr,BRr,BIr)
+        call refraction_waqg(rBRk,rBIk,rBRr,rBIr,BRk,BIk,psik_bt,BRr,BIr,psir_bt)
      else
         if(zero_aveB==1) call sumB(BRk,BIk)                           !Resets the vertical sum of B to zero
         call convol_waqg(nqk,nBRk,nBIk,nqr,nBRr,nBIr,uk,vk,qk,BRk,BIk,ur,vr,qr,BRr,BIr)
         call refraction_waqg(rBRk,rBIk,rBRr,rBIr,BRk,BIk,psik,BRr,BIr,psir)
      end if
- 
-     !Compute dissipation from qok
-     call dissipation_q_nv(dqk,qok)
-
-     if(inviscid==1) then
-        dqk=(0.D0,0.D0)
-     end if
-
+     
      if(linear==1) then
         nqk=(0.D0,0.D0)
         nBRk=(0.D0,0.D0)
@@ -351,15 +405,22 @@ end if
 
      if(passive_scalar/=1 .and. no_dispersion/=1 .and. no_waves/=1) then     !This was moved to the right place on October 1st, 2018 (see diary on the same day for details)
         ! --- Recover A from B --- !
-        if(eady==1) then !Include the mean-flow advection in the right-hand side, J(Psi,LA) --> i*k_x*z*LA
+        if(eady==1 .and. barotropize == 0) then !Include the mean-flow advection in the right-hand side, J(Psi,LA) --> i*k_x*z*LA
            do izh0=1,n3h0
               do iky=1,ikty
                  do ikx=1,iktx
                     kx = kxa(ikx)
 
-                    if (L(ikx,iky).eq.1) then
-                       FtRk(ikx,iky,izh0)=i*kx*zash0(izh0)*BRk(ikx,iky,izh0)
-                       FtIk(ikx,iky,izh0)=i*kx*zash0(izh0)*BIk(ikx,iky,izh0)
+                    if(expeady==1) then
+                       if (L(ikx,iky).eq.1) then
+                          FtRk(ikx,iky,izh0)=i*kx*exp(N2_scale*(zash0(izh0)-z0))*BRk(ikx,iky,izh0)
+                          FtIk(ikx,iky,izh0)=i*kx*exp(N2_scale*(zash0(izh0)-z0))*BIk(ikx,iky,izh0)
+                       end if
+                    else   !Regular linear shear
+                       if (L(ikx,iky).eq.1) then
+                          FtRk(ikx,iky,izh0)=i*kx*zash0(izh0)*BRk(ikx,iky,izh0)
+                          FtIk(ikx,iky,izh0)=i*kx*zash0(izh0)*BIk(ikx,iky,izh0)
+                       end if
                     end if
 
                  end do
@@ -390,26 +451,46 @@ end if
               kx = kxa(ikx)
               kh2=kx*kx+ky*ky
 
-              if(eady==1) then
-                 diss = delt* (i*kx*zash0(izh0) +  nuh*((1.*kx)**(2.*ilap) + (1.*ky)**(2.*ilap)) )     !Integrating factor includes the term Uqx
+              if(eady==1 .and. expeady == 0 .and. barotropize == 0) then      !Integrating factor includes the terms Uqx and ULAx
+                 int_factor   = delt* (i*kx*zash0(izh0)                    +  nuh1 *((1.*kx)**(2.*ilap1 ) + (1.*ky)**(2.*ilap1 )) + nuh2 *((1.*kx)**(2.*ilap2 ) + (1.*ky)**(2.*ilap2 ))  )
+                 int_factor_w = delt* (i*kx*zash0(izh0)                    +  nuh1w*((1.*kx)**(2.*ilap1w) + (1.*ky)**(2.*ilap1w)) + nuh2w*((1.*kx)**(2.*ilap2w) + (1.*ky)**(2.*ilap2w))  )
+              elseif(eady==1 .and. expeady == 1 .and. barotropize == 0) then      !Integrating factor includes the terms U exp() qx and U exp() LAx
+                 int_factor   = delt* (i*kx*exp(N2_scale*(zash0(izh0)-z0)) +  nuh1 *((1.*kx)**(2.*ilap1 ) + (1.*ky)**(2.*ilap1 )) + nuh2 *((1.*kx)**(2.*ilap2 ) + (1.*ky)**(2.*ilap2 ))  )
+                 int_factor_w = delt* (i*kx*exp(N2_scale*(zash0(izh0)-z0)) +  nuh1w*((1.*kx)**(2.*ilap1w) + (1.*ky)**(2.*ilap1w)) + nuh2w*((1.*kx)**(2.*ilap2w) + (1.*ky)**(2.*ilap2w))  )
+              else if(eady==1 .and. expeady == 0 .and. barotropize == 1) then      !Integrating factor includes the term Uqx but NOT the U LAx term
+                 int_factor   = delt* (i*kx*zash0(izh0)                    +  nuh1 *((1.*kx)**(2.*ilap1 ) + (1.*ky)**(2.*ilap1 )) + nuh2 *((1.*kx)**(2.*ilap2 ) + (1.*ky)**(2.*ilap2 ))  )
+                 int_factor_w = delt* (                                       nuh1w*((1.*kx)**(2.*ilap1w) + (1.*ky)**(2.*ilap1w)) + nuh2w*((1.*kx)**(2.*ilap2w) + (1.*ky)**(2.*ilap2w))  )
+              elseif(eady==1 .and. expeady == 1 .and. barotropize == 1) then      !Integrating factor includes the terms U exp() qx but not U exp() LAx
+                 int_factor   = delt* (i*kx*exp(N2_scale*(zash0(izh0)-z0)) +  nuh1 *((1.*kx)**(2.*ilap1 ) + (1.*ky)**(2.*ilap1 )) + nuh2 *((1.*kx)**(2.*ilap2 ) + (1.*ky)**(2.*ilap2 ))  )
+                 int_factor_w = delt* (                                       nuh1w*((1.*kx)**(2.*ilap1w) + (1.*ky)**(2.*ilap1w)) + nuh2w*((1.*kx)**(2.*ilap2w) + (1.*ky)**(2.*ilap2w))  )
               else
-                 diss = nuh*delt*((1.*kx)**(2.*ilap) + (1.*ky)**(2.*ilap))          
+                 int_factor   = delt* (                                       nuh1 *((1.*kx)**(2.*ilap1 ) + (1.*ky)**(2.*ilap1 )) + nuh2 *((1.*kx)**(2.*ilap2 ) + (1.*ky)**(2.*ilap2 ))  )
+                 int_factor_w = delt* (                                       nuh1w*((1.*kx)**(2.*ilap1w) + (1.*ky)**(2.*ilap1w)) + nuh2w*((1.*kx)**(2.*ilap2w) + (1.*ky)**(2.*ilap2w))  )
               end if
 
+
               if (L(ikx,iky).eq.1) then
-                 qtempk(ikx,iky,izh1) =  qok(ikx,iky,izh1)*exp(-2*diss) - 2*delt*nqk(ikx,iky,izh0)*exp(-diss)  + 2*delt*dqk(ikx,iky,izh0)*exp(-2*diss)
-                BRtempk(ikx,iky,izh0) = BRok(ikx,iky,izh0)*exp(-2*diss) - 2*delt*(nBRk(ikx,iky,izh0) + (0.5/(Bu*Ro))*kh2*AIk(ikx,iky,izh0) - 0.5*rBIk(ikx,iky,izh0) )*exp(-diss)
-                BItempk(ikx,iky,izh0) = BIok(ikx,iky,izh0)*exp(-2*diss) - 2*delt*(nBIk(ikx,iky,izh0) - (0.5/(Bu*Ro))*kh2*ARk(ikx,iky,izh0) + 0.5*rBRk(ikx,iky,izh0) )*exp(-diss)
+                 qtempk(ikx,iky,izh1) =  qok(ikx,iky,izh1)*exp(-2*int_factor) - 2*delt*nqk(ikx,iky,izh0)*exp(-int_factor) 
+                BRtempk(ikx,iky,izh0) = BRok(ikx,iky,izh0)*exp(-2*int_factor_w) - 2*delt*(nBRk(ikx,iky,izh0) + (0.5/(Bu*Ro))*kh2*AIk(ikx,iky,izh0) - 0.5*rBIk(ikx,iky,izh0) )*exp(-int_factor_w)
+                BItempk(ikx,iky,izh0) = BIok(ikx,iky,izh0)*exp(-2*int_factor_w) - 2*delt*(nBIk(ikx,iky,izh0) - (0.5/(Bu*Ro))*kh2*ARk(ikx,iky,izh0) + 0.5*rBRk(ikx,iky,izh0) )*exp(-int_factor_w)
                 
                 if(eady == 1 .and. eady_bnd == 1) then  !Add bottom and top boundary terms      
                    !Bottom boundary: add vQy and the Ekman term                                                                                                             
                    if(mype == 0 .and. izh0 == 1) then
-                      qtempk(ikx,iky,izh1) = qtempk(ikx,iky,izh1) + 2.*delt*(1./dz)*i*kx*Bu*psik(ikx,iky,izh1)*exp(-diss) + 2.*delt*(1./dz)*(1.*kh2)*Ek*psi_old(ikx,iky,izh1)*exp(-2*diss)
+                      if(expeady==1) then    !Expeady => extra H/h factor in the temperature term
+                         qtempk(ikx,iky,izh1) = qtempk(ikx,iky,izh1) + 2.*delt*(1./dz)*i*kx*N2_scale*Bu*psik(ikx,iky,izh1)*exp(-int_factor) + 2.*delt*(1./dz)*(1.*kh2)*Ek*psi_old(ikx,iky,izh1)*exp(-2*int_factor)
+                      else
+                         qtempk(ikx,iky,izh1) = qtempk(ikx,iky,izh1) + 2.*delt*(1./dz)*i*kx*         Bu*psik(ikx,iky,izh1)*exp(-int_factor) + 2.*delt*(1./dz)*(1.*kh2)*Ek*psi_old(ikx,iky,izh1)*exp(-2*int_factor)
+                      end if
                    end if
 
                    !Top Boundary: add vQy                                                                                                                                        
                    if(mype == (npe-1) .and. izh0 == n3h0) then
-                      qtempk(ikx,iky,izh1) = qtempk(ikx,iky,izh1) - 2.*delt*(1./dz)*(i*kx*Bu)*psik(ikx,iky,izh1)*exp(-diss)
+                      if(expeady==1) then    !Expeady => extra H/h factor in the temperature term 
+                         qtempk(ikx,iky,izh1) = qtempk(ikx,iky,izh1) - 2.*delt*(1./dz)*(i*kx*N2_scale*Bu)*psik(ikx,iky,izh1)*exp(-int_factor)
+                      else
+                         qtempk(ikx,iky,izh1) = qtempk(ikx,iky,izh1) - 2.*delt*(1./dz)*(i*kx*         Bu)*psik(ikx,iky,izh1)*exp(-int_factor)
+                      end if
                    end if
                 end if
 
@@ -423,6 +504,18 @@ end if
         enddo
      enddo
 
+     !Compute d/dt B at the same time that the right-hand side is computed (prior to filtering)
+     dBRk = (BRtempk - BRok)/(2.*delt)
+     dBIk = (BItempk - BIok)/(2.*delt)
+     !Switch signs for the advection due to the base-state, because it is interpreted as Forcing in the right-hand side in the conversion subroutines.
+     if(eady==1) then
+        FtRk = -FtRk
+        FtIk = -FtIk
+     end if
+     if(out_conv ==1 .and. mod(iter,freq_conv )==0)  then
+        call wke_conversion(BRk, BIk, BRr, BIr, FtRk, FtIk, FtRr, FtIr, dBRk, dBIk, dBRr, dBIr)
+        call we_conversion(ARk, AIk, BRk, BIk, CRk, CIk,  dBRk, dBIk, nBRk, nBIk, rBRk, rBIk, FtRk, FtIk, dBRr, dBIr, nBRr, nBIr, rBRr, rBIr, FtRr, FtIr)
+     end if
 
      !Apply Robert-Asselin filter to damp the leap-frog computational mode
      do izh0=1,n3h0
@@ -458,7 +551,7 @@ if(fixed_flow==0) then
  !Keep the old version of psi for the stability of the Ekman term
  psi_old = psik 
 
- if(no_waves == 1) then
+ if(no_feedback == 1 .or. no_waves == 1) then
     qwk = (0.D0,0.D0)
  else
     call compute_qw(qwk,BRk,BIk,qwr,BRr,BIr)           ! Compute qw                                                                                                                    
@@ -502,6 +595,16 @@ if(out_etot ==1 .and. mod(iter,freq_etot )==0) call diag_zentrum(uk,vk,wk,bk,wak
 do id_field=1,nfields
    if(out_slice ==1 .and. mod(iter,freq_slice)==0 .and. count_slice(id_field)<max_slices) call slices(uk,vk,bk,psik,qk,ur,vr,br,psir,qr,id_field)
 end do
+
+
+do id_field=1,nfieldsw
+   if(out_slicew ==1 .and. mod(iter,freq_slicew)==0 .and. count_slicew(id_field)<max_slices) call slices_waves(BRk,BIk,BRr,BIr,CRk,CIk,id_field)
+end do
+
+do iz=1,num_spec
+   if(out_hspecw ==1  .and. mod(iter,freq_hspecw)==0 ) call hspec_waves(BRk,BIk,CRk,CIk,iz)
+end do
+
 
 if(dump==1 .and. mod(iter,freq_dump)==0) call dump_restart(psik)
 
