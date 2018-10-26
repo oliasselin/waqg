@@ -4,8 +4,8 @@ number_of_nodes=1
 number_of_tasks=8
 ntasks_per_node=8
 
-sourdir=/oasis/scratch/comet/oasselin/temp_project/expeady/feedback_test_tiny_Uw/source/
-datadir=/oasis/scratch/comet/oasselin/temp_project/expeady/feedback_test_tiny_Uw/output/
+sourdir=/oasis/scratch/comet/oasselin/temp_project/expeady/feedback_test_corrected/source/
+datadir=/oasis/scratch/comet/oasselin/temp_project/expeady/feedback_test_corrected/output/
 
 mkdir -p $sourdir
 mkdir -p $datadir
