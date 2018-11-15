@@ -1,11 +1,11 @@
 #!/bin/bash
 
-number_of_nodes=4
-number_of_tasks=64
+number_of_nodes=8
+number_of_tasks=128
 ntasks_per_node=16
 
-sourdir=/oasis/scratch/comet/oasselin/temp_project/expeady/storm_bc_dE60_fb_uw1/source/
-datadir=/oasis/scratch/comet/oasselin/temp_project/expeady/storm_bc_dE60_fb_uw1/output/
+sourdir=/oasis/scratch/comet/oasselin/temp_project/niskine/expeady/dE240_dt0.01_U0.025/source/
+datadir=/oasis/scratch/comet/oasselin/temp_project/niskine/expeady/dE240_dt0.01_U0.025/output/
 
 mkdir -p $sourdir
 mkdir -p $datadir
@@ -16,14 +16,14 @@ cd $sourdir
 cat > EXEC_STEP << EXEC
 #!/bin/sh 
 
-#SBATCH --job-name="storm_XE_fb"
-#SBATCH --output="/home/oasselin/monitor/storm_XE_fb.o%j"
-#SBATCH --error="/home/oasselin/monitor/storm_XE_fb.e%j"
+#SBATCH --job-name="dE240"
+#SBATCH --output="/home/oasselin/monitor/dE240.o%j"
+#SBATCH --error="/home/oasselin/monitor/dE240.e%j"
 #SBATCH --partition=compute ##debug
 #SBATCH --nodes=$number_of_nodes
 #SBATCH --ntasks-per-node=$ntasks_per_node
 #SBATCH --export=ALL
-#SBATCH -t 20:00:00
+#SBATCH -t 36:00:00
 
 #This job runs with 2 nodes, 24 cores per node for a total of 48 cores.
 #ibrun in verbose mode will give binding detail
@@ -44,7 +44,7 @@ cat > COMPILE_STEP << COMPILE
                                                                                                                                                        
 
 cd $sourdir
-cp $HOME/expeady/*.f90 .
+cp $HOME/niskine/*.f90 .
 
 PARA=parameters.f90
 MAIN=main_waqg.f90
