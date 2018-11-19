@@ -122,6 +122,7 @@ PROGRAM main
   call initialize_fftw(array2dr,array2di,fr_even,fk_even)
   call init_arrays
   call init_base_state
+  call compute_eigen
   if(mype==0)  call validate_run
 
   if(restart==1) then

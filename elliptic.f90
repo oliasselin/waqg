@@ -358,4 +358,100 @@ CONTAINS
 
     END SUBROUTINE OMEGA_EQUATION
 
+
+
+
+    SUBROUTINE compute_eigen
+
+      !This subroutine computes the eigenvalues and vectors for A and LA. LAPACK actually solves for L' = - (N0 H_scale / cor)^2 L,                                
+      !Where the minus sign implies that the eigenvalues are positive and thus the eigenvectors are sorted from the gravest to highest mode.          
+
+
+      !Eigenvalues ouput of LAPACK == Em, then                                                                                                   
+      !Dimensional RDR = N0 H_scale sqrt(Em) / f    (Rossby deformation radius: LA == - (1/RDR)^2 A)                                     
+      !Dimensional kappa = 1/RDR                    (Where LA == - kappa^2 A)                                                                
+
+      double precision :: ds(n3-1)          !diagonal and sub/super diagonal values                                                      
+
+      double precision :: WORK(2*n3-2)          !diagonal and sub/super diagonal values for DSTEV                                                   
+      integer :: info                                      ! Returns error for LAPACK                                                   
+            
+      !Validate orthonormality of the modes                                                                                             
+      integer :: iz1,iz2
+      double precision :: leftover
+
+
+      !Define matrix L'                                                                                                                            
+      !Compute center diagonal:
+      do iz=1,n3
+         if(iz==1) then
+            eigen_values(iz) = -(1./r_2ut(iz))
+         elseif(iz==n3) then
+            eigen_values(iz) = -(1./r_2ut(iz-1))
+         else !1<iz<n3
+            eigen_values(iz) = -(1./r_2ut(iz) + 1./r_2ut(iz-1))
+         end if
+      end do
+
+      !Compute lower and upper diagonals: ds_i = 1/N^2(z^u_i) from i = 1 to N-1
+      do iz=1,n3-1
+         ds(iz) = 1./r_2ut(iz)
+      end do
+
+      !Give LAPACK -L = - d/dz'( (1/N')^2 d/dz') so that eigenvalues are positive and thus eigenvectors are sorted from gravest to highest                         
+      eigen_values=-eigen_values/(dz*dz)
+      ds=-ds/(dz*dz)
+
+      !Calculate the eigenvectors and eigenvalues using LAPACK                                                                    
+      call DSTEV( 'V', n3, eigen_values, ds, eigen_vectors, n3, WORK, INFO )       !DSTEV( JOBZ, N, D, E, Z, LDZ, WORK, INFO )                                                
+      if(info/=0) write(*,*) "problem in compute_eigen", info
+
+      !LAPACK solved the problem -LA = E A, our actual eigen values are kappa = sqrt(E) ---- The original problem is LA = - kappa^2 A                                         
+      eigen_values = sqrt(abs(eigen_values))
+
+      !Reinforce the first (constant) mode:                                                                                                                                   
+!      eigen_values(1) = 0.
+!      do iz=1,n3-1
+!         eigen_vectors(iz,1) = 1/sqrt(1.*n3)
+!      end do
+
+
+
+
+
+      !********************************************************!                                                                                                            
+      !* Print the first baroclinic Rossby deformation radius *!                                                                                                        
+      !* the eigen values and eigen vectors and validate them *!                                                                                                           
+      !********************************************************!                                                                                                                  
+
+
+      if(mype==0) then
+
+         write(*,*) "Rossby deformation radius (km) = ",N0*H_scale/(cor*eigen_values(2)*1000)
+
+         !Print eigenvalues and eigenvectors of first 3 modes
+         open (unit = 154679, file = "eigen.dat")
+         do iz=1,n3
+            write(154679,"(1x,E12.5,1x,E12.5,1x,E12.5,1x,E12.5,1x,E12.5)") zas(iz),eigen_values(iz),eigen_vectors(iz,1),eigen_vectors(iz,2),eigen_vectors(iz,3)
+         end do
+
+         !Test: verify that the modes are orthonormal
+         do iz=1,n3
+            do iz1=1,n3
+
+               leftover=0.
+               do iz2=1,n3
+                  leftover = leftover + eigen_vectors(iz2,iz1)*eigen_vectors(iz2,iz)
+               end do
+
+               if(abs(leftover)>1e-14 .and. iz1/=iz) write(*,*) "Problem with orthonormality: modes (iz1,iz) have leftover=",leftover,iz1,iz
+
+            end do
+         end do
+      end if
+
+    end SUBROUTINE compute_eigen
+
+
+
 END MODULE elliptic

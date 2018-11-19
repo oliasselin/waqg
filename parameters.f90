@@ -156,7 +156,8 @@ MODULE parameters
     double precision, save :: pi_0s(n3h2)                    !Staggered version of pi_0 (useful in two_exp BS
     double precision, save :: pi_0st(n3)                     !Staggered version of transposed pi_0 (useful in two_exp BS
 
-
+    double precision, save :: eigen_vectors(n3,n3)               !Ouput = Eigenvectors(z^s_i,mode #)                                                                                     
+    double precision, save :: eigen_values(n3)                   !Input = values on the diagonal. Output: eigenvalues in ascending order
 
     !I choose:
     !x N=0.03 s^-1 (to get N_troposphere ~ 0.01 right)

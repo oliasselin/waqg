@@ -1393,7 +1393,7 @@ MODULE derivatives
 
       
       !Print the spectrum and filter A if desired
-      if( (filter_A == 1 .and. mod(iter,freq_filter_A)==0 ) .or. (print_A == 1 .and. mod(iter,freq_print_A)==0) )  call spec_A(ARkt,AIkt)
+      if( (filter_A == 1 .and. mod(iter,freq_filter_A)==0 ) .or. (print_A == 1 .and. mod(iter,freq_print_A)==0) )  call spec_A_general(ARkt,AIkt)! call spec_A(ARkt,AIkt)
 
       !Transpose A back to the regular z-parallelized world
       call mpitranspose(ARkt,iktx,n3,iktyp,ARk,ikty,n3h0)
@@ -2187,6 +2187,93 @@ MODULE derivatives
 
 
     end SUBROUTINE compute_rot
+
+
+
+
+
+subroutine spec_A_general(ARkt,AIkt)
+
+    !kx,kz,z modes
+    double complex, dimension(iktx,n3, iktyp) :: ARkt          !Transposed (ky-parallelization) ARk                                                                                                                                                           
+    double complex, dimension(iktx,n3, iktyp) :: AIkt          !Transposed (ky-parallelization) AIk                                                                                                                                                     
+
+    !kx,ky,m modes
+    double complex, dimension(iktx,n3, iktyp) :: ARmt   
+    double complex, dimension(iktx,n3, iktyp) :: AImt      
+
+    integer :: m
+
+    !Initialize vertical modes to zero
+    ARmt=(0.D0,0.D0)
+    AImt=(0.D0,0.D0)
+
+    DO ikyp=1,iktyp
+       iky=ikyp+iktyp*mype
+       ky=kya(iky)
+
+       DO ikx=1,iktx
+          kx=kxa(ikx)
+
+          kh2=kx*kx+ky*ky
+
+          if(L(ikx,iky)==1 ) then
+
+             !Calculate the vertical modes if allowed by YBJ criterion
+             do m=1,n3
+
+                !Only calculate the mode if it's not illegal
+                if (filter_A /= 1 .or. mod(iter,freq_filter_A)/=0 .or. kh2 <= YBJ_criterion*Bu*(eigen_values(m)**2) .or. m==1) then
+
+                   do iz=1,n3
+                      ARmt(ikx,m,ikyp) = ARmt(ikx,m,ikyp) + ARkt(ikx,iz,ikyp)*eigen_vectors(iz,m)
+                      AImt(ikx,m,ikyp) = AImt(ikx,m,ikyp) + AIkt(ikx,iz,ikyp)*eigen_vectors(iz,m)
+                   end do
+            
+                end if
+
+             end do
+
+          end if
+
+      end do
+    end DO
+
+
+    !Print spectrum of kinetic energy: 0.5 |LA|^2 as a function of kh and m
+
+
+
+    !Transform the filtered field back to (kx,z,kyp) space
+    ARkt=(0.D0,0.D0)
+    AIkt=(0.D0,0.D0)
+
+    DO ikyp=1,iktyp
+       iky=ikyp+iktyp*mype
+       ky=kya(iky)
+
+       DO ikx=1,iktx
+          kx=kxa(ikx)
+
+          kh2=kx*kx+ky*ky
+
+          if(L(ikx,iky)==1 ) then
+
+             do iz=1,n3
+
+                do m = 1,n3
+                   ARkt(ikx,iz,ikyp) = ARkt(ikx,iz,ikyp) + ARmt(ikx,m,ikyp)*eigen_vectors(iz,m)
+                   AIkt(ikx,iz,ikyp) = AIkt(ikx,iz,ikyp) + AImt(ikx,m,ikyp)*eigen_vectors(iz,m)
+                end do
+                
+             end do
+
+          end if
+       end DO
+    end DO
+
+  end subroutine spec_A_general
+
 
 
 subroutine spec_A(ARkt,AIkt)
