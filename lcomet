@@ -1,11 +1,11 @@
 #!/bin/bash
 
-number_of_nodes=8
-number_of_tasks=128
+number_of_nodes=4
+number_of_tasks=64
 ntasks_per_node=16
 
-sourdir=/oasis/scratch/comet/oasselin/temp_project/niskine/expeady/dE240_dt0.01_U0.025/source/
-datadir=/oasis/scratch/comet/oasselin/temp_project/niskine/expeady/dE240_dt0.01_U0.025/output/
+sourdir=/oasis/scratch/comet/oasselin/temp_project/niskine/expeady/storm/source/
+datadir=/oasis/scratch/comet/oasselin/temp_project/niskine/expeady/storm/output/
 
 mkdir -p $sourdir
 mkdir -p $datadir
@@ -16,9 +16,9 @@ cd $sourdir
 cat > EXEC_STEP << EXEC
 #!/bin/sh 
 
-#SBATCH --job-name="dE240"
-#SBATCH --output="/home/oasselin/monitor/dE240.o%j"
-#SBATCH --error="/home/oasselin/monitor/dE240.e%j"
+#SBATCH --job-name="storm"
+#SBATCH --output="/home/oasselin/monitor/storm.o%j"
+#SBATCH --error="/home/oasselin/monitor/storm.e%j"
 #SBATCH --partition=compute ##debug
 #SBATCH --nodes=$number_of_nodes
 #SBATCH --ntasks-per-node=$ntasks_per_node
