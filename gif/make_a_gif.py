@@ -85,7 +85,7 @@ def make_a_gif(run,sli,field,fixed_cbrange='',cbmin=-0.005,cbmax=0.0005,nmax=100
     if not os.path.exists(gif_dir):
         os.makedirs(gif_dir)
 
-    make_gif = 'convert -delay '+str(delay)+' -loop 0 '+png_dir+'*.png '+gif_dir+'/'+field_name+'_'+sli+'.gif'
+    make_gif = 'convert -limit thread 1 -delay '+str(delay)+' -loop 0 '+png_dir+'*.png '+gif_dir+'/'+field_name+'_'+sli+'.gif'
 
     p = subprocess.Popen(make_gif, shell = True)
     os.waitpid(p.pid, 0)

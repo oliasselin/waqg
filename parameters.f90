@@ -196,7 +196,7 @@ MODULE parameters
     integer :: iter=0
     integer :: itermax=1000000000
     real :: maxtime=1000                      
-    double precision, parameter :: delt=0.5*Bu*Ro/(2.*ktrunc_x*ktrunc_x)   !0.01*dx   !0.5*Bu*Ro/(2.*ktrunc_x*ktrunc_x) !0.25/ktrunc_x !0.5*Bu*Ro/(2.*ktrunc_x*ktrunc_x) 
+    double precision, parameter :: delt= Ro/20.   !0.5*Bu*Ro/(2.*ktrunc_x*ktrunc_x)   !0.01*dx   !0.5*Bu*Ro/(2.*ktrunc_x*ktrunc_x) !0.25/ktrunc_x !0.5*Bu*Ro/(2.*ktrunc_x*ktrunc_x) 
     double precision, parameter :: gamma=1e-3                                  !Robert filter parameter
 
 
@@ -308,10 +308,10 @@ MODULE parameters
 
 
     !Filtering of A modes
-    integer, parameter :: filter_A=0, freq_filter_A=1!*freq_etot
+    integer, parameter :: filter_A=1, freq_filter_A=1!*freq_etot
     integer, parameter :: print_A=0, freq_print_A=1*freq_etot
     integer :: count_A=0
-    double precision, parameter :: YBJ_criterion = 1!100000.           !Tolerate modes with Nkh/fkz < YBJ_criterion.
+    double precision, parameter :: YBJ_criterion =3! 100000.           !Tolerate modes with (Nkh/fkz)^2 < YBJ_criterion.
 
 
 
