@@ -1481,6 +1481,51 @@ MODULE derivatives
 
 
 
+    subroutine wave_shear(BRkt,BIkt,SRk,SIk)
+
+      !This subroutine computes the vertical shear in waves, LA_z, from the transposed LA. Shear is computed on the staggered grid, z^i_u = i*dz, i = 1,n3
+      !It is assumed that LAz = 0 right at the top boundary (i = n3) --- this is not necessarily true...
+
+      double complex, dimension(iktx,n3, iktyp), intent(in) :: BRkt          !Transposed (ky-parallelization) BRk (this array can most likely be recycled)                                               
+      double complex, dimension(iktx,n3, iktyp), intent(in) :: BIkt          !Transposed (ky-parallelization) BIk (this array can most likely be recycled) 
+
+      !Temporary array to store shear
+      double complex, dimension(iktx,n3, iktyp) :: SRkt          !Transposed (ky-parallelization) BRk (this array can most likely be recycled)                                               
+      double complex, dimension(iktx,n3, iktyp) :: SIkt          !Transposed (ky-parallelization) BIk (this array can most likely be recycled) 
+
+      !Shear variables: LA_z
+      double complex,   dimension(iktx,ikty,n3h0), intent(out) :: SRk, SIk
+
+      
+      DO ikx=1,iktx
+         DO ikyp=1,iktyp
+            iky=ikyp+iktyp*mype
+
+            if(L(ikx,iky)==1 ) then
+
+               do iz=1,n3-1
+
+                  SRkt(ikx,iz,ikyp) = (BRkt(ikx,iz+1,ikyp)-BRkt(ikx,iz,ikyp))/dz
+                  SIkt(ikx,iz,ikyp) = (BIkt(ikx,iz+1,ikyp)-BIkt(ikx,iz,ikyp))/dz
+
+               end do
+
+               
+               SRkt(ikx,n3,ikyp) = (0.D0,0.D0)
+               SIkt(ikx,n3,ikyp) = (0.D0,0.D0)
+
+            end if
+
+         end DO
+      end DO
+
+
+      !Transpose shear into regular (ikx,iky,izh0) dimensions
+      call mpitranspose(SRkt,iktx,n3,iktyp,SRk,ikty,n3h0)
+      call mpitranspose(SIkt,iktx,n3,iktyp,SIk,ikty,n3h0)
+
+
+    end subroutine wave_shear
 
 
 

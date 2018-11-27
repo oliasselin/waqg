@@ -236,7 +236,9 @@ MODULE parameters
     integer, parameter :: out_ens    = 0, freq_ens   =  3*n3!freq_etot*10
     integer, parameter :: out_pv     = 0, freq_pv    =  3*n3!freq_etot*10
 
-    integer, parameter :: out_ez     = 0, freq_ez    =  freq_etot        !E(z) (freq has to be a multiple of that of etot) 
+    integer, parameter :: out_ez     = 1, freq_ez    =  freq_etot        !E(z)  (freq has to be a multiple of that of etot) 
+    integer, parameter :: out_wz     = 1, freq_wz    =  freq_we          !WE(z) (freq has to be a multiple of that of we)
+    integer, parameter :: out_wshear = 1                                 !Calculate wave vertical shear
     integer, parameter :: out_rotz   = 0, freq_rotz  =  freq_etot 
     integer, parameter :: out_ensz   = 0, freq_ensz  =  3*n3!freq_ens
     integer, parameter :: out_pvz    = 0, freq_pvz   =  freq_pv
