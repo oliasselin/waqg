@@ -1495,7 +1495,7 @@ end subroutine hspec
 
        !PLOT!
      do iz=1,n3
-        write(unit_ez,fmt=*) iz,ksz(iz),kuz(iz),psz(iz)      !iz,URMS, WRMS, BRMS
+        write(unit_ez,fmt=*) zas(iz)*H_scale,ksz(iz),kuz(iz),psz(iz)      !iz,URMS, WRMS, BRMS
      enddo
      write(unit_ez,*) '           '
      call flush(unit_ez)
@@ -1584,7 +1584,7 @@ end subroutine hspec
 
        !PLOT!
      do iz=1,n3
-        write(unit_wz,fmt=*) iz,ksz(iz),kuz(iz),psz(iz)      !iz,URMS, WRMS, BRMS
+        write(unit_wz,fmt=*) zas(iz)*H_scale,ksz(iz),kuz(iz),psz(iz)      !iz,URMS, WRMS, BRMS
      enddo
      write(unit_wz,*) '           '
      call flush(unit_wz)
