@@ -668,7 +668,9 @@ end subroutine hspec
        real :: ptot_p,ptot
        real :: stot_p,stot
 
-
+       ktot_p = 0.
+       ptot_p = 0.
+       stot_p = 0.
 
        k_p = 0.
        p_p = 0.
@@ -685,7 +687,7 @@ end subroutine hspec
 
                 if(L(ikx,iky)==1) then
                    k_p(izh0) = k_p(izh0) + real( BRk(ikx,iky,izh0)*CONJG( BRk(ikx,iky,izh0) ) + BIk(ikx,iky,izh0)*CONJG( BIk(ikx,iky,izh0) ) )
-                   p_p(izh0) = p_p(izh0) + 0.5*(1/(Bu*r_2(izh2)))*kh2*real( CRk(ikx,iky,izh0)*CONJG( CRk(ikx,iky,izh0) ) + CIk(ikx,iky,izh0)*CONJG( CIk(ikx,iky,izh0) ) )
+                   p_p(izh0) = p_p(izh0) + 0.5*(r_2(izh2)/Bu)*kh2*real( CRk(ikx,iky,izh0)*CONJG( CRk(ikx,iky,izh0) ) + CIk(ikx,iky,izh0)*CONJG( CIk(ikx,iky,izh0) ) )
                    s_p(izh0) = s_p(izh0) + r_2(izh2)*real( SRk(ikx,iky,izh0)*CONJG( SRk(ikx,iky,izh0) ) + SIk(ikx,iky,izh0)*CONJG( SIk(ikx,iky,izh0) ) )
                 end if
 
@@ -2423,6 +2425,9 @@ end subroutine hspec
     write(unit_run,*) 
 
     write(unit_run,*) "Period of total energy        output:",freq_etot*delt,  freq_etot           
+    write(unit_run,*) "Period of total wave energy   output:",freq_we*delt,  freq_we
+    write(unit_run,*) "Period of flow z-profile      output:",freq_ez*delt,  freq_ez
+    write(unit_run,*) "Period of wave z-profile      output:",freq_wz*delt,  freq_wz
     write(unit_run,*) "Period of horziontal spectrum output:",freq_hspec*delt, freq_hspec           
     write(unit_run,*) "Period of            slab     output:",freq_slab*delt,  freq_slab           
     write(unit_run,*) "Period of            slices   output:",freq_slice*delt, freq_slice           
