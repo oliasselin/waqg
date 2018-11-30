@@ -204,8 +204,10 @@ CONTAINS
        call mpi_reduce(ktot_rot_p,ktot_rot, 1,MPI_REAL,   MPI_SUM,0,MPI_COMM_WORLD,ierror)
        call mpi_reduce(ptot_rot_p,ptot_rot, 1,MPI_REAL,   MPI_SUM,0,MPI_COMM_WORLD,ierror)
 
-       if(mype==0) write(unit=unit_energy ,fmt=*) time,ktot,ptot,ptot_quad
-       if(mype==0) write(unit=unit_energyr,fmt=*) time,ktot_rot,ptot_rot
+       
+
+       if(mype==0) write(unit=unit_energy ,fmt=*) time*(L_scale/U_scale)/(3600*24),real(U_scale*U_scale)*ktot,ptot, real(U_scale*U_scale)*ptot_quad
+       if(mype==0) write(unit=unit_energyr,fmt=*) time*(L_scale/U_scale)/(3600*24),real(U_scale*U_scale)*ktot_rot , real(U_scale*U_scale)*ptot_rot
        
        
      end subroutine diag_zentrum
@@ -728,7 +730,7 @@ end subroutine hspec
        ptot = Uw_scale*Uw_scale*ptot/n3
        stot = (Uw_scale*Uw_scale/(U_scale*U_scale))*Fr*Fr*stot/n3
 
-       if(mype==0) write(unit_we,fmt=*) time,ktot,ptot,stot
+       if(mype==0) write(unit_we,fmt=*) time*(L_scale/U_scale)/(3600*24),ktot,ptot,stot
 
      end subroutine wave_energy
 
