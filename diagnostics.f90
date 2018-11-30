@@ -2098,15 +2098,15 @@ end subroutine hspec
        Imemk = BIk
        call fft_c2r(BRk,BRr,n3h0)
        call fft_c2r(BIk,BIr,n3h0)
-       field = 0.5*(BRr*BRr + BIr*BIr)
+       field = 0.5*(BRr*BRr + BIr*BIr)*Uw_scale*Uw_scale
     elseif(id_field==2) then
        Rmemk = BRk
        call fft_c2r(BRk,BRr,n3h0)
-       field = BRr
+       field = BRr*Uw_scale
     elseif(id_field==3) then
        Imemk = BIk
        call fft_c2r(BIk,BIr,n3h0)
-       field = BIr
+       field = BIr*Uw_scale
     elseif(id_field==4) then
        
        do izh0=1,n3h0
@@ -2136,12 +2136,12 @@ end subroutine hspec
           izh2=izh0+2
           do ix=1,n1
              do iy=1,n2
-                
-                field(ix,iy,izh0) = (0.25/(Bu*r_2(izh2)))*( Rmem(ix,iy,izh0)*Rmem(ix,iy,izh0) + Imem(ix,iy,izh0)*Imem(ix,iy,izh0) + Rmem2(ix,iy,izh0)*Rmem2(ix,iy,izh0) + Imem2(ix,iy,izh0)*Imem2(ix,iy,izh0) )
+                field(ix,iy,izh0) = (0.25*r_2(izh2)/Bu)*( Rmem(ix,iy,izh0)*Rmem(ix,iy,izh0) + Imem(ix,iy,izh0)*Imem(ix,iy,izh0) + Rmem2(ix,iy,izh0)*Rmem2(ix,iy,izh0) + Imem2(ix,iy,izh0)*Imem2(ix,iy,izh0) )
                 
              end do
           end do
        end do
+       field=field*Uw_scale*Uw_scale
     elseif(id_field==5) then
        call fft_c2r(qwk,qwr,n3h0)
        field = (U_scale/L_scale)*qwr       
