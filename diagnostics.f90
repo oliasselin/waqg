@@ -164,8 +164,8 @@ CONTAINS
 
        !If desired, we can plot energy as a function of z and also the vertical energy spectrum                                                                                                           
 
-       if(out_ez ==1   .and. ( mod(iter,freq_ez)==0 .or. iter == 0)) call plot_ez(real(U_scale*U_scale)*ks,real(U_scale*U_scale)*ku,real(U_scale*U_scale)*ps_quad)
-       if(out_rotz ==1 .and. ( mod(iter,freq_rotz)==0 .or. iter==0)) call plot_rotz(ks_rot,pu_rot)              
+       if(out_ez ==1   .and. ( mod(iter,freq_ez)==0 .or. iter == 0)) call plot_ez(real(U_scale*U_scale)*ks,real(U_scale*U_scale)*ps_quad,real(U_scale*U_scale)*pu_rot)   !This gives KE and PE (staggered and unstaggered)
+!       if(out_rotz ==1 .and. ( mod(iter,freq_rotz)==0 .or. iter==0)) call plot_rotz(ks_rot,pu_rot)              
 !       if(out_specz ==1 .and. ( mod(iter,freq_specz)==0 .or. iter == 0)) call specz(ks,ku,pu)
 
        !Compute the total energy by integrating over z!
@@ -206,8 +206,8 @@ CONTAINS
 
        
 
-       if(mype==0) write(unit=unit_energy ,fmt=*) time*(L_scale/U_scale)/(3600*24),real(U_scale*U_scale)*ktot,ptot, real(U_scale*U_scale)*ptot_quad
-       if(mype==0) write(unit=unit_energyr,fmt=*) time*(L_scale/U_scale)/(3600*24),real(U_scale*U_scale)*ktot_rot , real(U_scale*U_scale)*ptot_rot
+       if(mype==0) write(unit=unit_energy ,fmt=*) time*(L_scale/U_scale)/(3600*24),real(U_scale*U_scale)*ktot,real(U_scale*U_scale)*ptot_rot    !These are QG KE and PE
+
        
        
      end subroutine diag_zentrum
