@@ -367,7 +367,7 @@ CONTAINS
       !Where the minus sign implies that the eigenvalues are positive and thus the eigenvectors are sorted from the gravest to highest mode.          
 
 
-      !Eigenvalues ouput of LAPACK == Em, then                                                                                                   
+      !Eigenvalues output of LAPACK == Em, then                                                                                                   
       !Dimensional RDR = N0 H_scale sqrt(Em) / f    (Rossby deformation radius: LA == - (1/RDR)^2 A)                                     
       !Dimensional kappa = 1/RDR                    (Where LA == - kappa^2 A)                                                                
 
@@ -380,6 +380,7 @@ CONTAINS
       integer :: iz1,iz2
       double precision :: leftover
 
+      integer :: m
 
       !Define matrix L'                                                                                                                            
       !Compute center diagonal:
@@ -449,6 +450,42 @@ CONTAINS
             end do
          end do
       end if
+
+      !********************************************************************************************************************!
+      !* Print the legality matrix: modes satisfying (or not) the YBJ criterion N lambda_m / f lambda_hor < YBJ_criterion *!
+      !********************************************************************************************************************!
+
+      if(mype==0) then 
+         open (unit=3334,file='legality.dat',action="write",status="replace")
+
+         do m = 1,n3
+            do ikx = 0,ktx
+
+               if(m == 1 .or. ikx <= sqrt(YBJ_criterion*Bu)*eigen_values(m)) then    !The mode is legal for the chosen YBJ_criterion 
+                  write(unit=3334,fmt=3334) 1.
+               else                                                                  !The mode is not legal
+                  write(unit=3334,fmt=3334) 0.
+               end if
+
+               !Superbly unefficient, but just for test
+               if(m == 2) then
+                  if(ikx <= sqrt(YBJ_criterion*Bu)*eigen_values(m)) then 
+                     write(*,*) "Mode kh = ",ikx," is legal for the first baroclinic mode"
+                  else
+                     write(*,*) "Mode kh = ",ikx," is not legal for the first baroclinic mode"
+                  end if
+               end if
+
+            end do
+            write(unit=3334,fmt=*) '           '
+         end do
+         
+3334     format(1x,F10.3,1x)
+         close (unit=3334)
+
+      end if
+
+
 
     end SUBROUTINE compute_eigen
 

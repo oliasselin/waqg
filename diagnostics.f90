@@ -670,9 +670,13 @@ end subroutine hspec
        real :: ptot_p,ptot
        real :: stot_p,stot
 
+       real :: k0tot_p,k0tot  !Kinetic energy in the kh=0 mode
+
        ktot_p = 0.
        ptot_p = 0.
        stot_p = 0.
+
+       k0tot_p = 0.
 
        k_p = 0.
        p_p = 0.
@@ -706,6 +710,8 @@ end subroutine hspec
           ptot_p = ptot_p + p_p(izh0)
           stot_p = stot_p + s_p(izh0)
 
+          k0tot_p = k0tot_p + 0.5*real( BRk(1,1,izh0)*CONJG( BRk(1,1,izh0) ) + BIk(1,1,izh0)*CONJG( BIk(1,1,izh0) ) )
+
        end do
 
        !--- Vertical slices ---!
@@ -726,11 +732,15 @@ end subroutine hspec
        call mpi_reduce(ptot_p,ptot,1,MPI_REAL,MPI_SUM,0,MPI_COMM_WORLD,ierror)
        call mpi_reduce(stot_p,stot,1,MPI_REAL,MPI_SUM,0,MPI_COMM_WORLD,ierror)
 
+       call mpi_reduce(k0tot_p,k0tot,1,MPI_REAL,MPI_SUM,0,MPI_COMM_WORLD,ierror)
+
        ktot = Uw_scale*Uw_scale*ktot/n3
        ptot = Uw_scale*Uw_scale*ptot/n3
        stot = (Uw_scale*Uw_scale/(U_scale*U_scale))*Fr*Fr*stot/n3
 
-       if(mype==0) write(unit_we,fmt=*) time*(L_scale/U_scale)/(3600*24),ktot,ptot,stot
+       k0tot = Uw_scale*Uw_scale*k0tot/n3
+
+       if(mype==0) write(unit_we,fmt=*) time*(L_scale/U_scale)/(3600*24),ktot,ptot,k0tot
 
      end subroutine wave_energy
 
