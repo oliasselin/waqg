@@ -10,7 +10,7 @@ from finds import find_timestep
 
 scratch_location = '/oasis/scratch/comet/oasselin/temp_project/'
 folder = 'niskine/expeady/'
-run = 'storm_Uw0.2_fb/'
+run = 'storm_Uw0.2_2/'
 location = scratch_location+folder+run
 
 
@@ -149,6 +149,7 @@ if os.path.isfile(path_ez):
     fpe_ta = np.average(fpe,axis=0)
     
 
+
     #Compute the mean-flow kinetic energy: U_scale^2 exp(2 (z-Dz)/h)
     mke    = U_scale*U_scale*np.exp(2*z/h_thermo)
     exp_fit= (fke_ta[-1]*np.exp(dz/h_thermo))*np.exp(2*z/h_thermo)        #Same profile, but normalized to fit EKE at the surface
@@ -166,7 +167,7 @@ if os.path.isfile(path_ez):
 
     plt.subplot(1,1,1)
     plt.plot(fke_ta,z,label='EKE')
-    plt.plot(fpe_ta,z+dz/2,label='EPE')
+#    plt.plot(fpe_ta,z+dz/2,label='EPE')
     plt.plot(exp_fit,z,label='Fit: ~ exp$(2z/h)$')
     plt.plot(bc1,z,label='First BC mode (squared)')
     plt.xlabel('Energy m$^2$/s$^2$')
