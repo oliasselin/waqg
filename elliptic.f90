@@ -368,7 +368,7 @@ CONTAINS
 
 
       !Eigenvalues output of LAPACK == Em, then                                                                                                   
-      !Dimensional RDR = N0 H_scale sqrt(Em) / f    (Rossby deformation radius: LA == - (1/RDR)^2 A)                                     
+      !Dimensional RDR = N0 H_scale / sqrt(Em) f    (Rossby deformation radius: LA == - (1/RDR)^2 A)                                     
       !Dimensional kappa = 1/RDR                    (Where LA == - kappa^2 A)                                                                
 
       double precision :: ds(n3-1)          !diagonal and sub/super diagonal values                                                      
@@ -381,6 +381,19 @@ CONTAINS
       double precision :: leftover
 
       integer :: m
+
+
+      !Initial condition as a function of z and m
+      double precision :: CRz(n3),BRz(n3),ARz(n3)
+      double precision :: CRm(n3),BRm(n3),ARm(n3)
+
+      double precision :: z
+
+      double precision :: ave_A,ave_B,ave_C
+      double precision :: xi_a,xi_b,xi_c
+      double precision :: delta_a,delta_b,delta_c
+
+      double precision :: cons
 
       !Define matrix L'                                                                                                                            
       !Compute center diagonal:
@@ -449,6 +462,7 @@ CONTAINS
 
             end do
          end do
+
       end if
 
       !********************************************************************************************************************!
@@ -486,7 +500,84 @@ CONTAINS
       end if
 
 
+      !*********************************************************************!
+      !* Print the initial condition for waves and its (vertical) spectrum *!
+      !*********************************************************************!
+      if(mype==0) then
 
+
+         ARm = 0.
+         BRm = 0.
+         CRm = 0.
+
+         !Regenerate the initial condition (the cosh one)
+
+         delta_a = 200.
+         delta_b = 100.
+         delta_c = 50.
+
+         xi_a = H_scale/delta_a
+         xi_b = H_scale/delta_b
+         xi_c = H_scale/delta_c
+
+         cons = 2./sqrt(twopi/2.)
+
+         ave_A = 0.
+         ave_B = 0.
+         ave_C = 0.
+
+         do iz=1,n3
+
+            z = zas(iz)
+
+            ARz(iz) = cons*xi_a*exp(-xi_a*(z-twopi)**2)
+            BRz(iz) = cons*xi_b*exp(-xi_b*(z-twopi)**2)
+            CRz(iz) = cons*xi_c*exp(-xi_c*(z-twopi)**2)
+
+            ave_A=ave_A + ARz(iz)
+            ave_B=ave_B + BRz(iz)
+            ave_C=ave_C + CRz(iz)
+
+         end do
+         
+         !Remove the horizontal average from B
+         ARz=ARz-ave_A/n3
+         BRz=BRz-ave_B/n3
+         CRz=CRz-ave_C/n3
+
+         !Print the initial condition
+         open (unit=6969,file='init.dat',action="write",status="replace")
+         do iz=1,n3
+            write(unit=6969,fmt=3335) zas(iz)*H_scale,ARz(iz),BRz(iz),CRz(iz)
+         enddo
+         
+3335     format(1x,E12.5,1x,E12.5,1x,E12.5,1x,E12.5,1x)
+
+         close (unit=6969)
+
+
+         !Calculate the vertical coefficients (for both A and B)
+         do m=1,n3
+            do iz=1,n3
+
+               ARm(m) = ARm(m) + ARz(iz)*eigen_vectors(iz,m)
+               BRm(m) = BRm(m) + BRz(iz)*eigen_vectors(iz,m)
+               CRm(m) = CRm(m) + CRz(iz)*eigen_vectors(iz,m)
+
+            end do
+         end do
+         
+         
+         !Print the(dimensional WKE spectrum using B and A
+         open (unit=696969,file='init_spec.dat',action="write",status="replace")
+         do m=1,n3
+            write(unit=696969,fmt=3336) m-1 ,   ARm(m)*ARm(m)/(2.*n3),   BRm(m)*BRm(m)/(2.*n3),   CRm(m)*CRm(m)/(2.*n3)  
+         enddo
+         
+3336     format(1x,I3,1x,E12.5,1x,E12.5,1x,E12.5,1x)
+         close (unit=696969)
+      end if
+         
     end SUBROUTINE compute_eigen
 
 
