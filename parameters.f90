@@ -2,7 +2,7 @@ MODULE parameters
 
    IMPLICIT NONE
 
-    integer, parameter :: n1=32, n2=32, n3=32
+    integer, parameter :: n1=64, n2=64, n3=64
     integer, parameter :: npe=8
 
     integer, parameter :: n1d=n1+2, n2d=n2, n3d=n3
@@ -19,8 +19,8 @@ MODULE parameters
     double complex :: i = (0.,1.)
     double precision, parameter :: twopi=4.D0*asin(1.D0)
 
-    double precision, parameter :: dom_x = 80000                              !Horizontal domain size (in m)
-    double precision, parameter :: dom_z = 4000                               !Vertical   domain size (in m)
+    double precision, parameter :: dom_x = twopi*5e4                          !Horizontal domain size (in m)
+    double precision, parameter :: dom_z = 5e3                                !Vertical   domain size (in m)
     double precision, parameter :: L1=twopi, L2=twopi, L3=twopi               !Domain size
     double precision, parameter :: dx=L1/n1,dy=L2/n2,dz=L3/n3                 !Cell dimensions  
 
@@ -102,7 +102,7 @@ MODULE parameters
     double precision, parameter :: N2_scale = 0.75D0   !N^2 ~ exp(N2_scale*(z-z0) 
 
     !Stratification = constant_N!
-    double precision, parameter :: N0  =  0.002          !Actual N is s^-1, not squared.    
+ !   double precision, parameter :: N0  =  twopi*1e-3  !0.002          !Actual N is s^-1, not squared.    
 
    ! USEFUL INDEX !                                                                                                                          
    ! ------------ !                                                                                                                         
@@ -156,15 +156,18 @@ MODULE parameters
     ! => Ro = pi Ar
     !Keep in mind that: N/f = 1/Ar * (Ro/Fr).
 
+    integer, parameter :: singlem = 5
+
 
     !Primary parameters!
     !------------------!
 
     double precision, parameter :: H_scale=dom_z/L3          !Actual H in m ( z_real = H z' where z' in [0:L3]  is the nondim z.)
     double precision, parameter :: L_scale=dom_x/L1          !Actual L in m ( x_real = L x' where x' in [0:2pi] is the nondim x.)
-    double precision, parameter :: cor=0.0001!0.00000000001!0.0005 !0.0001                           !Actual f = 0.0001 s^-1 (real value of planet Earth)
+    double precision, parameter :: cor=1e-4!0.00000000001!0.0005 !0.0001                           !Actual f = 0.0001 s^-1 (real value of planet Earth)
+    double precision, parameter :: N0 = twopi*10*cor
     double precision, parameter :: U_scale=0.25                        !Actual U in m/s (u_real = U u' where u' is the nondim velocity ur implemented in the code)
-    double precision, parameter :: Uw_scale=1.                       !Characteristic magnitude of wave velocity (wave counterpart to U_scale for flow)
+    double precision, parameter :: Uw_scale=2.5e-5                       !Characteristic magnitude of wave velocity (wave counterpart to U_scale for flow)
     double precision, parameter :: Ar2 = (H_scale/L_scale)**2                                   !(1./64.)**2!(1./10.)**2 !0.01     !Aspect ratio squared = (H/L)^2     
     double precision, parameter :: Ro  = U_scale/(cor*L_scale)                                  !Rossby number  U/fL
     double precision, parameter :: Fr  = U_scale/(N0*H_scale)                                   !Froude number  U/N(z0)H
@@ -179,18 +182,18 @@ MODULE parameters
     real :: time=0.
     integer :: iter=0
     integer :: itermax=1000000000
-    real :: maxtime=40                      
+    real :: maxtime=100                      
     double precision, parameter :: delt=0.5*Bu*Ro/(2.*ktrunc_x*ktrunc_x) !0.25/ktrunc_x !0.5*Bu*Ro/(2.*ktrunc_x*ktrunc_x) 
-    double precision, parameter :: gamma=1e-3                                  !Robert filter parameter
+    double precision, parameter :: gamma=1e-2                                  !Robert filter parameter
 
     !Other successful viscosity: 5e-2 * (10./ktrunc_x ) **2. 
     !PERFECT VISCOSITY: 0.01 * (64./(1.*n1)) **(4./3.)
     !In reality, nuh is 1/Re and nuz is 1/(Ar2*Re) with 1/Re = UL/nu
 
-    double precision, parameter :: coeff =0.1!0.4!0.4!0.1!0.075
+    double precision, parameter :: coeff =0.!0.4!0.4!0.1!0.075
     double precision, parameter :: coeffz=0.!coeff!/10.!/1000!/10.
 
-    integer, parameter :: ilap = 4                   !horizontal viscosity = nuh nabla^(2*ilap). So ilap =1 is regular viscosity. ilap>1 is hyperviscosity
+    integer, parameter :: ilap = 8                   !horizontal viscosity = nuh nabla^(2*ilap). So ilap =1 is regular viscosity. ilap>1 is hyperviscosity
 
     !General dissipation! (test for hyperviscosity: see Oct 10 2014 toread)
     double precision, parameter :: nuh  =  coeff * (64./(1.*n1)) **(4./3.) * (3./n1)**(2*(ilap-1))             !6e-2 * (10./ktrunc_x ) **2. ! horizontal visc coeff (regular viscosity)
@@ -209,10 +212,10 @@ MODULE parameters
     !Output!
     !------!
 
-    integer, parameter :: out_etot   = 0, freq_etot   = INT(0.1/delt)!50!346!n3/64!n3!64!n3!50*n3/64      !Total energy                                                    
-    integer, parameter :: out_we     = 1, freq_we     = INT(0.1/delt)!50!346!n3/64!n3!64!n3!50*n3/64      !Total energy                                                    
-    integer, parameter :: out_conv   = 1, freq_conv   = freq_we      !Conversion terms in the potential energy equation.
-    integer, parameter :: out_hspec  = 0, freq_hspec  = 5*freq_etot!n3/64!n3!freq_etot*10     !Horizontal energy spectrum at various heights 
+    integer, parameter :: out_etot   = 1, freq_etot   = INT(0.1*twopi*Ro/delt)!50!346!n3/64!n3!64!n3!50*n3/64      !Total energy                                                    
+    integer, parameter :: out_we     = 1, freq_we     = INT(0.1*twopi*Ro/delt)!50!346!n3/64!n3!64!n3!50*n3/64      !Total energy                                                    
+    integer, parameter :: out_conv   = 0, freq_conv   = freq_we      !Conversion terms in the potential energy equation.
+    integer, parameter :: out_hspec  = 1, freq_hspec  = 1*freq_etot!n3/64!n3!freq_etot*10     !Horizontal energy spectrum at various heights 
     integer, parameter :: out_hspecw = 1, freq_hspecw = 1*freq_etot!n3/64!n3!freq_etot*10     !Horizontal energy spectrum at various heights 
     integer, parameter :: out_hg     = 0                 !Output geostrophic horizontal spectrum as well?
     integer, parameter :: out_vspec  = 0, freq_vspec =  freq_hspec
@@ -262,14 +265,14 @@ MODULE parameters
     integer :: count_slice(nfields) = 0       !number of slices
     integer :: count_slice2(nfields2) = 0       !number of slices
     integer :: zval=n3/2                      !z-level at which we wish to plo a slice                                                                                                                               
-    integer :: yval=n2/2
-    integer :: xval=n1/2
+    integer :: yval=n2/4
+    integer :: xval=n1/4
     integer :: hlvl(nfields)=[0,0,0,0]                                   
     integer :: hlvl2(nfields2)=[1,1,1,1,0]                                   
 
     integer, parameter :: bot_height = 1
     integer, parameter :: mid_height = n3/2
-    integer, parameter :: top_height = n3-1
+    integer, parameter :: top_height = n3
 
     integer, parameter :: out_slab = 0, freq_slab = 1
     integer, parameter :: slab_mype   = npe/2-1 

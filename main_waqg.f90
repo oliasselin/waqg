@@ -99,6 +99,11 @@ PROGRAM main
 
   equivalence(u_rotr,u_rot)
 
+  integer :: unit_wke = 123451236
+  open (unit=unit_wke,file='wke.dat',action="write",status="replace")
+
+
+
   !********************** Initializing... *******************************!
 
 
@@ -412,6 +417,22 @@ if(out_etot ==1 .and. mod(iter,freq_etot )==0) call diag_zentrum(uk,vk,wk,bk,wak
  if(out_we ==1   .and. mod(iter,freq_we   )==0)  call wave_energy(BRk,BIk,CRk,CIk)
  if(out_conv ==1 .and. mod(iter,freq_conv )==0)  call we_conversion(ARk, AIk, nBRk, nBIk, rBRk, rBIk, nBRr, nBIr, rBRr, rBIr)
 
+
+
+
+ !***** Print time series of WKE at the core of the bottom left vortex *****!
+
+ call fft_c2r(BRk,BRr,n3h0)
+ call fft_c2r(BIk,BIr,n3h0)
+
+ if(mype==(npe-1)) then
+    write(unit_wke,fmt=*) time,time/(twopi*Ro),0.5*(BRr(n1/4,n2/4,n3h0)**2+BIr(n1/4,n2/4,n3h0)**2)*U_scale*U_scale
+ end if
+
+ call fft_r2c(BRr,BRk,n3h0)
+ call fft_r2c(BIr,BIk,n3h0)
+
+ !**************************************************************************!
 
  if(time>maxtime) EXIT
 end do !End loop

@@ -1225,7 +1225,7 @@ end subroutine hspec
        Imemk = BIk
        call fft_c2r(BRk,BRr,n3h0)
        call fft_c2r(BIk,BIr,n3h0)
-       field = 0.5*(BRr*BRr + BIr*BIr)
+       field = 0.5*(BRr*BRr + BIr*BIr)*U_scale*U_scale
     elseif(id_field==2) then
        Rmemk = BRk
        call fft_c2r(BRk,BRr,n3h0)
