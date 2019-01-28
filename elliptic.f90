@@ -249,6 +249,101 @@ CONTAINS
 
 
 
+    SUBROUTINE A_solver_ybj_plus(ak,bt)
+
+      ! This subroutines solves the elliptic equation a_ell(z) d^2 psi/dz^2 + b_ell(z) d psi/dz - kh2 psi = q for the streamfunction psi. 
+
+      double complex, dimension(iktx,ikty,n3h0), intent(out) :: ak   !A in usual z-parallelization                                                                       
+      double complex, dimension(iktx,n3, iktyp)              :: at   !Transposed (ky-parallelization) A                                                   
+      double complex, dimension(iktx,n3, iktyp), intent(in)  :: bt   !Transposed (ky-parallelization) right-hand side               
+
+      integer :: info                                      ! Returns error for sgtsv                                                                                           
+
+      double precision :: d(n3),dl(n3-1),du(n3-1)          !diagonal value   
+      double precision :: br(n3), bi(n3)                 !real and imaginary parts of rhs                                                                      
+
+                                                                                                                                                                          
+      DO ikx=1,iktx
+         kx=kxa(ikx)
+         DO ikyp=1,iktyp
+            iky=ikyp+iktyp*mype
+            ky=kya(iky)
+
+            kh2=kx*kx + ky*ky
+
+            if(kh2/=0 .and. L(ikx,iky)==1 ) then
+               
+               do iz=1,n3
+                  
+                  br(iz)=dz*dz*Bu*DBLE(  bt(ikx,iz,ikyp) )  
+                  bi(iz)=dz*dz*Bu*DIMAG( bt(ikx,iz,ikyp) )  
+
+               end do
+
+               do iz=1,n3
+                  if(iz==1) then                     
+                     d(iz) = -( rho_ut(iz)*a_ell_ut(iz)/rho_st(iz) + kh2*dz*dz/4. )
+                    du(iz) = rho_ut(iz)*a_ell_ut(iz)/rho_st(iz)
+                  elseif(iz==n3) then
+                     d(iz) = -( rho_ut(iz-1)*a_ell_ut(iz-1)/rho_st(iz) + kh2*dz*dz/4. )
+                  dl(iz-1) = rho_ut(iz-1)*a_ell_ut(iz-1)/rho_st(iz)
+                  else !1<iz<n3
+                     d(iz) = -( (rho_ut(iz)*a_ell_ut(iz) + rho_ut(iz-1)*a_ell_ut(iz-1))/rho_st(iz) + kh2*dz*dz/4. )
+                    du(iz) = rho_ut(iz)*a_ell_ut(iz)/rho_st(iz)
+                  dl(iz-1) = rho_ut(iz-1)*a_ell_ut(iz-1)/rho_st(iz)
+                  end if
+               end do
+               
+               call DGTSV( n3, 1, dl, d, du, br, n3, info )
+               if(info/=0) write(*,*) "problem in helmdouble", info
+               
+               do iz=1,n3
+                  if(iz==1) then                     
+                     d(iz) = -( rho_ut(iz)*a_ell_ut(iz)/rho_st(iz) + kh2*dz*dz/4. )
+                    du(iz) = rho_ut(iz)*a_ell_ut(iz)/rho_st(iz)
+                  elseif(iz==n3) then
+                     d(iz) = -( rho_ut(iz-1)*a_ell_ut(iz-1)/rho_st(iz) + kh2*dz*dz/4. )
+                  dl(iz-1) = rho_ut(iz-1)*a_ell_ut(iz-1)/rho_st(iz)
+                  else !1<iz<n3
+                     d(iz) = -( (rho_ut(iz)*a_ell_ut(iz) + rho_ut(iz-1)*a_ell_ut(iz-1))/rho_st(iz) + kh2*dz*dz/4. )
+                    du(iz) = rho_ut(iz)*a_ell_ut(iz)/rho_st(iz)
+                  dl(iz-1) = rho_ut(iz-1)*a_ell_ut(iz-1)/rho_st(iz)
+                  end if
+               end do
+
+               call DGTSV( n3, 1, dl, d, du, bi, n3, info )
+               if(info/=0) write(*,*) "problem in helmdouble (imag)", info
+               
+               !*** Put the solution in pt ***!    
+               
+               DO iz=1,n3
+                  at(ikx,iz,ikyp)=br(iz)+i*bi(iz)
+               END DO
+
+            else
+            
+               !set kh=0 modes to zero...                                                                                                                                    
+
+                DO iz=1,n3
+                   at(ikx,iz,ikyp)=(0.,0.)
+                END DO
+
+             
+             end if
+
+         END DO
+      END DO
+
+      !*********** Transposition to z-parallelized p ***************!                                                                                                               
+
+      call mpitranspose(at,iktx,n3,iktyp,ak,ikty,n3h0)
+
+
+    END SUBROUTINE A_SOLVER_YBJ_PLUS
+    
+
+
+
 
 
 
