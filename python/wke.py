@@ -6,10 +6,13 @@ scratch_location = '/oasis/scratch/comet/oasselin/temp_project/'
 folder = 'steady_wave/'
 run = 'm7.5_U0.025_n256'
 
-
 tmax = 1000
-error = np.zeros((tmax,2))
+wke = np.zeros((tmax,3))
 timestep = 0.1
+
+res = 64
+wke_bo_bq  = np.zeros((res/2,res/2))
+wke_ybj_bq = np.zeros((res/2,res/2))
 
 for ts in range(tmax):
 
@@ -22,12 +25,22 @@ for ts in range(tmax):
         wke_bo = np.loadtxt(path_bo) 
         wke_ybj= np.loadtxt(path_ybj) 
 
-        error[ts,1]  = np.mean(np.square(wke_ybj-wke_bo)) / np.mean(np.square(wke_bo))    #Same as (3.22) in TBS but with A -> wke
-        error[ts,0]  = ts*timestep
+        #average wke only in the bottom left quarter... knowing that that slices are printed from the bottom Y, then all x, second y then all x, etc.
+
+        for y in range(res/2):
+            for x in range(res/2):
+                wke_bo_bq[x,y]  = wke_bo[res*y+x]
+                wke_ybj_bq[x,y] = wke_ybj[res*y+x]
+            
+        wke[ts,0]  = ts*timestep
+        wke[ts,1]  = np.mean(wke_ybj_bq)
+        wke[ts,2]  = np.mean(wke_bo_bq)
+
+
 
     else:
-        error = error[:ts-1,:]
+        wke = wke[:ts-1,:]
         break
 
 
-np.savetxt('data/error_'+run+'.dat',error)
+np.savetxt('data/wke_'+run+'.dat',wke)
