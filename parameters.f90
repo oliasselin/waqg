@@ -40,6 +40,8 @@ MODULE parameters
     !Tags to specify run!
     !-------------------!
 
+    integer, parameter :: ybj_plus = 1                  !1: B is L+A and A is recovered from B like psi is recovered from q (exception of the 1/4 factor). 0: Regular YBJ equation   
+
     integer, parameter :: no_dispersion=0
     integer, parameter :: linear=0                      !1: set the nonlinear terms (advection) to 0. 
     integer, parameter :: inviscid=0                    !1: No dissipation, otherwise: dissipation
