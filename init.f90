@@ -864,9 +864,9 @@ do ix=1,n1d
          end if
 
       if(ix<=n1) then
-         if(z1>=0) f1s(ix,iy,iz1)=sin(x)*sin(y)
-         if(z2>=0) f2s(ix,iy,iz2)=-(Uw_scale/U_scale)*cos(singlem*z3)/(singlem**2)
-         if(z3>=0) f3s(ix,iy,iz3)= (Uw_scale/U_scale)*cos(singlem*z3)
+         if(z1>=0) f1s(ix,iy,iz1)= - (mmm**2+(kkk**2+lll**2)/(4.*Bu))*sin(kkk*x)*cos(lll*y)*cos(mmm*z1)
+         if(z2>=0) f2s(ix,iy,iz2)=0.
+         if(z3>=0) f3s(ix,iy,iz3)=sin(kkk*x)*cos(lll*y)*cos(mmm*z3)
       else
          if(z1>=0) f1s(ix,iy,iz1)=0.
          if(z2>=0) f2s(ix,iy,iz2)=0.

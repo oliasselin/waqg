@@ -2,7 +2,7 @@ MODULE parameters
 
    IMPLICIT NONE
 
-    integer, parameter :: n1=64, n2=64, n3=64
+    integer, parameter :: n1=64, n2=64, n3=256
     integer, parameter :: npe=8
 
     integer, parameter :: n1d=n1+2, n2d=n2, n3d=n3
@@ -57,6 +57,8 @@ MODULE parameters
 
     !Initial structure!
     !-----------------!
+
+    integer, parameter :: kkk=5,lll=3,mmm = 2 
 
 
     integer, parameter :: generic=1 
@@ -183,7 +185,7 @@ MODULE parameters
 
     real :: time=0.
     integer :: iter=0
-    integer :: itermax=1000000000
+    integer :: itermax=1!1000000000
     real :: maxtime=100                      
     double precision, parameter :: delt=0.5*Bu*Ro/(2.*ktrunc_x*ktrunc_x) !0.25/ktrunc_x !0.5*Bu*Ro/(2.*ktrunc_x*ktrunc_x) 
     double precision, parameter :: gamma=1e-2                                  !Robert filter parameter

@@ -4,8 +4,8 @@ number_of_nodes=1
 number_of_tasks=8
 ntasks_per_node=8
 
-sourdir=/oasis/scratch/comet/oasselin/temp_project/steady_wave/YBJ/m5_U0.25/source/
-datadir=/oasis/scratch/comet/oasselin/temp_project/steady_wave/YBJ/m5_U0.25/output/
+sourdir=/oasis/scratch/comet/oasselin/temp_project/test_inversion/test1/source/
+datadir=/oasis/scratch/comet/oasselin/temp_project/test_inversion/test1/output/
 
 mkdir -p $sourdir
 mkdir -p $datadir
@@ -16,14 +16,14 @@ cd $sourdir
 cat > EXEC_STEP << EXEC
 #!/bin/sh 
 
-#SBATCH --job-name="test1"
-#SBATCH --output="/home/oasselin/monitor/test1.o"
-#SBATCH --error="/home/oasselin/monitor/test1.e"
-#SBATCH --partition=compute
+#SBATCH --job-name="test"
+#SBATCH --output="/home/oasselin/monitor/test.o"
+#SBATCH --error="/home/oasselin/monitor/test.e"
+#SBATCH --partition=debug
 #SBATCH --nodes=$number_of_nodes
 #SBATCH --ntasks-per-node=$ntasks_per_node
 #SBATCH --export=ALL
-#SBATCH -t 01:00:00
+#SBATCH -t 00:05:00
 
 #This job runs with 2 nodes, 24 cores per node for a total of 48 cores.
 #ibrun in verbose mode will give binding detail

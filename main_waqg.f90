@@ -99,8 +99,11 @@ PROGRAM main
 
   equivalence(u_rotr,u_rot)
 
+  real :: error,error_p
+
   integer :: unit_wke = 123451236
   open (unit=unit_wke,file='wke.dat',action="write",status="replace")
+
 
 
 
@@ -116,19 +119,43 @@ PROGRAM main
 
 
   !Initialize fields
-  call generate_fields_stag(psir,n3h1,ARr,n3h0,BRr,n3h0) 
+  call generate_fields_stag(BRr,n3h0,ARr,n3h0,AIr,n3h0) 
 
-  call fft_r2c(psir,psik,n3h1)
-  call fft_r2c(ARr,ARk,n3h0)
+  call fft_r2c(AIr,AIk,n3h0)
   call fft_r2c(BRr,BRk,n3h0)
+   
+  !Test the inversion for ARk, exact solution written in AIk
+  if(zero_aveB==1) call sumB(BRk,BIk)                           !Resets the vertical sum of B to zero                                                                                     
+  call mpitranspose(BRk,iktx,ikty,n3h0,BRkt,n3,iktyp)           !Transpose BR to iky-parallelized space                                                                                 
+  call A_solver_ybj_plus(ARk,BRkt)
+  
+  !Compute error!
+  ARk=ARk-AIk       !This is the error in k-space
 
-  AIk = (0.D0,0.D0)
-  BIk = (0.D0,0.D0)
-   qk = (0.D0,0.D0)
+  error=0.
+  error_p=0.
 
-  call compute_velo(uk,vk,wk,bk,psik) 
-  call generate_halo(uk,vk,wk,bk)
-  call generate_halo_q(qk) 
+  !Integrate the error in the whole domain
+  do iz=1,n3h0
+     do iky=1,ikty
+        do ikx=1,iktx
+           
+           if(L(ikx,iky)==1) then
+              error_p = error_p + real( ARk(ikx,iky,iz)*CONJG( ARk(ikx,iky,iz) ))
+           end if
+           
+        enddo
+     enddo
+  end do
+
+  error_p = error_p/n3
+  
+  !Sum over all processors
+  call mpi_reduce(error_p     ,error     , 1,MPI_REAL,   MPI_SUM,0,MPI_COMM_WORLD,ierror)
+       
+  !Print total L2-norm error
+  write(*,*) "n3=",n3,"error on A=",error
+
 
 
  !Initial diagnostics!
