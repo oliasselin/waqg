@@ -31,6 +31,10 @@ PROGRAM main
   !**** C = Az and is decomposed into real and imag parts (ex.: C = CR + iCI) even though in Fourier-space both CRk and CIk are complex
   double complex,   dimension(iktx,ikty,n3h0) :: CRk, CIk
 
+  !**** S = LAz is the vertical shear of waves ****! This could be optimized
+  double complex,   dimension(iktx,ikty,n3h0) :: SRk, SIk
+  double precision, dimension(n1d,n2d,n3h0)   :: SRr, SIr
+
   !**** n = nonlinear advection term J(psi,B) **** r = refractive term ~ B*vort
   double complex,   dimension(iktx,ikty,n3h0) :: nBRk, nBIk, rBRk, rBIk
   double precision, dimension(n1d,n2d,n3h0)   :: nBRr, nBIr, rBRr, rBIr
@@ -75,6 +79,9 @@ PROGRAM main
   equivalence(BIr,BIk)
   equivalence(ARr,ARk)
   equivalence(AIr,AIk)
+
+  equivalence(SRr,SRk)
+  equivalence(SIr,SIk)
 
   equivalence(nBRr,nBRk)
   equivalence(nBIr,nBIk)
@@ -122,6 +129,7 @@ PROGRAM main
   call initialize_fftw(array2dr,array2di,fr_even,fk_even)
   call init_arrays
   call init_base_state
+  call compute_eigen
   if(mype==0)  call validate_run
 
   if(restart==1) then
@@ -164,7 +172,18 @@ PROGRAM main
 
  if(out_etot ==1) call diag_zentrum(uk,vk,wk,bk,wak,psik,u_rot)
 
- if(out_we   ==1) call wave_energy(BRk,BIk,CRk,CIk)
+ if(out_we   ==1) then
+    if(out_wshear ==1) then
+       call mpitranspose(BRk,iktx,ikty,n3h0,BRkt,n3,iktyp)           !Transpose BR to iky-parallelized space                                                                                                                 
+       call mpitranspose(BIk,iktx,ikty,n3h0,BIkt,n3,iktyp)           !Transpose BK to iky-parallelized space                                                                                                   
+       call wave_shear(BRkt,BIkt,SRk,SIk)
+    else
+       SRk = (0.D0,0.D0)
+       SIk = (0.D0,0.D0)
+    end if
+    call wave_energy(BRk,BIk,CRk,CIk,SRk,SIk)
+ end if
+
 
  do id_field=1,nfields                                            
     if(out_slice ==1) call slices(uk,vk,bk,psik,qk,ur,vr,br,psir,qr,id_field)
@@ -435,7 +454,12 @@ end if
         call mpitranspose(BRk,iktx,ikty,n3h0,BRkt,n3,iktyp)           !Transpose BR to iky-parallelized space 
         call mpitranspose(BIk,iktx,ikty,n3h0,BIkt,n3,iktyp)           !Transpose BK to iky-parallelized space 
         call compute_A(ARk,AIK,BRkt,BIkt,CRk,CIK,sigma)               !Compute A!
-        
+
+        if(out_we ==1   .and. mod(iter,freq_we   )==0)  then
+           if(out_wshear ==1) call wave_shear(BRkt,BIkt,SRk,SIk)
+           call wave_energy(BRk,BIk,CRk,CIk,SRk,SIk)
+        end if
+
         ! ------------------------ !
      end if
 
@@ -608,7 +632,7 @@ end do
 
 if(dump==1 .and. mod(iter,freq_dump)==0) call dump_restart(psik)
 
-if(out_we ==1   .and. mod(iter,freq_we   )==0)  call wave_energy(BRk,BIk,CRk,CIk)
+
  
 
 if(time>maxtime) EXIT

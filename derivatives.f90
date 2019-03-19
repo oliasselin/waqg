@@ -1393,7 +1393,7 @@ MODULE derivatives
 
       
       !Print the spectrum and filter A if desired
-      if( (filter_A == 1 .and. mod(iter,freq_filter_A)==0 ) .or. (print_A == 1 .and. mod(iter,freq_print_A)==0) )  call spec_A(ARkt,AIkt)
+      if( (filter_A == 1 .and. mod(iter,freq_filter_A)==0 ) .or. (print_A == 1 .and. mod(iter,freq_print_A)==0) )  call spec_A_general(ARkt,AIkt)! call spec_A(ARkt,AIkt)
 
       !Transpose A back to the regular z-parallelized world
       call mpitranspose(ARkt,iktx,n3,iktyp,ARk,ikty,n3h0)
@@ -1481,6 +1481,51 @@ MODULE derivatives
 
 
 
+    subroutine wave_shear(BRkt,BIkt,SRk,SIk)
+
+      !This subroutine computes the vertical shear in waves, LA_z, from the transposed LA. Shear is computed on the staggered grid, z^i_u = i*dz, i = 1,n3
+      !It is assumed that LAz = 0 right at the top boundary (i = n3) --- this is not necessarily true...
+
+      double complex, dimension(iktx,n3, iktyp), intent(in) :: BRkt          !Transposed (ky-parallelization) BRk (this array can most likely be recycled)                                               
+      double complex, dimension(iktx,n3, iktyp), intent(in) :: BIkt          !Transposed (ky-parallelization) BIk (this array can most likely be recycled) 
+
+      !Temporary array to store shear
+      double complex, dimension(iktx,n3, iktyp) :: SRkt          !Transposed (ky-parallelization) BRk (this array can most likely be recycled)                                               
+      double complex, dimension(iktx,n3, iktyp) :: SIkt          !Transposed (ky-parallelization) BIk (this array can most likely be recycled) 
+
+      !Shear variables: LA_z
+      double complex,   dimension(iktx,ikty,n3h0), intent(out) :: SRk, SIk
+
+      
+      DO ikx=1,iktx
+         DO ikyp=1,iktyp
+            iky=ikyp+iktyp*mype
+
+            if(L(ikx,iky)==1 ) then
+
+               do iz=1,n3-1
+
+                  SRkt(ikx,iz,ikyp) = (BRkt(ikx,iz+1,ikyp)-BRkt(ikx,iz,ikyp))/dz
+                  SIkt(ikx,iz,ikyp) = (BIkt(ikx,iz+1,ikyp)-BIkt(ikx,iz,ikyp))/dz
+
+               end do
+
+               
+               SRkt(ikx,n3,ikyp) = (0.D0,0.D0)
+               SIkt(ikx,n3,ikyp) = (0.D0,0.D0)
+
+            end if
+
+         end DO
+      end DO
+
+
+      !Transpose shear into regular (ikx,iky,izh0) dimensions
+      call mpitranspose(SRkt,iktx,n3,iktyp,SRk,ikty,n3h0)
+      call mpitranspose(SIkt,iktx,n3,iktyp,SIk,ikty,n3h0)
+
+
+    end subroutine wave_shear
 
 
 
@@ -2187,6 +2232,244 @@ MODULE derivatives
 
 
     end SUBROUTINE compute_rot
+
+
+
+
+
+subroutine spec_A_general2(ARkt,AIkt)
+
+    !kx,kz,z modes
+    double complex, dimension(iktx,n3, iktyp) :: ARkt          !Transposed (ky-parallelization) ARk                                                                                                                                                           
+    double complex, dimension(iktx,n3, iktyp) :: AIkt          !Transposed (ky-parallelization) AIk                                                                                                                                                     
+
+    !kx,ky,m modes
+    double complex, dimension(iktx,n3, iktyp) :: ARmt   
+    double complex, dimension(iktx,n3, iktyp) :: AImt      
+
+    integer :: m
+
+    !Initialize vertical modes to zero
+    ARmt=(0.D0,0.D0)
+    AImt=(0.D0,0.D0)
+
+    DO ikyp=1,iktyp
+       iky=ikyp+iktyp*mype
+       ky=kya(iky)
+
+       DO ikx=1,iktx
+          kx=kxa(ikx)
+
+          kh2=kx*kx+ky*ky
+
+          if(L(ikx,iky)==1 ) then
+
+             !Calculate the vertical modes if allowed by YBJ criterion
+             do m=1,n3
+
+                !Only calculate the mode if it's not illegal
+                if (filter_A /= 1 .or. mod(iter,freq_filter_A)/=0 .or. kh2 <= YBJ_criterion*Bu*(eigen_values(m)**2) .or. m==1) then
+
+                   do iz=1,n3
+                      ARmt(ikx,m,ikyp) = ARmt(ikx,m,ikyp) + ARkt(ikx,iz,ikyp)*eigen_vectors(iz,m)
+                      AImt(ikx,m,ikyp) = AImt(ikx,m,ikyp) + AIkt(ikx,iz,ikyp)*eigen_vectors(iz,m)
+                   end do
+            
+                end if
+
+             end do
+
+          end if
+
+      end do
+    end DO
+
+
+    !Print spectrum of kinetic energy: 0.5 |LA|^2 as a function of kh and m
+
+
+
+    !Transform the filtered field back to (kx,z,kyp) space
+    ARkt=(0.D0,0.D0)
+    AIkt=(0.D0,0.D0)
+
+    DO ikyp=1,iktyp
+       iky=ikyp+iktyp*mype
+       ky=kya(iky)
+
+       DO ikx=1,iktx
+          kx=kxa(ikx)
+
+          kh2=kx*kx+ky*ky
+
+          if(L(ikx,iky)==1 ) then
+
+             do iz=1,n3
+
+                do m = 1,n3
+                   ARkt(ikx,iz,ikyp) = ARkt(ikx,iz,ikyp) + ARmt(ikx,m,ikyp)*eigen_vectors(iz,m)
+                   AIkt(ikx,iz,ikyp) = AIkt(ikx,iz,ikyp) + AImt(ikx,m,ikyp)*eigen_vectors(iz,m)
+                end do
+                
+             end do
+
+          end if
+       end DO
+    end DO
+
+  end subroutine spec_A_general2
+
+
+
+subroutine spec_A_general(ARkt,AIkt)
+
+    !kx,kz,z modes
+    double complex, dimension(iktx,n3, iktyp) :: ARkt          !Transposed (ky-parallelization) ARk                                               
+    double complex, dimension(iktx,n3, iktyp) :: AIkt          !Transposed (ky-parallelization) AIk                                                                   
+
+    !kx,ky,m modes
+    double complex, dimension(iktx,n3, iktyp) :: ARmt   
+    double complex, dimension(iktx,n3, iktyp) :: AImt      
+
+    integer :: mode
+    integer :: m
+
+    real, dimension(0:ktx,n3) :: swke_p,swke                          !spectrum for wave kinetic energy
+    double precision :: kh
+       
+    character(len = 32) :: fname                !future file name                                                                                                  
+    
+
+    !***************************************!
+    !* Calculate the spectral coefficients *!
+    !***************************************!
+
+    !Initialize vertical modes to zero
+    ARmt=(0.D0,0.D0)
+    AImt=(0.D0,0.D0)
+
+    DO ikyp=1,iktyp
+       iky=ikyp+iktyp*mype
+       ky=kya(iky)
+
+       DO ikx=1,iktx
+          kx=kxa(ikx)
+
+          kh2=kx*kx+ky*ky
+
+          if(L(ikx,iky)==1 ) then
+
+             do m=1,n3
+                do iz=1,n3
+                   ARmt(ikx,m,ikyp) = ARmt(ikx,m,ikyp) + ARkt(ikx,iz,ikyp)*eigen_vectors(iz,m)
+                   AImt(ikx,m,ikyp) = AImt(ikx,m,ikyp) + AIkt(ikx,iz,ikyp)*eigen_vectors(iz,m)
+                end do
+             end do
+
+          end if
+
+      end do
+    end DO
+
+
+    !Print spectrum of kinetic energy: 0.5 |LA|^2 as a function of kh and m
+    if(print_A == 1 .and. mod(iter,freq_print_A)==0) then
+
+       swke_p=0.
+       swke=0.
+
+       DO ikyp=1,iktyp
+          iky=ikyp+iktyp*mype
+          ky=kya(iky)
+          
+          DO ikx=1,iktx
+             kx=kxa(ikx)
+             
+             kh2=kx*kx+ky*ky             
+             kh   = sqrt(1.D0*kh2)
+             mode = ifix(real(kh*L1/twopi+0.5))
+
+             if (L(ikx,iky).eq.1) then
+           
+                do m=1,n3
+                   swke_p(mode,m)   = swke_p(mode,m) + (eigen_values(m)**4)*real( ARmt(ikx,m,ikyp)*CONJG( ARmt(ikx,m,ikyp)  ) + AImt(ikx,m,ikyp)*CONJG( AImt(ikx,m,ikyp) ) )
+                end do
+
+             end if
+          end DO
+       end DO
+
+       !At the moment, mode kh=0 is not included in A, so no need to remove half of it as usual...
+       
+
+       !Sum the spectra from all processors
+       call mpi_reduce(swke_p,swke,(ktx+1)*n3,MPI_REAL,MPI_SUM,0,MPI_COMM_WORLD,ierror)
+
+       !Get the dimensions correct, then print the spectrum!
+       if(mype==0) then
+
+          swke = swke*Uw_scale*Uw_scale/n3          !Because 1/2pi int eigen_vectors(iz,m)*eigen_vectors(iz,m) dz \approx 1/n3
+
+          write (fname, "(A4,I3,A4)") "swke",count_A,".dat"
+          open (unit=unit_specA,file=fname,action="write",status="replace")
+
+          do m=1,n3
+             write(unit=unit_specA,fmt=333) (swke(mode,m),mode=0,ktx)
+             write(unit=unit_specA,fmt=*) '           '
+          enddo
+          
+333       format(1x,E12.5,1x)
+          close (unit=unit_specA)
+       end if
+       
+       count_A=count_A+1
+
+    end if
+
+
+
+
+
+
+
+    !If desired, filter A!
+    if (filter_A == 1 .or. mod(iter,freq_filter_A)==0) then
+
+       !Transform the filtered field back to (kx,z,kyp) space
+       ARkt=(0.D0,0.D0)
+       AIkt=(0.D0,0.D0)
+
+       DO ikyp=1,iktyp
+          iky=ikyp+iktyp*mype
+          ky=kya(iky)
+          
+          DO ikx=1,iktx
+             kx=kxa(ikx)
+             
+             kh2=kx*kx+ky*ky
+             
+             if(L(ikx,iky)==1 ) then
+
+                do m = 1,n3
+
+                   !Integrate the mode only if it is legal!
+                   if (kh2 <= YBJ_criterion*Bu*(eigen_values(m)**2) .or. m==1) then
+                      do iz=1,n3
+                         ARkt(ikx,iz,ikyp) = ARkt(ikx,iz,ikyp) + ARmt(ikx,m,ikyp)*eigen_vectors(iz,m)
+                         AIkt(ikx,iz,ikyp) = AIkt(ikx,iz,ikyp) + AImt(ikx,m,ikyp)*eigen_vectors(iz,m)
+                      end do
+                   end if
+                   
+                end do
+                
+             end if
+          end DO
+       end DO
+
+    end if
+
+  end subroutine spec_A_general
+
 
 
 subroutine spec_A(ARkt,AIkt)

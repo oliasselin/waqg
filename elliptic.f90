@@ -358,4 +358,228 @@ CONTAINS
 
     END SUBROUTINE OMEGA_EQUATION
 
+
+
+
+    SUBROUTINE compute_eigen
+
+      !This subroutine computes the eigenvalues and vectors for A and LA. LAPACK actually solves for L' = - (N0 H_scale / cor)^2 L,                                
+      !Where the minus sign implies that the eigenvalues are positive and thus the eigenvectors are sorted from the gravest to highest mode.          
+
+
+      !Eigenvalues output of LAPACK == Em, then                                                                                                   
+      !Dimensional RDR = N0 H_scale / sqrt(Em) f    (Rossby deformation radius: LA == - (1/RDR)^2 A)                                     
+      !Dimensional kappa = 1/RDR                    (Where LA == - kappa^2 A)                                                                
+
+      double precision :: ds(n3-1)          !diagonal and sub/super diagonal values                                                      
+
+      double precision :: WORK(2*n3-2)          !diagonal and sub/super diagonal values for DSTEV                                                   
+      integer :: info                                      ! Returns error for LAPACK                                                   
+            
+      !Validate orthonormality of the modes                                                                                             
+      integer :: iz1,iz2
+      double precision :: leftover
+
+      integer :: m
+
+
+      !Initial condition as a function of z and m
+      double precision :: CRz(n3),BRz(n3),ARz(n3)
+      double precision :: CRm(n3),BRm(n3),ARm(n3)
+
+      double precision :: z
+
+      double precision :: ave_A,ave_B,ave_C
+      double precision :: xi_a,xi_b,xi_c
+      double precision :: delta_a,delta_b,delta_c
+
+      double precision :: cons
+
+      !Define matrix L'                                                                                                                            
+      !Compute center diagonal:
+      do iz=1,n3
+         if(iz==1) then
+            eigen_values(iz) = -(1./r_2ut(iz))
+         elseif(iz==n3) then
+            eigen_values(iz) = -(1./r_2ut(iz-1))
+         else !1<iz<n3
+            eigen_values(iz) = -(1./r_2ut(iz) + 1./r_2ut(iz-1))
+         end if
+      end do
+
+      !Compute lower and upper diagonals: ds_i = 1/N^2(z^u_i) from i = 1 to N-1
+      do iz=1,n3-1
+         ds(iz) = 1./r_2ut(iz)
+      end do
+
+      !Give LAPACK -L = - d/dz'( (1/N')^2 d/dz') so that eigenvalues are positive and thus eigenvectors are sorted from gravest to highest                         
+      eigen_values=-eigen_values/(dz*dz)
+      ds=-ds/(dz*dz)
+
+      !Calculate the eigenvectors and eigenvalues using LAPACK                                                                    
+      call DSTEV( 'V', n3, eigen_values, ds, eigen_vectors, n3, WORK, INFO )       !DSTEV( JOBZ, N, D, E, Z, LDZ, WORK, INFO )                                                
+      if(info/=0) write(*,*) "problem in compute_eigen", info
+
+      !LAPACK solved the problem -LA = E A, our actual eigen values are kappa = sqrt(E) ---- The original problem is LA = - kappa^2 A                                         
+      eigen_values = sqrt(abs(eigen_values))
+
+      !Reinforce the first (constant) mode:                                                                                                                                   
+!      eigen_values(1) = 0.
+!      do iz=1,n3-1
+!         eigen_vectors(iz,1) = 1/sqrt(1.*n3)
+!      end do
+
+
+
+
+
+      !********************************************************!                                                                                                            
+      !* Print the first baroclinic Rossby deformation radius *!                                                                                                        
+      !* the eigen values and eigen vectors and validate them *!                                                                                                           
+      !********************************************************!                                                                                                                  
+
+
+      if(mype==0) then
+
+         write(*,*) "Rossby deformation radius (km) = ",N0*H_scale/(cor*eigen_values(2)*1000)
+
+         !Print eigenvalues and eigenvectors of first 3 modes
+         open (unit = 154679, file = "eigen.dat")
+         do iz=1,n3
+            write(154679,"(1x,E12.5,1x,E12.5,1x,E12.5,1x,E12.5,1x,E12.5)") zas(iz),eigen_values(iz),eigen_vectors(iz,1),eigen_vectors(iz,2),eigen_vectors(iz,3)
+         end do
+
+         !Test: verify that the modes are orthonormal
+         do iz=1,n3
+            do iz1=1,n3
+
+               leftover=0.
+               do iz2=1,n3
+                  leftover = leftover + eigen_vectors(iz2,iz1)*eigen_vectors(iz2,iz)
+               end do
+
+               if(abs(leftover)>1e-14 .and. iz1/=iz) write(*,*) "Problem with orthonormality: modes (iz1,iz) have leftover=",leftover,iz1,iz
+
+            end do
+         end do
+
+      end if
+
+      !********************************************************************************************************************!
+      !* Print the legality matrix: modes satisfying (or not) the YBJ criterion N lambda_m / f lambda_hor < YBJ_criterion *!
+      !********************************************************************************************************************!
+
+      if(mype==0) then 
+         open (unit=3334,file='legality.dat',action="write",status="replace")
+
+         do m = 1,n3
+            do ikx = 0,ktx
+
+               if(m == 1 .or. ikx <= sqrt(YBJ_criterion*Bu)*eigen_values(m)) then    !The mode is legal for the chosen YBJ_criterion 
+                  write(unit=3334,fmt=3334) 1.
+               else                                                                  !The mode is not legal
+                  write(unit=3334,fmt=3334) 0.
+               end if
+
+               !Superbly unefficient, but just for test
+               if(m == 2) then
+                  if(ikx <= sqrt(YBJ_criterion*Bu)*eigen_values(m)) then 
+                     write(*,*) "Mode kh = ",ikx," is legal for the first baroclinic mode"
+                  else
+                     write(*,*) "Mode kh = ",ikx," is not legal for the first baroclinic mode"
+                  end if
+               end if
+
+            end do
+            write(unit=3334,fmt=*) '           '
+         end do
+         
+3334     format(1x,F10.3,1x)
+         close (unit=3334)
+
+      end if
+
+
+      !*********************************************************************!
+      !* Print the initial condition for waves and its (vertical) spectrum *!
+      !*********************************************************************!
+      if(mype==0) then
+
+
+         ARm = 0.
+         BRm = 0.
+         CRm = 0.
+
+         !Regenerate the initial condition (the cosh one)
+
+         delta_a = 200.
+         delta_b = 100.
+         delta_c = 50.
+
+         xi_a = H_scale/delta_a
+         xi_b = H_scale/delta_b
+         xi_c = H_scale/delta_c
+
+         cons = 2./sqrt(twopi/2.)
+
+         ave_A = 0.
+         ave_B = 0.
+         ave_C = 0.
+
+         do iz=1,n3
+
+            z = zas(iz)
+
+            ARz(iz) = cons*xi_a*exp(-xi_a*(z-twopi)**2)
+            BRz(iz) = cons*xi_b*exp(-xi_b*(z-twopi)**2)
+            CRz(iz) = cons*xi_c*exp(-xi_c*(z-twopi)**2)
+
+            ave_A=ave_A + ARz(iz)
+            ave_B=ave_B + BRz(iz)
+            ave_C=ave_C + CRz(iz)
+
+         end do
+         
+         !Remove the horizontal average from B
+         ARz=ARz-ave_A/n3
+         BRz=BRz-ave_B/n3
+         CRz=CRz-ave_C/n3
+
+         !Print the initial condition
+         open (unit=6969,file='init.dat',action="write",status="replace")
+         do iz=1,n3
+            write(unit=6969,fmt=3335) zas(iz)*H_scale,ARz(iz),BRz(iz),CRz(iz)
+         enddo
+         
+3335     format(1x,E12.5,1x,E12.5,1x,E12.5,1x,E12.5,1x)
+
+         close (unit=6969)
+
+
+         !Calculate the vertical coefficients (for both A and B)
+         do m=1,n3
+            do iz=1,n3
+
+               ARm(m) = ARm(m) + ARz(iz)*eigen_vectors(iz,m)
+               BRm(m) = BRm(m) + BRz(iz)*eigen_vectors(iz,m)
+               CRm(m) = CRm(m) + CRz(iz)*eigen_vectors(iz,m)
+
+            end do
+         end do
+         
+         
+         !Print the(dimensional WKE spectrum using B and A
+         open (unit=696969,file='init_spec.dat',action="write",status="replace")
+         do m=1,n3
+            write(unit=696969,fmt=3336) m-1 ,   ARm(m)*ARm(m)/(2.*n3),   BRm(m)*BRm(m)/(2.*n3),   CRm(m)*CRm(m)/(2.*n3)  
+         enddo
+         
+3336     format(1x,I3,1x,E12.5,1x,E12.5,1x,E12.5,1x)
+         close (unit=696969)
+      end if
+         
+    end SUBROUTINE compute_eigen
+
+
+
 END MODULE elliptic

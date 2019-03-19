@@ -29,6 +29,7 @@ MODULE files
 !  integer, parameter :: unit_hmid   =62
 !  integer, parameter :: unit_htop   =63
   integer, parameter :: unit_ez     =64
+  integer, parameter :: unit_wz     =65
 
   integer, parameter :: unit_rco    =67
   integer, parameter :: unit_bs     =68
@@ -131,6 +132,7 @@ MODULE files
       !Energy
       if(mype==0) open (unit=unit_energy   ,file="energy.dat"   ,action="write",status="replace")
       if(mype==0) open (unit=unit_ez       ,file="ez.dat"       ,action="write",status="replace")
+      if(mype==0) open (unit=unit_wz       ,file="wz.dat"       ,action="write",status="replace")
       if(mype==0) open (unit=unit_energyr  ,file="erot.dat"   ,action="write",status="replace")
       if(mype==0) open (unit=unit_we       ,file="we.dat"   ,action="write",status="replace")
       if(mype==0) open (unit=unit_conv1     ,file="conv1.dat"  ,action="write",status="replace")
@@ -261,6 +263,7 @@ MODULE files
 !      if(mype==0) close(unit=unit_ro_mid)
 !      if(mype==0) close(unit=unit_ro_top)
       if(mype==0) close(unit=unit_ez)
+      if(mype==0) close(unit=unit_wz)
 !      if(mype==0) close(unit=unit_hbotg)
 !      if(mype==0) close(unit=unit_hmidg)
 !      if(mype==0) close(unit=unit_htopg)
