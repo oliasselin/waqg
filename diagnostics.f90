@@ -36,6 +36,7 @@ CONTAINS
 
       !Compute velocity/buoyancy fields                                                                                                                                                                                           
       do izh1=1,n3h1
+         izh2=izh1+1
          do iky=1,ikty
             ky = kya(iky)
             do ikx=1,iktx
@@ -43,7 +44,7 @@ CONTAINS
                if (L(ikx,iky).eq.1) then
                   u_rot(ikx,iky,izh1) =  - i*ky*psik(ikx,iky,izh1)
                   v_rot(ikx,iky,izh1) =    i*kx*psik(ikx,iky,izh1)
-                  b_rot(ikx,iky,izh1) =    ( psik(ikx,iky,izh1+1) - psik(ikx,iky,izh1) )/(r_1(izh2)*dz)    !1/r_1 d psi/dz                                                                                                                
+                  b_rot(ikx,iky,izh1) =    ( psik(ikx,iky,izh1+1) - psik(ikx,iky,izh1) )/(r_1(izh2)*dz)    !1/r_1 d psi/dz                                                           
                else
                   u_rot(ikx,iky,izh1) =  (0.D0,0.D0)
                   v_rot(ikx,iky,izh1) =  (0.D0,0.D0)

@@ -2,3 +2,5 @@
 *.png
 *.dat
 plots/
+*.pyc
+*.pal
