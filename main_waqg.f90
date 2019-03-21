@@ -190,7 +190,7 @@ PROGRAM main
  end do
 
  do id_field=1,nfieldsw                                            
-    if(out_slicew ==1) call slices_waves(BRk,BIk,BRr,BIr,CRk,CIk,qwk,qwr,id_field)
+    if(out_slicew ==1) call slices_waves(ARk,AIk,BRk,BIk,BRr,BIr,CRk,CIk,qwk,qwr,id_field)
  end do
 
  do iz=1,num_spec
@@ -450,10 +450,16 @@ end if
            FtIk=(0.D0,0.D0)
         end if
 
-        call compute_sigma(sigma,nBRk, nBIk, rBRk, rBIk, FtRk, FtIk)  !Compute the sum of A
         call mpitranspose(BRk,iktx,ikty,n3h0,BRkt,n3,iktyp)           !Transpose BR to iky-parallelized space 
         call mpitranspose(BIk,iktx,ikty,n3h0,BIkt,n3,iktyp)           !Transpose BK to iky-parallelized space 
-        call compute_A(ARk,AIK,BRkt,BIkt,CRk,CIK,sigma)               !Compute A!
+
+        if(ybj_plus==1) then
+           call A_solver_ybj_plus(ARk,BRkt)
+           call A_solver_ybj_plus(AIk,BIkt)
+        else   !Normal YBJ solver
+           call compute_sigma(sigma,nBRk, nBIk, rBRk, rBIk, FtRk, FtIk)  !Compute the sum of A 
+           call compute_A(ARk,AIK,BRkt,BIkt,CRk,CIK,sigma)               !Compute A!
+        end if
 
         if(out_we ==1   .and. mod(iter,freq_we   )==0)  then
            if(out_wshear ==1) call wave_shear(BRkt,BIkt,SRk,SIk)
@@ -622,7 +628,7 @@ end do
 
 
 do id_field=1,nfieldsw
-   if(out_slicew ==1 .and. mod(iter,freq_slicew)==0 .and. count_slicew(id_field)<max_slices) call slices_waves(BRk,BIk,BRr,BIr,CRk,CIk,qwk,qwr,id_field)
+   if(out_slicew ==1 .and. mod(iter,freq_slicew)==0 .and. count_slicew(id_field)<max_slices) call slices_waves(ARk,AIk,BRk,BIk,BRr,BIr,CRk,CIk,qwk,qwr,id_field)
 end do
 
 do iz=1,num_spec

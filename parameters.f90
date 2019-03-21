@@ -41,6 +41,7 @@ MODULE parameters
 
     integer, parameter :: fixed_flow = 0        !1: Skip the psi-inversion steps
     integer, parameter :: passive_scalar = 0    !1: Set A and refraction to 0 and skip the LA -> A inversion. BR and BI become two (independent) passive scalars.
+    integer, parameter :: ybj_plus = 1                  !1: B is L+A and A is recovered from B like psi is recovered from q (exception of the 1/4 factor). 0: Regular YBJ equation   
     
     integer, parameter :: no_waves = 0                  !1: Wave part ignored.
     integer, parameter :: no_feedback = 1               !1: Wave do not feedback on the flow; ): they do
