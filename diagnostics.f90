@@ -36,6 +36,7 @@ CONTAINS
 
       !Compute velocity/buoyancy fields                                                                                                                                                                                           
       do izh1=1,n3h1
+         izh2=izh1+1
          do iky=1,ikty
             ky = kya(iky)
             do ikx=1,iktx
@@ -43,7 +44,7 @@ CONTAINS
                if (L(ikx,iky).eq.1) then
                   u_rot(ikx,iky,izh1) =  - i*ky*psik(ikx,iky,izh1)
                   v_rot(ikx,iky,izh1) =    i*kx*psik(ikx,iky,izh1)
-                  b_rot(ikx,iky,izh1) =    ( psik(ikx,iky,izh1+1) - psik(ikx,iky,izh1) )/(r_1(izh2)*dz)    !1/r_1 d psi/dz                                                                                                                
+                  b_rot(ikx,iky,izh1) =    ( psik(ikx,iky,izh1+1) - psik(ikx,iky,izh1) )/(r_1(izh2)*dz)    !1/r_1 d psi/dz                                                           
                else
                   u_rot(ikx,iky,izh1) =  (0.D0,0.D0)
                   v_rot(ikx,iky,izh1) =  (0.D0,0.D0)
@@ -2073,8 +2074,9 @@ end subroutine hspec
 
 
 
-  subroutine slices_waves(BRk,BIk,BRr,BIr,CRk,CIk,qwk,qwr,id_field)
+  subroutine slices_waves(ARk,AIk,BRk,BIk,BRr,BIr,CRk,CIk,qwk,qwr,id_field)
 
+    double complex, dimension(iktx,ikty,n3h0) :: ARk,AIk
     double complex, dimension(iktx,ikty,n3h0) :: BRk,BIk
     double precision,    dimension(n1d,n2d,n3h0) :: BRr, BIr
 
@@ -2105,9 +2107,30 @@ end subroutine hspec
     equivalence(Rmem2,Rmemk2)
     equivalence(Imem2,Imemk2)
 
+
+
     if(id_field==1)   then
        Rmemk = BRk
        Imemk = BIk
+
+       if(ybj_plus==1) then  !In YBJ+, B = L^+ A = LA + 0.25 nabla(A), or in nondimensional k-space, Bk = LAk - 0.25 k_h^2 Ak /Bu. Here we transform Bk into LAk by adding 0.25 kh2 Ak / Bu
+          do izh0=1,n3h0
+             do iky=1,ikty
+                ky = kya(iky)
+                do ikx=1,iktx
+                   kx = kxa(ikx)
+                   kh2=kx*kx+ky*ky
+                   if(L(ikx,iky)==1) then
+                      BRk(ikx,iky,izh0) = BRk(ikx,iky,izh0) + 0.25*kh2*ARk(ikx,iky,izh0)/Bu
+                      BIk(ikx,iky,izh0) = BIk(ikx,iky,izh0) + 0.25*kh2*AIk(ikx,iky,izh0)/Bu
+                   else
+                      BRk(ikx,iky,izh0) = (0.D0,0.D0)
+                      BIk(ikx,iky,izh0) = (0.D0,0.D0)
+                   end if
+                enddo
+             enddo
+          end do
+       end if
        call fft_c2r(BRk,BRr,n3h0)
        call fft_c2r(BIk,BIr,n3h0)
        field = 0.5*(BRr*BRr + BIr*BIr)*Uw_scale*Uw_scale
