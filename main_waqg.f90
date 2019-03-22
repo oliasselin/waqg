@@ -225,11 +225,11 @@ PROGRAM main
     call compute_velo(uk,vk,wk,bk,psik_bt)
     if(npe > 1) call generate_halo(uk,vk,wk,bk)
 
-    if(zero_aveB==1) call sumB(BRk,BIk)                                               !Resets the vertical sum of B to zero                                                         
+    if(zero_aveB==1 .and. ybj_plus==0) call sumB(BRk,BIk)                                               !Resets the vertical sum of B to zero                    
     call convol_waves(nBRk,nBIk,nBRr,nBIr,uk,vk,BRk,BIk,ur,vr,BRr,BIr)
     call refraction_waqg(rBRk,rBIk,rBRr,rBIr,BRk,BIk,psik_bt,BRr,BIr,psir_bt)
  else
-    if(zero_aveB==1) call sumB(BRk,BIk)                                               !Resets the vertical sum of B to zero
+    if(zero_aveB==1 .and. ybj_plus==0) call sumB(BRk,BIk)                                               !Resets the vertical sum of B to zero
     call convol_waqg(nqk,nBRk,nBIk,nqr,nBRr,nBIr,uk,vk,qk,BRk,BIk,ur,vr,qr,BRr,BIr)
     call refraction_waqg(rBRk,rBIk,rBRr,rBIr,BRk,BIk,psik,BRr,BIr,psir)
  end if
@@ -390,11 +390,11 @@ end if
         call compute_velo(uk,vk,wk,bk,psik_bt)
         if(npe > 1) call generate_halo(uk,vk,wk,bk)
         
-        if(zero_aveB==1) call sumB(BRk,BIk)                           !Resets the vertical sum of B to zero                                                                         
+        if(zero_aveB==1 .and. ybj_plus==0) call sumB(BRk,BIk)                           !Resets the vertical sum of B to zero                                    
         call convol_waves(nBRk,nBIk,nBRr,nBIr,uk,vk,BRk,BIk,ur,vr,BRr,BIr)
         call refraction_waqg(rBRk,rBIk,rBRr,rBIr,BRk,BIk,psik_bt,BRr,BIr,psir_bt)
      else
-        if(zero_aveB==1) call sumB(BRk,BIk)                           !Resets the vertical sum of B to zero
+        if(zero_aveB==1 .and. ybj_plus==0) call sumB(BRk,BIk)                           !Resets the vertical sum of B to zero
         call convol_waqg(nqk,nBRk,nBIk,nqr,nBRr,nBIr,uk,vk,qk,BRk,BIk,ur,vr,qr,BRr,BIr)
         call refraction_waqg(rBRk,rBIk,rBRr,rBIr,BRk,BIk,psik,BRr,BIr,psir)
      end if
