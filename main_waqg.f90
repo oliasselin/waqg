@@ -412,19 +412,12 @@ end if
               do iky=1,ikty
                  do ikx=1,iktx
                     kx = kxa(ikx)
-
-                    if(expeady==1) then
-                       if (L(ikx,iky).eq.1) then
-                          FtRk(ikx,iky,izh0)=i*kx*exp(N2_scale*(zash0(izh0)-z0))*BRk(ikx,iky,izh0)
-                          FtIk(ikx,iky,izh0)=i*kx*exp(N2_scale*(zash0(izh0)-z0))*BIk(ikx,iky,izh0)
-                       end if
-                    else   !Regular linear shear
-                       if (L(ikx,iky).eq.1) then
-                          FtRk(ikx,iky,izh0)=i*kx*zash0(izh0)*BRk(ikx,iky,izh0)
-                          FtIk(ikx,iky,izh0)=i*kx*zash0(izh0)*BIk(ikx,iky,izh0)
-                       end if
+                    
+                    if (L(ikx,iky).eq.1) then
+                       FtRk(ikx,iky,izh0)=i*kx*U_mean(izh0)*BRk(ikx,iky,izh0)
+                       FtIk(ikx,iky,izh0)=i*kx*U_mean(izh0)*BIk(ikx,iky,izh0)
                     end if
-
+                    
                  end do
               end do
            end do
