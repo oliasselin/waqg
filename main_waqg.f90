@@ -286,23 +286,13 @@ end if
             BIk(ikx,iky,izh0) = ( BIok(ikx,iky,izh0) - delt*nBIk(ikx,iky,izh0)  + delt*(0.5/(Bu*Ro))*kh2*ARk(ikx,iky,izh0) - delt*0.5*rBRk(ikx,iky,izh0) )*exp(-int_factor_w)
 
             if(eady == 1 .and. eady_bnd == 1) then  !Add bottom and top boundary terms
+
                !Bottom boundary: add vQy and the Ekman term                
-               if(mype == 0 .and. izh0 == 1) then
-                  if(expeady==1) then    !Expeady => extra H/h factor in the temperature term                                                                                        
-                     qk(ikx,iky,izh1) = qk(ikx,iky,izh1) + delt*(1./dz)*(i*kx*N2_scale*Bu*psik(ikx,iky,izh1) + (1.*kh2)*Ek*psi_old(ikx,iky,izh1) )*exp(-int_factor)
-                  else
-                     qk(ikx,iky,izh1) = qk(ikx,iky,izh1) + delt*(1./dz)*(i*kx*         Bu*psik(ikx,iky,izh1) + (1.*kh2)*Ek*psi_old(ikx,iky,izh1) )*exp(-int_factor)
-                  end if
-               end if
+               if(mype == 0 .and. izh0 == 1) qk(ikx,iky,izh1) = qk(ikx,iky,izh1) + delt*(1./dz)*(i*kx*Theta_y*psik(ikx,iky,izh1) + (1.*kh2)*Ek*psi_old(ikx,iky,izh1) )*exp(-int_factor)
 
                !Top Boundary: add vQy            
-               if(mype == (npe-1) .and. izh0 == n3h0) then
-                  if(expeady==1) then    !Expeady => extra H/h factor in the temperature term                        
-                     qk(ikx,iky,izh1) = qk(ikx,iky,izh1) - delt*(1./dz)*(i*kx*N2_scale*Bu)*psik(ikx,iky,izh1)*exp(-int_factor)
-                  else
-                     qk(ikx,iky,izh1) = qk(ikx,iky,izh1) - delt*(1./dz)*(i*kx*         Bu)*psik(ikx,iky,izh1)*exp(-int_factor)
-                  end if
-               end if
+               if(mype == (npe-1) .and. izh0 == n3h0) qk(ikx,iky,izh1) = qk(ikx,iky,izh1) - delt*(1./dz)*(i*kx*Theta_y)*psik(ikx,iky,izh1)*exp(-int_factor)
+
             end if
 
           else
@@ -492,22 +482,10 @@ end if
                 
                 if(eady == 1 .and. eady_bnd == 1) then  !Add bottom and top boundary terms      
                    !Bottom boundary: add vQy and the Ekman term                                                                                                             
-                   if(mype == 0 .and. izh0 == 1) then
-                      if(expeady==1) then    !Expeady => extra H/h factor in the temperature term
-                         qtempk(ikx,iky,izh1) = qtempk(ikx,iky,izh1) + 2.*delt*(1./dz)*i*kx*N2_scale*Bu*psik(ikx,iky,izh1)*exp(-int_factor) + 2.*delt*(1./dz)*(1.*kh2)*Ek*psi_old(ikx,iky,izh1)*exp(-2*int_factor)
-                      else
-                         qtempk(ikx,iky,izh1) = qtempk(ikx,iky,izh1) + 2.*delt*(1./dz)*i*kx*         Bu*psik(ikx,iky,izh1)*exp(-int_factor) + 2.*delt*(1./dz)*(1.*kh2)*Ek*psi_old(ikx,iky,izh1)*exp(-2*int_factor)
-                      end if
-                   end if
-
+                   if(mype == 0 .and. izh0 == 1) qtempk(ikx,iky,izh1) = qtempk(ikx,iky,izh1) + 2.*delt*(1./dz)*i*kx*Theta_y*psik(ikx,iky,izh1)*exp(-int_factor) + 2.*delt*(1./dz)*(1.*kh2)*Ek*psi_old(ikx,iky,izh1)*exp(-2*int_factor)
+       
                    !Top Boundary: add vQy                                                                                                                                        
-                   if(mype == (npe-1) .and. izh0 == n3h0) then
-                      if(expeady==1) then    !Expeady => extra H/h factor in the temperature term 
-                         qtempk(ikx,iky,izh1) = qtempk(ikx,iky,izh1) - 2.*delt*(1./dz)*(i*kx*N2_scale*Bu)*psik(ikx,iky,izh1)*exp(-int_factor)
-                      else
-                         qtempk(ikx,iky,izh1) = qtempk(ikx,iky,izh1) - 2.*delt*(1./dz)*(i*kx*         Bu)*psik(ikx,iky,izh1)*exp(-int_factor)
-                      end if
-                   end if
+                   if(mype == (npe-1) .and. izh0 == n3h0) qtempk(ikx,iky,izh1) = qtempk(ikx,iky,izh1) - 2.*delt*(1./dz)*(i*kx*Theta_y)*psik(ikx,iky,izh1)*exp(-int_factor)
                 end if
 
               else
