@@ -117,6 +117,11 @@ MODULE parameters
     double precision, parameter :: N2_scale = dom_z/(twopi*450)   !N^2 ~ exp(N2_scale*(z-z0)), thus xi=H/h = 4000/(2pi*800) = 5/2pi 
     double precision, parameter :: N0  =  sqrt(2e-5)             !Actual N is s^-1, not squared.  If ExpEady==1 ==> N0 = Nmax. 
 
+    !For the Eady case
+    double precision :: U_mean(n3h0)                  !Eady: base-state velocity profile
+    double precision :: Theta_y                       !Eady: base-state meriodional potential temperature gradient (constant, nondimensionalized)
+
+
    ! USEFUL INDEX !                                                                                                                          
    ! ------------ !                                                                                                                         
 
