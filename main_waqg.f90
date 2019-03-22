@@ -270,21 +270,14 @@ end if
           kx = kxa(ikx)
           kh2=kx*kx+ky*ky
 
-          if(eady==1 .and. expeady == 0 .and. barotropize == 0) then      !Integrating factor includes the terms Uqx and ULAx
-             int_factor   = delt* (i*kx*zash0(izh0)                    +  nuh1 *((1.*kx)**(2.*ilap1 ) + (1.*ky)**(2.*ilap1 )) + nuh2 *((1.*kx)**(2.*ilap2 ) + (1.*ky)**(2.*ilap2 ))  )
-             int_factor_w = delt* (i*kx*zash0(izh0)                    +  nuh1w*((1.*kx)**(2.*ilap1w) + (1.*ky)**(2.*ilap1w)) + nuh2w*((1.*kx)**(2.*ilap2w) + (1.*ky)**(2.*ilap2w))  )
-          elseif(eady==1 .and. expeady == 1 .and. barotropize == 0) then      !Integrating factor includes the terms U exp() qx and U exp() LAx
-             int_factor   = delt* (i*kx*exp(N2_scale*(zash0(izh0)-z0)) +  nuh1 *((1.*kx)**(2.*ilap1 ) + (1.*ky)**(2.*ilap1 )) + nuh2 *((1.*kx)**(2.*ilap2 ) + (1.*ky)**(2.*ilap2 ))  )
-             int_factor_w = delt* (i*kx*exp(N2_scale*(zash0(izh0)-z0)) +  nuh1w*((1.*kx)**(2.*ilap1w) + (1.*ky)**(2.*ilap1w)) + nuh2w*((1.*kx)**(2.*ilap2w) + (1.*ky)**(2.*ilap2w))  )
-          else if(eady==1 .and. expeady == 0 .and. barotropize == 1) then      !Integrating factor includes the term Uqx but NOT the U LAx term
-             int_factor   = delt* (i*kx*zash0(izh0)                    +  nuh1 *((1.*kx)**(2.*ilap1 ) + (1.*ky)**(2.*ilap1 )) + nuh2 *((1.*kx)**(2.*ilap2 ) + (1.*ky)**(2.*ilap2 ))  )
-             int_factor_w = delt* (                                       nuh1w*((1.*kx)**(2.*ilap1w) + (1.*ky)**(2.*ilap1w)) + nuh2w*((1.*kx)**(2.*ilap2w) + (1.*ky)**(2.*ilap2w))  )
-          elseif(eady==1 .and. expeady == 1 .and. barotropize == 1) then      !Integrating factor includes the terms U exp() qx but not U exp() LAx
-             int_factor   = delt* (i*kx*exp(N2_scale*(zash0(izh0)-z0)) +  nuh1 *((1.*kx)**(2.*ilap1 ) + (1.*ky)**(2.*ilap1 )) + nuh2 *((1.*kx)**(2.*ilap2 ) + (1.*ky)**(2.*ilap2 ))  )
-             int_factor_w = delt* (                                       nuh1w*((1.*kx)**(2.*ilap1w) + (1.*ky)**(2.*ilap1w)) + nuh2w*((1.*kx)**(2.*ilap2w) + (1.*ky)**(2.*ilap2w))  )
-          else
-             int_factor   = delt* (                                       nuh1 *((1.*kx)**(2.*ilap1 ) + (1.*ky)**(2.*ilap1 )) + nuh2 *((1.*kx)**(2.*ilap2 ) + (1.*ky)**(2.*ilap2 ))  )
-             int_factor_w = delt* (                                       nuh1w*((1.*kx)**(2.*ilap1w) + (1.*ky)**(2.*ilap1w)) + nuh2w*((1.*kx)**(2.*ilap2w) + (1.*ky)**(2.*ilap2w))  )
+          !Integrating factor for horizontal diffusion
+          int_factor   = delt* ( nuh1 *((1.*kx)**(2.*ilap1 ) + (1.*ky)**(2.*ilap1 )) + nuh2 *((1.*kx)**(2.*ilap2 ) + (1.*ky)**(2.*ilap2 )) )
+          int_factor_w = delt* ( nuh1w*((1.*kx)**(2.*ilap1w) + (1.*ky)**(2.*ilap1w)) + nuh2w*((1.*kx)**(2.*ilap2w) + (1.*ky)**(2.*ilap2w)) )
+
+          !In the Eady case, integrating factor includes advection by the mean flow
+          if(eady==1) then
+             int_factor   = int_factor   + delt*i*kx*U_mean(izh0)
+             if(barotropize==0) int_factor_w = int_factor_w + delt*i*kx*U_mean(izh0)
           end if
 
           if (L(ikx,iky).eq.1) then
@@ -480,22 +473,15 @@ end if
            do ikx=1,iktx
               kx = kxa(ikx)
               kh2=kx*kx+ky*ky
-
-              if(eady==1 .and. expeady == 0 .and. barotropize == 0) then      !Integrating factor includes the terms Uqx and ULAx
-                 int_factor   = delt* (i*kx*zash0(izh0)                    +  nuh1 *((1.*kx)**(2.*ilap1 ) + (1.*ky)**(2.*ilap1 )) + nuh2 *((1.*kx)**(2.*ilap2 ) + (1.*ky)**(2.*ilap2 ))  )
-                 int_factor_w = delt* (i*kx*zash0(izh0)                    +  nuh1w*((1.*kx)**(2.*ilap1w) + (1.*ky)**(2.*ilap1w)) + nuh2w*((1.*kx)**(2.*ilap2w) + (1.*ky)**(2.*ilap2w))  )
-              elseif(eady==1 .and. expeady == 1 .and. barotropize == 0) then      !Integrating factor includes the terms U exp() qx and U exp() LAx
-                 int_factor   = delt* (i*kx*exp(N2_scale*(zash0(izh0)-z0)) +  nuh1 *((1.*kx)**(2.*ilap1 ) + (1.*ky)**(2.*ilap1 )) + nuh2 *((1.*kx)**(2.*ilap2 ) + (1.*ky)**(2.*ilap2 ))  )
-                 int_factor_w = delt* (i*kx*exp(N2_scale*(zash0(izh0)-z0)) +  nuh1w*((1.*kx)**(2.*ilap1w) + (1.*ky)**(2.*ilap1w)) + nuh2w*((1.*kx)**(2.*ilap2w) + (1.*ky)**(2.*ilap2w))  )
-              else if(eady==1 .and. expeady == 0 .and. barotropize == 1) then      !Integrating factor includes the term Uqx but NOT the U LAx term
-                 int_factor   = delt* (i*kx*zash0(izh0)                    +  nuh1 *((1.*kx)**(2.*ilap1 ) + (1.*ky)**(2.*ilap1 )) + nuh2 *((1.*kx)**(2.*ilap2 ) + (1.*ky)**(2.*ilap2 ))  )
-                 int_factor_w = delt* (                                       nuh1w*((1.*kx)**(2.*ilap1w) + (1.*ky)**(2.*ilap1w)) + nuh2w*((1.*kx)**(2.*ilap2w) + (1.*ky)**(2.*ilap2w))  )
-              elseif(eady==1 .and. expeady == 1 .and. barotropize == 1) then      !Integrating factor includes the terms U exp() qx but not U exp() LAx
-                 int_factor   = delt* (i*kx*exp(N2_scale*(zash0(izh0)-z0)) +  nuh1 *((1.*kx)**(2.*ilap1 ) + (1.*ky)**(2.*ilap1 )) + nuh2 *((1.*kx)**(2.*ilap2 ) + (1.*ky)**(2.*ilap2 ))  )
-                 int_factor_w = delt* (                                       nuh1w*((1.*kx)**(2.*ilap1w) + (1.*ky)**(2.*ilap1w)) + nuh2w*((1.*kx)**(2.*ilap2w) + (1.*ky)**(2.*ilap2w))  )
-              else
-                 int_factor   = delt* (                                       nuh1 *((1.*kx)**(2.*ilap1 ) + (1.*ky)**(2.*ilap1 )) + nuh2 *((1.*kx)**(2.*ilap2 ) + (1.*ky)**(2.*ilap2 ))  )
-                 int_factor_w = delt* (                                       nuh1w*((1.*kx)**(2.*ilap1w) + (1.*ky)**(2.*ilap1w)) + nuh2w*((1.*kx)**(2.*ilap2w) + (1.*ky)**(2.*ilap2w))  )
+              
+              !Integrating factor for horizontal diffusion                                                                                                                              
+              int_factor   = delt* ( nuh1 *((1.*kx)**(2.*ilap1 ) + (1.*ky)**(2.*ilap1 )) + nuh2 *((1.*kx)**(2.*ilap2 ) + (1.*ky)**(2.*ilap2 )) )
+              int_factor_w = delt* ( nuh1w*((1.*kx)**(2.*ilap1w) + (1.*ky)**(2.*ilap1w)) + nuh2w*((1.*kx)**(2.*ilap2w) + (1.*ky)**(2.*ilap2w)) )
+              
+              !In the Eady case, integrating factor includes advection by the mean flow                                                                                        
+              if(eady==1) then
+                 int_factor   = int_factor   + delt*i*kx*U_mean(izh0)
+                 if(barotropize==0) int_factor_w = int_factor_w + delt*i*kx*U_mean(izh0)
               end if
 
 
