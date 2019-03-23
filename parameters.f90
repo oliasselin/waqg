@@ -101,10 +101,8 @@ MODULE parameters
     !Base-state!
     !----------!
 
-    integer, parameter :: tropopause=1, exponential=2, constant_N=3
-!    integer, parameter :: stratification = constant_N
+    integer, parameter :: tropopause=1, exponential=2, constant_N=3, skewed_gaussian=4
     integer, parameter :: stratification = exponential
-    integer, parameter :: expeady = 1                   !1: Eady with an exponential N and U profile (requires eady=eady_bnd=1 too)
 
     !Stratification = tropopause!
     integer, parameter :: fraction=128                   !If h#=150m, then fraction=133.333333~128

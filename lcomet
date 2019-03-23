@@ -4,8 +4,8 @@ number_of_nodes=4
 number_of_tasks=64
 ntasks_per_node=16
 
-sourdir=/oasis/scratch/comet/oasselin/temp_project/niskine/expeady/ybjp_control/source/
-datadir=/oasis/scratch/comet/oasselin/temp_project/niskine/expeady/ybjp_control/output/
+sourdir=/oasis/scratch/comet/oasselin/temp_project/niskine/expeady/ybjp_control_step3/source/
+datadir=/oasis/scratch/comet/oasselin/temp_project/niskine/expeady/ybjp_control_step3/output/
 
 mkdir -p $sourdir
 mkdir -p $datadir
@@ -67,5 +67,5 @@ COMPILE
 chmod 755 COMPILE_STEP
 ./COMPILE_STEP
 ##chmod 755 EXEC_STEP                                                                                                                                       
-sbatch EXEC_STEP
+#sbatch EXEC_STEP
 ##./EXEC_STEP                                                                                                                                               

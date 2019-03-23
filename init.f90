@@ -177,6 +177,7 @@ END SUBROUTINE init_arrays
 subroutine init_base_state
 
   double precision :: N2_nd(n3h2),N2_nds(n3h2),N2_ndst,N2_ndut   !nondimensional N^2, (un)staggered and (un)transposed
+  double precision :: U_mean_t(n3)                               !Full velocity profile obtained from the numerical integration of N^2
 
   do izh2=1,n3h2
    
@@ -212,40 +213,6 @@ subroutine init_base_state
      r_3(izh2)     = 0.D0
 
   end do
-
-  if(eady==1) then
-
-     !For the Eady problem: set the base-state velocity profile!
-     do izh0=1,n3h0
-        
-        zs=zash0(izh0)   !Staggered   fields       
-        
-        if(stratification==exponential) then
-           U_mean(izh0)  = exp( N2_scale*(zs-z0) )
-        else if(stratification==constant_N) then
-           U_mean(izh0)  = zs
-        else
-           write(*,*) "Unable to define velocity profile. Abort."
-           stop
-        end if
-        
-     end do
-     
-     !For the Eady problem: set the base-state meridional potential temp gradient
-     if(stratification==exponential) then
-        Theta_y = N2_scale*Bu
-     else if(stratification==constant_N) then
-        Theta_y = Bu
-     else
-        write(*,*) "Unable to define theta_y. Abort."
-        stop
-     end if
-
-  else
-     U_mean  = 0.D0
-     Theta_y = 0.D0
-  end if
-
 
   !Special case: I need r_1 at z=0.
   r_1(izbot2-1) = 1.D0
@@ -300,6 +267,59 @@ subroutine init_base_state
   
   a_helm = 1./Ar2
   b_helm = 0.
+
+
+  if(eady==1) then !For the Eady problem: set the base-state velocity profile and the  meridional potential temp gradient                                                                             
+
+     if(stratification==exponential) then
+        
+        Theta_y = N2_scale*Bu
+
+        do izh0=1,n3h0
+           zs=zash0(izh0)   !Staggered   fields   
+           U_mean(izh0)  = exp( N2_scale*(zs-z0) )
+        end do
+
+     else if(stratification==constant_N) then
+        
+        Theta_y = Bu
+
+        do izh0=1,n3h0
+           zs=zash0(izh0)   !Staggered   fields                                                                                                                                                                            
+           U_mean(izh0)  = zs
+        end do
+
+     else if(stratification==skewed_gaussian) then
+
+        Theta_y = Bu
+
+        !Numerically integrate N2 to get U (Eady problem requires Uz \propto N^2) for all vertical levels
+        U_mean_t(1)= 0.5*dz*r_2ut(1)
+        do iz=1,n3-1
+           U_mean_t(iz+1)=r_2ut(iz)*dz + U_mean_t(iz)
+        end do
+
+        !Save the processor-specific portion of the velocity profile
+        do izh0=1,n3h0
+           iz = mype*n3h0+izh0
+           U_mean(izh0) = U_mean_t(iz)
+        end do
+
+     else
+        write(*,*) "Unable to define theta_y. Abort."
+        stop
+     end if
+
+  else
+
+     U_mean  = 0.D0
+     Theta_y = 0.D0
+
+  end if
+
+
+
+
 
 end subroutine init_base_state
 
