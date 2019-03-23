@@ -193,6 +193,9 @@ subroutine init_base_state
      else if(stratification==constant_N) then
         N2_nd(izh2)   = 1.D0
         N2_nds(izh2)  = 1.D0
+     else if(stratification==skewed_gaussian) then
+        N2_nd(izh2)   = (N12_sg/(H_scale*sigma_sg*sqrt(twopi)))*exp(-((z -z0_sg)**2)/(sigma_sg**2))*(1.+erf( alpha_sg*(z -z0_sg)/(sigma_sg*sqrt(2.))))+N02_sg
+        N2_nds(izh2)  = (N12_sg/(H_scale*sigma_sg*sqrt(twopi)))*exp(-((zs-z0_sg)**2)/(sigma_sg**2))*(1.+erf( alpha_sg*(zs-z0_sg)/(sigma_sg*sqrt(2.))))+N02_sg
      else
         write(*,*) "Undefined stratification profile. Aborting."
         stop
@@ -223,6 +226,7 @@ subroutine init_base_state
   !Print base-state!
   if (mype==0) open (unit = 154673, file = "rucoeff.dat")
   if (mype==0) open (unit = 154674, file = "rscoeff.dat")
+  if (mype==0) open (unit = 154675, file = "u_mean.dat")
   
                           
   do iz=1,n3
@@ -238,8 +242,11 @@ subroutine init_base_state
         N2_ndut =  exp( N2_scale*(z -z0) )
         N2_ndst =  exp( N2_scale*(zs-z0) )
      else if(stratification==constant_N) then
-        N2_ndut   = 1.D0
+        N2_ndut  = 1.D0
         N2_ndst  = 1.D0
+     else if(stratification==skewed_gaussian) then
+        N2_ndut  = (N12_sg/(H_scale*sigma_sg*sqrt(twopi)))*exp(-((z -z0_sg)**2)/(sigma_sg**2))*(1.+erf( alpha_sg*(z -z0_sg)/(sigma_sg*sqrt(2.))))+N02_sg
+        N2_ndst  = (N12_sg/(H_scale*sigma_sg*sqrt(twopi)))*exp(-((zs-z0_sg)**2)/(sigma_sg**2))*(1.+erf( alpha_sg*(zs-z0_sg)/(sigma_sg*sqrt(2.))))+N02_sg
      else
         write(*,*) "Undefined stratification profile. Aborting."
         stop
@@ -291,12 +298,12 @@ subroutine init_base_state
 
      else if(stratification==skewed_gaussian) then
 
-        Theta_y = Bu
+        Theta_y = Xi*Bu
 
         !Numerically integrate N2 to get U (Eady problem requires Uz \propto N^2) for all vertical levels
-        U_mean_t(1)= 0.5*dz*r_2ut(1)
+        U_mean_t(1)= 0.5*dz*r_2ut(1)/int_N2_nd
         do iz=1,n3-1
-           U_mean_t(iz+1)=r_2ut(iz)*dz + U_mean_t(iz)
+           U_mean_t(iz+1)=r_2ut(iz)*dz/int_N2_nd + U_mean_t(iz)
         end do
 
         !Save the processor-specific portion of the velocity profile
@@ -304,6 +311,15 @@ subroutine init_base_state
            iz = mype*n3h0+izh0
            U_mean(izh0) = U_mean_t(iz)
         end do
+
+        !Print the mean U profile and the calculation from N2 (which should match)
+        if(mype==0) then
+           do iz=1,n3
+
+              write(154675,"(E12.5,E12.5,E12.5,E12.5,E12.5)") zas(iz),U_mean_t(iz)
+
+           end do
+        end if
 
      else
         write(*,*) "Unable to define theta_y. Abort."
