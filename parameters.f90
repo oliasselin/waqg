@@ -113,24 +113,22 @@ MODULE parameters
 
     !Stratification = exponential!
     double precision, parameter :: N2_scale = dom_z/(twopi*450)   !N^2 ~ exp(N2_scale*(z-z0)), thus xi=H/h = 4000/(2pi*800) = 5/2pi 
-    double precision, parameter :: N0  =  sqrt(2e-5)             !Actual N is s^-1, not squared.  If ExpEady==1 ==> N0 = Nmax. 
-
-    !For the Eady case
-    double precision :: U_mean(n3h0)                  !Eady: base-state velocity profile
-    double precision :: Theta_y                       !Eady: base-state meriodional potential temperature gradient (constant, nondimensionalized)
+!    double precision, parameter :: N0  =  sqrt(2e-5)             !Actual N is s^-1, not squared.  If ExpEady==1 ==> N0 = Nmax. 
 
     !Stratification = skewed gaussian!
-    double precision, parameter :: Ns2 = 2.565693246022704e-06       !Surface value of the fitted N2
-    double precision, parameter :: int_N2 = 0.007453294981541        !Vertical integral of the fitted skewed gaussian N2 
-    double precision, parameter :: U_surface = 0.1                   !Surface velocity of the base-state profile
-    double precision, parameter :: Xi = (dom_z/L3)*Ns2/int_N2        !Nondimensional parameter in front of the vQy term in Eady: H Ns2/ int(N^2)
+    double precision, parameter :: N0 = 0.001550529072004        !Surface value of the fitted N2
+    double precision, parameter :: N02_sg = 0.537713935783168
+    double precision, parameter :: N12_sg = 2.684198470106461
+    double precision, parameter :: sigma_sg = 0.648457170048730
+    double precision, parameter :: z0_sg = 6.121537923499139
+    double precision, parameter :: alpha_sg = -5.338431587899242
+    double precision, parameter :: Xi = 0.155309488603754   !1./int_N2_nd        !Nondimensional parameter in front of the vQy term in Eady: H Ns2/ int(N^2) for the skewed gaussian
 
-    double precision, parameter :: N02_sg = 0.503855946281447
-    double precision, parameter :: N12_sg = 1.989977016307059e3
-    double precision, parameter :: sigma_sg = 0.648477325335976
-    double precision, parameter :: z0_sg = 6.121312813068222
-    double precision, parameter :: alpha_sg = -5.066917050534648
-    double precision, parameter :: int_N2_nd = 6.084158432319791
+    !For the Eady case
+    double precision :: U_mean(n3h0)                        !Eady: base-state velocity profile
+    double precision :: Theta_y                             !Eady: base-state meriodional potential temperature gradient (constant, nondimensionalized)
+
+
 
    ! USEFUL INDEX !                                                                                                                          
    ! ------------ !                                                                                                                         
@@ -191,16 +189,16 @@ MODULE parameters
 
     double precision, parameter :: H_scale=dom_z/L3                  !Actual H in m ( z_real = H z' where z' in [0:L3]  is the nondim z.)
     double precision, parameter :: L_scale=dom_x/L1                  !Actual L in m ( x_real = L x' where x' in [0:2pi] is the nondim x.)
-    double precision, parameter :: cor=1.2419e-04                    !Actual f = 0.0001 s^-1 (real value of planet Earth)
-    double precision, parameter :: U_scale=U_surface!0.025                       !Actual U in m/s (u_real = U u' where u' is the nondim velocity ur implemented in the code)
-    double precision, parameter :: Uw_scale=0.2                       !Characteristic magnitude of wave velocity (wave counterpart to U_scale for flow)
+    double precision, parameter :: cor=1.2419D-04                    !Actual f = 0.0001 s^-1 (real value of planet Earth)
+    double precision, parameter :: U_scale=0.1D0!0.025                       !Actual U in m/s (u_real = U u' where u' is the nondim velocity ur implemented in the code)
+    double precision, parameter :: Uw_scale=0.2D0                       !Characteristic magnitude of wave velocity (wave counterpart to U_scale for flow)
     double precision, parameter :: Ar2 = (H_scale/L_scale)**2                                   !(1./64.)**2!(1./10.)**2 !0.01     !Aspect ratio squared = (H/L)^2     
     double precision, parameter :: Ro  = U_scale/(cor*L_scale)                                  !Rossby number  U/fL
     double precision, parameter :: Fr  = U_scale/(N0*H_scale)                                   !Froude number  U/N(z0)H
     double precision, parameter :: W2F = (Uw_scale/U_scale)**2                                  ! wave to flow velocity magnitude squared
     double precision, parameter :: Bu  = Fr*Fr/(Ro*Ro)                                          ! (Fr/Ro)^2 = Burger number 
 
-    double precision, parameter :: delta_E = 15                                                !Depth of the Ekman layer: 63 m
+    double precision, parameter :: delta_E = 15.D0                                                !Depth of the Ekman layer: 63 m
     double precision, parameter :: Ek  = delta_E/(Ro*H_scale)                                   !Ekman term = delta_E/(Ro H)
 
 
