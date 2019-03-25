@@ -174,8 +174,8 @@ PROGRAM main
 
  if(out_we   ==1) then
     if(out_wshear ==1) then
-       call mpitranspose(BRk,iktx,ikty,n3h0,BRkt,n3,iktyp)           !Transpose BR to iky-parallelized space                                                                                                                 
-       call mpitranspose(BIk,iktx,ikty,n3h0,BIkt,n3,iktyp)           !Transpose BK to iky-parallelized space                                                                                                   
+       call mpitranspose(BRk,iktx,ikty,n3h0,BRkt,n3,iktyp)           !Transpose BR to iky-parallelized space                                    
+       call mpitranspose(BIk,iktx,ikty,n3h0,BIkt,n3,iktyp)           !Transpose BK to iky-parallelized space                                  
        call wave_shear(BRkt,BIkt,SRk,SIk)
     else
        SRk = (0.D0,0.D0)
