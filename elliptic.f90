@@ -520,7 +520,7 @@ CONTAINS
          xi_b = H_scale/delta_b
          xi_c = H_scale/delta_c
 
-         cons = 2./sqrt(twopi/2.)
+!         cons = 2./sqrt(twopi/2.)
 
          ave_A = 0.
          ave_B = 0.
@@ -530,9 +530,13 @@ CONTAINS
 
             z = zas(iz)
 
-            ARz(iz) = cons*xi_a*exp(-xi_a*(z-twopi)**2)
-            BRz(iz) = cons*xi_b*exp(-xi_b*(z-twopi)**2)
-            CRz(iz) = cons*xi_c*exp(-xi_c*(z-twopi)**2)
+!            ARz(iz) = cons*xi_a*exp(-xi_a*(z-twopi)**2)
+!            BRz(iz) = cons*xi_b*exp(-xi_b*(z-twopi)**2)
+!            CRz(iz) = cons*xi_c*exp(-xi_c*(z-twopi)**2)
+
+            ARz(iz) = Uw_scale*exp(-(xi_a*(z-twopi))**2)
+            BRz(iz) = Uw_scale*exp(-(xi_b*(z-twopi))**2)
+            CRz(iz) = Uw_scale*exp(-(xi_c*(z-twopi))**2)
 
             ave_A=ave_A + ARz(iz)
             ave_B=ave_B + BRz(iz)
