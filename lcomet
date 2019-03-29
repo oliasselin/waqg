@@ -1,11 +1,11 @@
 #!/bin/bash
 
-number_of_nodes=4
-number_of_tasks=64
+number_of_nodes=8
+number_of_tasks=128
 ntasks_per_node=16
 
-sourdir=/oasis/scratch/comet/oasselin/temp_project/niskine/skewdy/initspec/source/
-datadir=/oasis/scratch/comet/oasselin/temp_project/niskine/skewdy/initspec/output/
+sourdir=/oasis/scratch/comet/oasselin/temp_project/niskine/skewdy/storm0/source/
+datadir=/oasis/scratch/comet/oasselin/temp_project/niskine/skewdy/storm0/output/
 
 mkdir -p $sourdir
 mkdir -p $datadir
@@ -19,11 +19,11 @@ cat > EXEC_STEP << EXEC
 #SBATCH --job-name="test_skew"
 #SBATCH --output="/home/oasselin/monitor/test_skew.o%j"
 #SBATCH --error="/home/oasselin/monitor/test_skew.e%j"
-#SBATCH --partition=debug##compute##debug
+#SBATCH --partition=compute##debug
 #SBATCH --nodes=$number_of_nodes
 #SBATCH --ntasks-per-node=$ntasks_per_node
 #SBATCH --export=ALL
-#SBATCH -t 00:10:00
+#SBATCH -t 16:00:00
 
 #This job runs with 2 nodes, 24 cores per node for a total of 48 cores.
 #ibrun in verbose mode will give binding detail

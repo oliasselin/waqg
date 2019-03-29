@@ -2,8 +2,8 @@ MODULE parameters
 
    IMPLICIT NONE
 
-    integer, parameter :: n1=64, n2=64, n3=512
-    integer, parameter :: npe=64
+    integer, parameter :: n1=512, n2=512, n3=512
+    integer, parameter :: npe=128
 
     integer, parameter :: n1d=n1+2, n2d=n2, n3d=n3
     integer, parameter :: n3h0=n3/npe, n3h1=n3/npe+2, n3h2=n3/npe+4
@@ -43,7 +43,7 @@ MODULE parameters
     integer, parameter :: passive_scalar = 0    !1: Set A and refraction to 0 and skip the LA -> A inversion. BR and BI become two (independent) passive scalars.
     integer, parameter :: ybj_plus = 1                  !1: B is L+A and A is recovered from B like psi is recovered from q (exception of the 1/4 factor). 0: Regular YBJ equation   
     
-    integer, parameter :: no_waves = 1                  !1: Wave part ignored.
+    integer, parameter :: no_waves = 0                  !1: Wave part ignored.
     integer, parameter :: no_feedback = 1               !1: Wave do not feedback on the flow; ): they do
     integer, parameter :: eady = 0                      !1: Eady version: add a bunch of terms
     integer, parameter :: eady_bnd = 0                  !1: Eady version: include the boundary terms (set NOT to zero only for testing purposes)
@@ -190,7 +190,7 @@ MODULE parameters
     double precision, parameter :: H_scale=dom_z/L3                  !Actual H in m ( z_real = H z' where z' in [0:L3]  is the nondim z.)
     double precision, parameter :: L_scale=dom_x/L1                  !Actual L in m ( x_real = L x' where x' in [0:2pi] is the nondim x.)
     double precision, parameter :: cor=1.2419D-04                    !Actual f = 0.0001 s^-1 (real value of planet Earth)
-    double precision, parameter :: U_scale=0.1D0!0.025                       !Actual U in m/s (u_real = U u' where u' is the nondim velocity ur implemented in the code)
+    double precision, parameter :: U_scale=0.01D0!0.025                       !Actual U in m/s (u_real = U u' where u' is the nondim velocity ur implemented in the code)
     double precision, parameter :: Uw_scale=0.1D0                       !Characteristic magnitude of wave velocity (wave counterpart to U_scale for flow)
     double precision, parameter :: Ar2 = (H_scale/L_scale)**2                                   !(1./64.)**2!(1./10.)**2 !0.01     !Aspect ratio squared = (H/L)^2     
     double precision, parameter :: Ro  = U_scale/(cor*L_scale)                                  !Rossby number  U/fL
@@ -238,11 +238,11 @@ MODULE parameters
     !Output!
     !------!
 
-    integer, parameter :: out_etot   = 1, freq_etot   = INT(0.1/delt)!50!346!n3/64!n3!64!n3!50*n3/64      !Total energy                                                    
-    integer, parameter :: out_we     = 0, freq_we     = INT(0.01/delt)!50!346!n3/64!n3!64!n3!50*n3/64      !Total energy                                                    
+    integer, parameter :: out_etot   = 1, freq_etot   = INT(0.01/delt)!50!346!n3/64!n3!64!n3!50*n3/64      !Total energy                                                    
+    integer, parameter :: out_we     = 1, freq_we     = INT(0.01/delt)!50!346!n3/64!n3!64!n3!50*n3/64      !Total energy                                                    
     integer, parameter :: out_conv   = 0, freq_conv   = freq_we      !Conversion terms in the potential energy equation.
     integer, parameter :: out_hspec  = 1, freq_hspec  = 1*freq_etot!n3/64!n3!freq_etot*10     !Horizontal energy spectrum at various heights 
-    integer, parameter :: out_hspecw = 0, freq_hspecw = 1*freq_etot!n3/64!n3!freq_etot*10     !Horizontal energy spectrum at various heights 
+    integer, parameter :: out_hspecw = 1, freq_hspecw = 1*freq_etot!n3/64!n3!freq_etot*10     !Horizontal energy spectrum at various heights 
     integer, parameter :: out_hg     = 0                 !Output geostrophic horizontal spectrum as well?
     integer, parameter :: out_vspec  = 0, freq_vspec =  freq_hspec
     integer, parameter :: out_vbuoy  = 0, freq_vbuoy =  freq_hspec
@@ -250,8 +250,8 @@ MODULE parameters
     integer, parameter :: out_ens    = 0, freq_ens   =  3*n3!freq_etot*10
     integer, parameter :: out_pv     = 0, freq_pv    =  3*n3!freq_etot*10
 
-    integer, parameter :: out_ez     = 0, freq_ez    =  freq_etot        !E(z)  (freq has to be a multiple of that of etot) 
-    integer, parameter :: out_wz     = 0, freq_wz    =  freq_we          !WE(z) (freq has to be a multiple of that of we)
+    integer, parameter :: out_ez     = 1, freq_ez    =  freq_etot        !E(z)  (freq has to be a multiple of that of etot) 
+    integer, parameter :: out_wz     = 1, freq_wz    =  freq_we          !WE(z) (freq has to be a multiple of that of we)
     integer, parameter :: out_wshear = 0                                 !Calculate wave vertical shear
     integer, parameter :: out_rotz   = 0, freq_rotz  =  freq_etot 
     integer, parameter :: out_ensz   = 0, freq_ensz  =  3*n3!freq_ens
@@ -310,16 +310,16 @@ MODULE parameters
     integer :: id_field                       !dummy index to differenciate fields plotted  
 
     integer, parameter :: out_slice   = 1, freq_slice =  1*freq_etot
-    integer, parameter :: out_slicew  = 0, freq_slicew=  1*freq_etot
+    integer, parameter :: out_slicew  = 1, freq_slicew=  1*freq_etot
     integer, parameter :: out_eta     = 0, freq_eta   =  freq_hspec
     integer, parameter :: out_tspec   = 0
 
     !Restart
     integer :: count_restart = 0                                 !when dumping: restart file number 
     integer, parameter :: dump = 0, freq_dump = freq_slice*10    !dump = 1 means you dump, every "freq_dump" timestep
-    integer, parameter :: restart = 0                            !restart = 1 start from file
-    integer, parameter :: restart_no = 21                         !Restart file number (from 0 to 99)
-    character(len = 64), parameter :: floc='../../dE60_dt0.02_512_6/output/'   !Location of the restart file (when restarting only: dumping in local output/ folder)
+    integer, parameter :: restart = 1                            !restart = 1 start from file
+    integer, parameter :: restart_no = 15                         !Restart file number (from 0 to 99)
+    character(len = 64), parameter :: floc='../../dE60_dt0.01_512_7/output/'   !Location of the restart file (when restarting only: dumping in local output/ folder)
 
 
     !Filtering of A modes
