@@ -2,8 +2,8 @@ MODULE parameters
 
    IMPLICIT NONE
 
-    integer, parameter :: n1=256, n2=256, n3=128
-    integer, parameter :: npe=64
+    integer, parameter :: n1=512, n2=512, n3=512
+    integer, parameter :: npe=128
 
     integer, parameter :: n1d=n1+2, n2d=n2, n3d=n3
     integer, parameter :: n3h0=n3/npe, n3h1=n3/npe+2, n3h2=n3/npe+4
@@ -31,6 +31,10 @@ MODULE parameters
     !Tags to specify run!
     !-------------------!
 
+    !Gaussian wave initial condition
+    double precision, parameter :: delta_a = 50.
+    double precision, parameter :: xi_a = dom_z/(L3*delta_a)
+
     !C's and N's
     integer, parameter :: n_one = 1, n_two = 2
     double precision, parameter :: c_one = 1./( n_one*n_one - n_one*n_two*tanh(twopi*n_one)/tanh(twopi*n_two) )
@@ -44,9 +48,9 @@ MODULE parameters
     integer, parameter :: ybj_plus = 1                  !1: B is L+A and A is recovered from B like psi is recovered from q (exception of the 1/4 factor). 0: Regular YBJ equation   
     
     integer, parameter :: no_waves = 0                  !1: Wave part ignored.
-    integer, parameter :: no_feedback = 1               !1: Wave do not feedback on the flow; ): they do
-    integer, parameter :: eady = 1                      !1: Eady version: add a bunch of terms
-    integer, parameter :: eady_bnd = 1                  !1: Eady version: include the boundary terms (set NOT to zero only for testing purposes)
+    integer, parameter :: no_feedback = 0               !1: Wave do not feedback on the flow; ): they do
+    integer, parameter :: eady = 0                      !1: Eady version: add a bunch of terms
+    integer, parameter :: eady_bnd = 0                  !1: Eady version: include the boundary terms (set NOT to zero only for testing purposes)
 
     integer, parameter :: no_dispersion=0
     integer, parameter :: no_refraction=0
@@ -101,10 +105,8 @@ MODULE parameters
     !Base-state!
     !----------!
 
-    integer, parameter :: tropopause=1, exponential=2, constant_N=3
-!    integer, parameter :: stratification = constant_N
-    integer, parameter :: stratification = exponential
-    integer, parameter :: expeady = 1                   !1: Eady with an exponential N and U profile (requires eady=eady_bnd=1 too)
+    integer, parameter :: tropopause=1, exponential=2, constant_N=3, skewed_gaussian=4
+    integer, parameter :: stratification = skewed_gaussian
 
     !Stratification = tropopause!
     integer, parameter :: fraction=128                   !If h#=150m, then fraction=133.333333~128
@@ -115,7 +117,22 @@ MODULE parameters
 
     !Stratification = exponential!
     double precision, parameter :: N2_scale = dom_z/(twopi*450)   !N^2 ~ exp(N2_scale*(z-z0)), thus xi=H/h = 4000/(2pi*800) = 5/2pi 
-    double precision, parameter :: N0  =  sqrt(2e-5)             !Actual N is s^-1, not squared.  If ExpEady==1 ==> N0 = Nmax. 
+!    double precision, parameter :: N0  =  sqrt(2e-5)             !Actual N is s^-1, not squared.  If ExpEady==1 ==> N0 = Nmax. 
+
+    !Stratification = skewed gaussian!
+    double precision, parameter :: N0 = 0.001550529072004        !Surface value of the fitted N2
+    double precision, parameter :: N02_sg = 0.537713935783168
+    double precision, parameter :: N12_sg = 2.684198470106461
+    double precision, parameter :: sigma_sg = 0.648457170048730
+    double precision, parameter :: z0_sg = 6.121537923499139
+    double precision, parameter :: alpha_sg = -5.338431587899242
+    double precision, parameter :: Xi = 0.155309488603754   !1./int_N2_nd        !Nondimensional parameter in front of the vQy term in Eady: H Ns2/ int(N^2) for the skewed gaussian
+
+    !For the Eady case
+    double precision :: U_mean(n3h0)                        !Eady: base-state velocity profile
+    double precision :: Theta_y                             !Eady: base-state meriodional potential temperature gradient (constant, nondimensionalized)
+
+
 
    ! USEFUL INDEX !                                                                                                                          
    ! ------------ !                                                                                                                         
@@ -176,16 +193,16 @@ MODULE parameters
 
     double precision, parameter :: H_scale=dom_z/L3                  !Actual H in m ( z_real = H z' where z' in [0:L3]  is the nondim z.)
     double precision, parameter :: L_scale=dom_x/L1                  !Actual L in m ( x_real = L x' where x' in [0:2pi] is the nondim x.)
-    double precision, parameter :: cor=1.2419e-04                    !Actual f = 0.0001 s^-1 (real value of planet Earth)
-    double precision, parameter :: U_scale=0.025                       !Actual U in m/s (u_real = U u' where u' is the nondim velocity ur implemented in the code)
-    double precision, parameter :: Uw_scale=0.2                       !Characteristic magnitude of wave velocity (wave counterpart to U_scale for flow)
+    double precision, parameter :: cor=1.2419D-04                    !Actual f = 0.0001 s^-1 (real value of planet Earth)
+    double precision, parameter :: U_scale=0.01D0!0.025                       !Actual U in m/s (u_real = U u' where u' is the nondim velocity ur implemented in the code)
+    double precision, parameter :: Uw_scale=0.4D0                       !Characteristic magnitude of wave velocity (wave counterpart to U_scale for flow)
     double precision, parameter :: Ar2 = (H_scale/L_scale)**2                                   !(1./64.)**2!(1./10.)**2 !0.01     !Aspect ratio squared = (H/L)^2     
     double precision, parameter :: Ro  = U_scale/(cor*L_scale)                                  !Rossby number  U/fL
     double precision, parameter :: Fr  = U_scale/(N0*H_scale)                                   !Froude number  U/N(z0)H
     double precision, parameter :: W2F = (Uw_scale/U_scale)**2                                  ! wave to flow velocity magnitude squared
     double precision, parameter :: Bu  = Fr*Fr/(Ro*Ro)                                          ! (Fr/Ro)^2 = Burger number 
 
-    double precision, parameter :: delta_E = 15                                                !Depth of the Ekman layer: 63 m
+    double precision, parameter :: delta_E = 60.D0                                                !Depth of the Ekman layer: 63 m
     double precision, parameter :: Ek  = delta_E/(Ro*H_scale)                                   !Ekman term = delta_E/(Ro H)
 
 
@@ -197,7 +214,7 @@ MODULE parameters
     integer :: iter=0
     integer :: itermax=1000000000
     real :: maxtime=1000                      
-    double precision, parameter :: delt= Ro/20.   !0.5*Bu*Ro/(2.*ktrunc_x*ktrunc_x)   !0.01*dx   !0.5*Bu*Ro/(2.*ktrunc_x*ktrunc_x) !0.25/ktrunc_x !0.5*Bu*Ro/(2.*ktrunc_x*ktrunc_x) 
+    double precision, parameter :: delt= 0.01*dx!Ro/20.   !0.5*Bu*Ro/(2.*ktrunc_x*ktrunc_x)   !0.01*dx   !0.5*Bu*Ro/(2.*ktrunc_x*ktrunc_x) !0.25/ktrunc_x !0.5*Bu*Ro/(2.*ktrunc_x*ktrunc_x) 
     double precision, parameter :: gamma=1e-3                                  !Robert filter parameter
 
 
@@ -211,6 +228,11 @@ MODULE parameters
     double precision, parameter :: coeff2  = 10.
     double precision, parameter :: coeff1w = 0.
     double precision, parameter :: coeff2w = 10.
+
+!    double precision, parameter :: coeff1  = 0.!0.01
+!    double precision, parameter :: coeff2  = 0.!10.
+!    double precision, parameter :: coeff1w = 0.!0.
+!    double precision, parameter :: coeff2w = 0.!10.
 
     integer, parameter :: ilap1  = 2
     integer, parameter :: ilap2  = 6
@@ -305,9 +327,8 @@ MODULE parameters
     integer :: count_restart = 0                                 !when dumping: restart file number 
     integer, parameter :: dump = 0, freq_dump = freq_slice*10    !dump = 1 means you dump, every "freq_dump" timestep
     integer, parameter :: restart = 1                            !restart = 1 start from file
-    integer, parameter :: restart_no = 13                         !Restart file number (from 0 to 99)
-!    character(len = 64), parameter :: floc='../../../restart/512/'   !Location of the restart file (when restarting only: dumping in local output/ folder)
-    character(len = 64), parameter :: floc='../../dE60_dt0.01_2/output/'   !Location of the restart file (when restarting only: dumping in local output/ folder)
+    integer, parameter :: restart_no = 15                         !Restart file number (from 0 to 99)
+    character(len = 64), parameter :: floc='../../dE60_dt0.01_512_7/output/'   !Location of the restart file (when restarting only: dumping in local output/ folder)
 
 
     !Filtering of A modes

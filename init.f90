@@ -177,6 +177,7 @@ END SUBROUTINE init_arrays
 subroutine init_base_state
 
   double precision :: N2_nd(n3h2),N2_nds(n3h2),N2_ndst,N2_ndut   !nondimensional N^2, (un)staggered and (un)transposed
+  double precision :: U_mean_t(n3)                               !Full velocity profile obtained from the numerical integration of N^2
 
   do izh2=1,n3h2
    
@@ -192,6 +193,9 @@ subroutine init_base_state
      else if(stratification==constant_N) then
         N2_nd(izh2)   = 1.D0
         N2_nds(izh2)  = 1.D0
+     else if(stratification==skewed_gaussian) then
+        N2_nd(izh2)   = N12_sg*exp(-((z -z0_sg)**2)/(sigma_sg**2))*(1.+erf( alpha_sg*(z -z0_sg)/(sigma_sg*sqrt(2.))))+N02_sg
+        N2_nds(izh2)  = N12_sg*exp(-((zs-z0_sg)**2)/(sigma_sg**2))*(1.+erf( alpha_sg*(zs-z0_sg)/(sigma_sg*sqrt(2.))))+N02_sg
      else
         write(*,*) "Undefined stratification profile. Aborting."
         stop
@@ -213,7 +217,7 @@ subroutine init_base_state
 
   end do
 
-   !Special case: I need r_1 at z=0.
+  !Special case: I need r_1 at z=0.
   r_1(izbot2-1) = 1.D0
   
   
@@ -222,6 +226,7 @@ subroutine init_base_state
   !Print base-state!
   if (mype==0) open (unit = 154673, file = "rucoeff.dat")
   if (mype==0) open (unit = 154674, file = "rscoeff.dat")
+  if (mype==0) open (unit = 154675, file = "u_mean.dat")
   
                           
   do iz=1,n3
@@ -237,8 +242,11 @@ subroutine init_base_state
         N2_ndut =  exp( N2_scale*(z -z0) )
         N2_ndst =  exp( N2_scale*(zs-z0) )
      else if(stratification==constant_N) then
-        N2_ndut   = 1.D0
+        N2_ndut  = 1.D0
         N2_ndst  = 1.D0
+     else if(stratification==skewed_gaussian) then
+        N2_ndut  = N12_sg*exp(-((z -z0_sg)**2)/(sigma_sg**2))*(1.+erf( alpha_sg*(z -z0_sg)/(sigma_sg*sqrt(2.))))+N02_sg
+        N2_ndst  = N12_sg*exp(-((zs-z0_sg)**2)/(sigma_sg**2))*(1.+erf( alpha_sg*(zs-z0_sg)/(sigma_sg*sqrt(2.))))+N02_sg
      else
         write(*,*) "Undefined stratification profile. Aborting."
         stop
@@ -266,6 +274,68 @@ subroutine init_base_state
   
   a_helm = 1./Ar2
   b_helm = 0.
+
+
+  if(eady==1) then !For the Eady problem: set the base-state velocity profile and the  meridional potential temp gradient                                                                             
+
+     if(stratification==exponential) then
+        
+        Theta_y = N2_scale*Bu
+
+        do izh0=1,n3h0
+           zs=zash0(izh0)   !Staggered   fields   
+           U_mean(izh0)  = exp( N2_scale*(zs-z0) )
+        end do
+
+     else if(stratification==constant_N) then
+        
+        Theta_y = Bu
+
+        do izh0=1,n3h0
+           zs=zash0(izh0)   !Staggered   fields                                                                                                                                                                            
+           U_mean(izh0)  = zs
+        end do
+
+     else if(stratification==skewed_gaussian) then
+
+        Theta_y = Xi*Bu
+
+        !Numerically integrate N2 to get U (Eady problem requires Uz \propto N^2) for all vertical levels
+        U_mean_t(1)= Xi*0.5*dz*r_2ut(1)
+        do iz=1,n3-1
+           U_mean_t(iz+1)=Xi*r_2ut(iz)*dz + U_mean_t(iz)
+        end do
+
+        !Save the processor-specific portion of the velocity profile
+        do izh0=1,n3h0
+           iz = mype*n3h0+izh0
+           U_mean(izh0) = U_mean_t(iz)
+        end do
+
+        !Print the mean U profile and the calculation from N2 (which should match)
+        if(mype==0) then
+           do iz=1,n3
+
+              write(154675,"(E12.5,E12.5,E12.5,E12.5,E12.5)") zas(iz),U_mean_t(iz)
+
+           end do
+        end if
+
+     else
+        write(*,*) "Unable to define theta_y. Abort."
+        stop
+     end if
+
+  else
+
+     U_mean  = 0.D0
+     Theta_y = 0.D0
+
+  end if
+
+
+
+
 
 end subroutine init_base_state
 
@@ -942,8 +1012,8 @@ do ix=1,n1d
 
       if(ix<=n1) then
          if(z1>=0) f1s(ix,iy,iz1)=0.
-         if(z2>=0) f2s(ix,iy,iz2)=c_one*(cosh(n_one*z2)/cosh(n_one*twopi)) + c_two*(cosh(n_two*z2)/cosh(n_two*twopi))
-         if(z3>=0) f3s(ix,iy,iz3)=n_one*n_one*c_one*(cosh(n_one*z3)/cosh(n_one*twopi)) + n_two*n_two*c_two*(cosh(n_two*z3)/cosh(n_two*twopi))
+         if(z2>=0) f2s(ix,iy,iz2)=exp(-(xi_a*(z2-twopi))**2)!c_one*(cosh(n_one*z2)/cosh(n_one*twopi)) + c_two*(cosh(n_two*z2)/cosh(n_two*twopi))
+         if(z3>=0) f3s(ix,iy,iz3)=0.
       else
          if(z1>=0) f1s(ix,iy,iz1)=0.
          if(z2>=0) f2s(ix,iy,iz2)=0.

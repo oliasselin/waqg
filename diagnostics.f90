@@ -643,7 +643,121 @@ end subroutine hspec
 
 
 
-     subroutine wave_energy(BRk,BIk,CRk,CIk,SRk,SIk)
+     subroutine wave_energy(ARk,AIk,BRk,BIk,CRk,CIk,SRk,SIk)
+       
+       !Computes the volume integrated waves kinetic energy: WKE = int( 0.5* |LA|^2 dV ) = Uw_scale^2 int( 0.5* |LA|^2 dV ) in nondim form.
+       !Computes the volume integrated waves potential energy: WPE = int( 0.25* (f/N)^2 |grad(Az)|^2 dV ). I defined a field C=Az to simplifiy.
+       !Computes the volume integrated wave inverse Richardson number: WIR = int( 0.5* |LA_z)|^2/N^2 dV ) 
+       !Nondim: WPE = int( 0.25* Uw_scalle^2/Bu 1/N'^2(z) |grad(Az)|^2 dV )
+   
+       !Then, WPE = int( 0.25 (f/N)^2 sum_k kh^2 [ |CRk|^2 + |CIk|^2 ] dz
+
+
+       !In the real space, WKE = int( 0.5* |B|^2 dV ) = int( 0.5*( Br^2 + Bi^2 ) dV ) which is analoguous to KE ~ int ( 0.5* (u^2 + v^2) dV)
+       !The integral in real space can be converted to a sum on horizontal wavenumbers at each vertical level:
+       ! 
+       ! KE(z) = sum over all k's such that L=1 of |uk|^2 minus half the kh=0 mode.
+
+       double complex, dimension(iktx,ikty,n3h0) :: ARk,AIk
+       double complex, dimension(iktx,ikty,n3h0) :: BRk,BIk
+       double complex, dimension(iktx,ikty,n3h0) :: CRk,CIk
+       double complex, dimension(iktx,ikty,n3h0) :: SRk,SIk
+
+       real, dimension(n3h0) :: k_p
+       real, dimension(n3h0) :: p_p
+       real, dimension(n3h0) :: s_p
+       real, dimension(n3h0) :: c_p      !Correction to K: 1/16 nabla A
+       
+       real :: ktot_p,ktot
+       real :: ptot_p,ptot
+       real :: stot_p,stot
+       real :: ctot_p,ctot
+
+       real :: k0tot_p,k0tot  !Kinetic energy in the kh=0 mode
+
+       ktot_p = 0.
+       ptot_p = 0.
+       stot_p = 0.
+       ctot_p = 0.
+
+       k0tot_p = 0.
+
+       k_p = 0.
+       p_p = 0.
+       s_p = 0.
+       c_p = 0.
+
+       do izh0=1,n3h0
+          izh2=izh0+2
+
+          do ikx=1,iktx
+             kx=kxa(ikx)
+             do iky=1,ikty
+                ky=kya(iky)
+                kh2=kx*kx+ky*ky
+
+                if(L(ikx,iky)==1) then
+                   k_p(izh0) = k_p(izh0) + real( BRk(ikx,iky,izh0)*CONJG( BRk(ikx,iky,izh0) ) + BIk(ikx,iky,izh0)*CONJG( BIk(ikx,iky,izh0) ) )
+                   p_p(izh0) = p_p(izh0) + (0.5/(r_2(izh2)*Bu))*kh2*real( CRk(ikx,iky,izh0)*CONJG( CRk(ikx,iky,izh0) ) + CIk(ikx,iky,izh0)*CONJG( CIk(ikx,iky,izh0) ) )
+                   s_p(izh0) = s_p(izh0) + r_2(izh2)*real( SRk(ikx,iky,izh0)*CONJG( SRk(ikx,iky,izh0) ) + SIk(ikx,iky,izh0)*CONJG( SIk(ikx,iky,izh0) ) )
+                   c_p(izh0) = c_p(izh0) + (1./8.)*(1./(Bu*Bu))*kh2*kh2*real( ARk(ikx,iky,izh0)*CONJG( ARk(ikx,iky,izh0) ) + AIk(ikx,iky,izh0)*CONJG( AIk(ikx,iky,izh0) ) )
+                end if
+
+
+             enddo
+          enddo
+
+          !With dealiasing, sum_k 1/2 |u(kx,ky,z)|^2 = sum_k L |u|^2 - 0.5 |u(0,0,z)|^2     
+          k_p(izh0) = k_p(izh0) - 0.5*real( BRk(1,1,izh0)*CONJG( BRk(1,1,izh0) ) + BIk(1,1,izh0)*CONJG( BIk(1,1,izh0) ) )
+          s_p(izh0) = s_p(izh0) - 0.5*r_2(izh2)*real( SRk(1,1,izh0)*CONJG( SRk(1,1,izh0) ) + SIk(1,1,izh0)*CONJG( SIk(1,1,izh0) ) )                   
+
+          !Sum local to the processor
+          ktot_p = ktot_p + k_p(izh0)
+          ptot_p = ptot_p + p_p(izh0)
+          stot_p = stot_p + s_p(izh0)
+          ctot_p = ctot_p + c_p(izh0)
+
+          k0tot_p = k0tot_p + 0.5*real( BRk(1,1,izh0)*CONJG( BRk(1,1,izh0) ) + BIk(1,1,izh0)*CONJG( BIk(1,1,izh0) ) )
+
+       end do
+
+       !--- Vertical slices ---!
+
+       !Get the dimensional values of WKE, WPE, and inverse wave Richardson number (this last is actually nondimensional...)
+       k_p = Uw_scale*Uw_scale*k_p
+       p_p = Uw_scale*Uw_scale*p_p
+       c_p = Uw_scale*Uw_scale*c_p
+       s_p = (Uw_scale*Uw_scale/(U_scale*U_scale))*Fr*Fr*s_p                  !This gives the dimensional value of 1/2 |\tilde{u}_z+\tilde{v}_z|^2/N^2
+
+       !If desired, we can plot these quantities as a function of z
+       if(out_wz ==1   .and. ( mod(iter,freq_wz)==0 .or. iter == 0)) call plot_wz(k_p,p_p,s_p)
+
+
+       !--- Volume integrals ---!
+
+       !Sum results from each processor                                                                                                                                                 
+       call mpi_reduce(ktot_p,ktot,1,MPI_REAL,MPI_SUM,0,MPI_COMM_WORLD,ierror)
+       call mpi_reduce(ptot_p,ptot,1,MPI_REAL,MPI_SUM,0,MPI_COMM_WORLD,ierror)
+       call mpi_reduce(stot_p,stot,1,MPI_REAL,MPI_SUM,0,MPI_COMM_WORLD,ierror)
+       call mpi_reduce(ctot_p,ctot,1,MPI_REAL,MPI_SUM,0,MPI_COMM_WORLD,ierror)
+
+       call mpi_reduce(k0tot_p,k0tot,1,MPI_REAL,MPI_SUM,0,MPI_COMM_WORLD,ierror)
+
+       ktot = Uw_scale*Uw_scale*ktot/n3
+       ptot = Uw_scale*Uw_scale*ptot/n3
+       ctot = Uw_scale*Uw_scale*ctot/n3
+       stot = (Uw_scale*Uw_scale/(U_scale*U_scale))*Fr*Fr*stot/n3
+
+       k0tot = Uw_scale*Uw_scale*k0tot/n3
+
+       if(mype==0) write(unit_we,fmt=*) time*(L_scale/U_scale)/(3600*24),ktot,k0tot
+       if(mype==0) write(unit_ce,fmt=*) time*(L_scale/U_scale)/(3600*24),ptot,ctot
+
+     end subroutine wave_energy
+
+
+
+     subroutine wave_energy2(BRk,BIk,CRk,CIk,SRk,SIk)
        
        !Computes the volume integrated waves kinetic energy: WKE = int( 0.5* |LA|^2 dV ) = Uw_scale^2 int( 0.5* |LA|^2 dV ) in nondim form.
        !Computes the volume integrated waves potential energy: WPE = int( 0.25* (f/N)^2 |grad(Az)|^2 dV ). I defined a field C=Az to simplifiy.
@@ -743,7 +857,7 @@ end subroutine hspec
 
        if(mype==0) write(unit_we,fmt=*) time*(L_scale/U_scale)/(3600*24),ktot,ptot,k0tot
 
-     end subroutine wave_energy
+     end subroutine wave_energy2
 
 
 
