@@ -4,8 +4,8 @@ number_of_nodes=8
 number_of_tasks=128
 ntasks_per_node=16
 
-sourdir=/oasis/scratch/comet/oasselin/temp_project/niskine/skewdy/storm0/source/
-datadir=/oasis/scratch/comet/oasselin/temp_project/niskine/skewdy/storm0/output/
+sourdir=/oasis/scratch/comet/oasselin/temp_project/niskine/skewdy/storm0_fb/source/
+datadir=/oasis/scratch/comet/oasselin/temp_project/niskine/skewdy/storm0_fb/output/
 
 mkdir -p $sourdir
 mkdir -p $datadir

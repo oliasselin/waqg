@@ -44,7 +44,7 @@ MODULE parameters
     integer, parameter :: ybj_plus = 1                  !1: B is L+A and A is recovered from B like psi is recovered from q (exception of the 1/4 factor). 0: Regular YBJ equation   
     
     integer, parameter :: no_waves = 0                  !1: Wave part ignored.
-    integer, parameter :: no_feedback = 1               !1: Wave do not feedback on the flow; ): they do
+    integer, parameter :: no_feedback = 0               !1: Wave do not feedback on the flow; ): they do
     integer, parameter :: eady = 0                      !1: Eady version: add a bunch of terms
     integer, parameter :: eady_bnd = 0                  !1: Eady version: include the boundary terms (set NOT to zero only for testing purposes)
 

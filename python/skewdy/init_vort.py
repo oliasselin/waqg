@@ -8,13 +8,17 @@ colormap='RdBu_r'#'seismic'#'coolwarm'#'seismic'
 
 scratch_location = '/oasis/scratch/comet/oasselin/temp_project/'
 folder = 'niskine/skewdy/'
+run = 'storm0/'
+
+
+vmin = -0.2
+vmax =  0.2
 
 #Create folder for plots if it doesn't exists
-if not os.path.exists('plots/'):
-    os.makedirs('plots/')
+if not os.path.exists('plots/'+run):
+    os.makedirs('plots/'+run)
 
-ts=180
-run = 'dE60_dt0.02_512_6/'
+ts=0
 hres = 512
 g = np.zeros((hres,hres,2))
 
@@ -56,14 +60,13 @@ if os.path.isfile(path_hor) and os.path.isfile(path_ver):
         ax.get_xaxis().set_ticks([])
         ax.get_yaxis().set_ticks([])
 
-        im = ax.imshow(g[:,:,idx],cmap=colormap,vmin=-1.,vmax=1.)
+        im = ax.imshow(g[:,:,idx],cmap=colormap,vmin=vmin,vmax=vmax)
 #        im = ax.imshow(g[:,:,idx],vmin=-1.,vmax=1.)
         
         cbar = ax.cax.colorbar(im)
-        cbar = grid.cbar_axes[0].colorbar(im,ticks=[-1,-0.5,0.,0.5,1])
+        cbar = grid.cbar_axes[0].colorbar(im,ticks=[vmin,0.,vmax])
 
 plt.title('$\zeta/f$ of the initial condition (xy and xz views)',fontsize=14)
-plt.savefig('plots/init_vort.eps')
+plt.savefig('plots/'+run+'init_vort.eps')
 #plt.show()
-
 

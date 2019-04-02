@@ -1,7 +1,8 @@
 set term pngcairo
 set size square
 set pm3d map
-load 'rdbu.pal'
+load 'moreland.pal'
+#load 'rdbu.pal'
 #set palette model RGB
 #set palette defined
 set key off
