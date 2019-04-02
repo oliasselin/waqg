@@ -31,6 +31,10 @@ MODULE parameters
     !Tags to specify run!
     !-------------------!
 
+    !Gaussian wave initial condition
+    double precision, parameter :: delta_a = 50.
+    double precision, parameter :: xi_a = dom_z/(L3*delta_a)
+
     !C's and N's
     integer, parameter :: n_one = 1, n_two = 2
     double precision, parameter :: c_one = 1./( n_one*n_one - n_one*n_two*tanh(twopi*n_one)/tanh(twopi*n_two) )
@@ -191,7 +195,7 @@ MODULE parameters
     double precision, parameter :: L_scale=dom_x/L1                  !Actual L in m ( x_real = L x' where x' in [0:2pi] is the nondim x.)
     double precision, parameter :: cor=1.2419D-04                    !Actual f = 0.0001 s^-1 (real value of planet Earth)
     double precision, parameter :: U_scale=0.01D0!0.025                       !Actual U in m/s (u_real = U u' where u' is the nondim velocity ur implemented in the code)
-    double precision, parameter :: Uw_scale=0.1D0                       !Characteristic magnitude of wave velocity (wave counterpart to U_scale for flow)
+    double precision, parameter :: Uw_scale=0.4D0                       !Characteristic magnitude of wave velocity (wave counterpart to U_scale for flow)
     double precision, parameter :: Ar2 = (H_scale/L_scale)**2                                   !(1./64.)**2!(1./10.)**2 !0.01     !Aspect ratio squared = (H/L)^2     
     double precision, parameter :: Ro  = U_scale/(cor*L_scale)                                  !Rossby number  U/fL
     double precision, parameter :: Fr  = U_scale/(N0*H_scale)                                   !Froude number  U/N(z0)H
@@ -225,6 +229,11 @@ MODULE parameters
     double precision, parameter :: coeff1w = 0.
     double precision, parameter :: coeff2w = 10.
 
+!    double precision, parameter :: coeff1  = 0.!0.01
+!    double precision, parameter :: coeff2  = 0.!10.
+!    double precision, parameter :: coeff1w = 0.!0.
+!    double precision, parameter :: coeff2w = 0.!10.
+
     integer, parameter :: ilap1  = 2
     integer, parameter :: ilap2  = 6
     integer, parameter :: ilap1w = 2
@@ -240,7 +249,7 @@ MODULE parameters
 
     integer, parameter :: out_etot   = 1, freq_etot   = INT(0.01/delt)!50!346!n3/64!n3!64!n3!50*n3/64      !Total energy                                                    
     integer, parameter :: out_we     = 1, freq_we     = INT(0.01/delt)!50!346!n3/64!n3!64!n3!50*n3/64      !Total energy                                                    
-    integer, parameter :: out_conv   = 0, freq_conv   = freq_we      !Conversion terms in the potential energy equation.
+    integer, parameter :: out_conv   = 1, freq_conv   = freq_we      !Conversion terms in the potential energy equation.
     integer, parameter :: out_hspec  = 1, freq_hspec  = 1*freq_etot!n3/64!n3!freq_etot*10     !Horizontal energy spectrum at various heights 
     integer, parameter :: out_hspecw = 1, freq_hspecw = 1*freq_etot!n3/64!n3!freq_etot*10     !Horizontal energy spectrum at various heights 
     integer, parameter :: out_hg     = 0                 !Output geostrophic horizontal spectrum as well?
@@ -252,7 +261,7 @@ MODULE parameters
 
     integer, parameter :: out_ez     = 1, freq_ez    =  freq_etot        !E(z)  (freq has to be a multiple of that of etot) 
     integer, parameter :: out_wz     = 1, freq_wz    =  freq_we          !WE(z) (freq has to be a multiple of that of we)
-    integer, parameter :: out_wshear = 0                                 !Calculate wave vertical shear
+    integer, parameter :: out_wshear = 1                                 !Calculate wave vertical shear
     integer, parameter :: out_rotz   = 0, freq_rotz  =  freq_etot 
     integer, parameter :: out_ensz   = 0, freq_ensz  =  3*n3!freq_ens
     integer, parameter :: out_pvz    = 0, freq_pvz   =  freq_pv

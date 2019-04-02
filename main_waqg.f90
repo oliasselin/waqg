@@ -148,11 +148,12 @@ PROGRAM main
      qok = qk 
 
   !**Initialize a storm**!
-  call generate_fields_stag(wr,n3h2,ARr,n3h0,BRr,n3h0) 
-  call fft_r2c(ARr,ARk,n3h0)
+  call generate_fields_stag(wr,n3h2,BRr,n3h0,BIr,n3h0) 
   call fft_r2c(BRr,BRk,n3h0)
+  call fft_r2c(BIr,BIk,n3h0)
+  call sumB(BRk,BIk)
+  ARk = (0.D0,0.D0)
   AIk = (0.D0,0.D0)
-  BIk = (0.D0,0.D0)
   CRk = (0.D0,0.D0)
   CIk = (0.D0,0.D0)
   !----------------------!
@@ -181,7 +182,7 @@ PROGRAM main
        SRk = (0.D0,0.D0)
        SIk = (0.D0,0.D0)
     end if
-    call wave_energy(BRk,BIk,CRk,CIk,SRk,SIk)
+    call wave_energy(ARk,AIk,BRk,BIk,CRk,CIk,SRk,SIk)
  end if
 
 
@@ -430,8 +431,8 @@ end if
         call mpitranspose(BIk,iktx,ikty,n3h0,BIkt,n3,iktyp)           !Transpose BK to iky-parallelized space 
 
         if(ybj_plus==1) then
-           call A_solver_ybj_plus(ARk,BRkt)
-           call A_solver_ybj_plus(AIk,BIkt)
+           call A_solver_ybj_plus(ARk,BRkt,CRk)
+           call A_solver_ybj_plus(AIk,BIkt,CIk)
         else   !Normal YBJ solver
            call compute_sigma(sigma,nBRk, nBIk, rBRk, rBIk, FtRk, FtIk)  !Compute the sum of A 
            call compute_A(ARk,AIK,BRkt,BIkt,CRk,CIK,sigma)               !Compute A!
@@ -439,7 +440,7 @@ end if
 
         if(out_we ==1   .and. mod(iter,freq_we   )==0)  then
            if(out_wshear ==1) call wave_shear(BRkt,BIkt,SRk,SIk)
-           call wave_energy(BRk,BIk,CRk,CIk,SRk,SIk)
+           call wave_energy(ARk,AIk,BRk,BIk,CRk,CIk,SRk,SIk)
         end if
 
         ! ------------------------ !
