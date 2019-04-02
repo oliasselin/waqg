@@ -194,8 +194,8 @@ subroutine init_base_state
         N2_nd(izh2)   = 1.D0
         N2_nds(izh2)  = 1.D0
      else if(stratification==skewed_gaussian) then
-        N2_nd(izh2)   = (N12_sg/(H_scale*sigma_sg*sqrt(twopi)))*exp(-((z -z0_sg)**2)/(sigma_sg**2))*(1.+erf( alpha_sg*(z -z0_sg)/(sigma_sg*sqrt(2.))))+N02_sg
-        N2_nds(izh2)  = (N12_sg/(H_scale*sigma_sg*sqrt(twopi)))*exp(-((zs-z0_sg)**2)/(sigma_sg**2))*(1.+erf( alpha_sg*(zs-z0_sg)/(sigma_sg*sqrt(2.))))+N02_sg
+        N2_nd(izh2)   = N12_sg*exp(-((z -z0_sg)**2)/(sigma_sg**2))*(1.+erf( alpha_sg*(z -z0_sg)/(sigma_sg*sqrt(2.))))+N02_sg
+        N2_nds(izh2)  = N12_sg*exp(-((zs-z0_sg)**2)/(sigma_sg**2))*(1.+erf( alpha_sg*(zs-z0_sg)/(sigma_sg*sqrt(2.))))+N02_sg
      else
         write(*,*) "Undefined stratification profile. Aborting."
         stop
@@ -245,8 +245,8 @@ subroutine init_base_state
         N2_ndut  = 1.D0
         N2_ndst  = 1.D0
      else if(stratification==skewed_gaussian) then
-        N2_ndut  = (N12_sg/(H_scale*sigma_sg*sqrt(twopi)))*exp(-((z -z0_sg)**2)/(sigma_sg**2))*(1.+erf( alpha_sg*(z -z0_sg)/(sigma_sg*sqrt(2.))))+N02_sg
-        N2_ndst  = (N12_sg/(H_scale*sigma_sg*sqrt(twopi)))*exp(-((zs-z0_sg)**2)/(sigma_sg**2))*(1.+erf( alpha_sg*(zs-z0_sg)/(sigma_sg*sqrt(2.))))+N02_sg
+        N2_ndut  = N12_sg*exp(-((z -z0_sg)**2)/(sigma_sg**2))*(1.+erf( alpha_sg*(z -z0_sg)/(sigma_sg*sqrt(2.))))+N02_sg
+        N2_ndst  = N12_sg*exp(-((zs-z0_sg)**2)/(sigma_sg**2))*(1.+erf( alpha_sg*(zs-z0_sg)/(sigma_sg*sqrt(2.))))+N02_sg
      else
         write(*,*) "Undefined stratification profile. Aborting."
         stop
@@ -301,9 +301,9 @@ subroutine init_base_state
         Theta_y = Xi*Bu
 
         !Numerically integrate N2 to get U (Eady problem requires Uz \propto N^2) for all vertical levels
-        U_mean_t(1)= 0.5*dz*r_2ut(1)/int_N2_nd
+        U_mean_t(1)= Xi*0.5*dz*r_2ut(1)
         do iz=1,n3-1
-           U_mean_t(iz+1)=r_2ut(iz)*dz/int_N2_nd + U_mean_t(iz)
+           U_mean_t(iz+1)=Xi*r_2ut(iz)*dz + U_mean_t(iz)
         end do
 
         !Save the processor-specific portion of the velocity profile
@@ -1012,8 +1012,8 @@ do ix=1,n1d
 
       if(ix<=n1) then
          if(z1>=0) f1s(ix,iy,iz1)=0.
-         if(z2>=0) f2s(ix,iy,iz2)=c_one*(cosh(n_one*z2)/cosh(n_one*twopi)) + c_two*(cosh(n_two*z2)/cosh(n_two*twopi))
-         if(z3>=0) f3s(ix,iy,iz3)=n_one*n_one*c_one*(cosh(n_one*z3)/cosh(n_one*twopi)) + n_two*n_two*c_two*(cosh(n_two*z3)/cosh(n_two*twopi))
+         if(z2>=0) f2s(ix,iy,iz2)=exp(-(xi_a*(z2-twopi))**2)!c_one*(cosh(n_one*z2)/cosh(n_one*twopi)) + c_two*(cosh(n_two*z2)/cosh(n_two*twopi))
+         if(z3>=0) f3s(ix,iy,iz3)=0.
       else
          if(z1>=0) f1s(ix,iy,iz1)=0.
          if(z2>=0) f2s(ix,iy,iz2)=0.

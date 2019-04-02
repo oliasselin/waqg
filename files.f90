@@ -20,6 +20,7 @@ MODULE files
 !  integer, parameter :: unit_estra  =52
   integer, parameter :: unit_energyr=53444
   integer, parameter :: unit_we=544
+  integer, parameter :: unit_ce=5441234
   integer, parameter :: unit_conv1=545
   integer, parameter :: unit_conv2=546
   integer, parameter :: unit_conv3=547
@@ -135,6 +136,7 @@ MODULE files
       if(mype==0) open (unit=unit_wz       ,file="wz.dat"       ,action="write",status="replace")
       if(mype==0) open (unit=unit_energyr  ,file="erot.dat"   ,action="write",status="replace")
       if(mype==0) open (unit=unit_we       ,file="we.dat"   ,action="write",status="replace")
+      if(mype==0) open (unit=unit_ce       ,file="ce.dat"   ,action="write",status="replace")
       if(mype==0) open (unit=unit_conv1     ,file="conv1.dat"  ,action="write",status="replace")
       if(mype==0) open (unit=unit_conv2     ,file="conv2.dat"  ,action="write",status="replace")
       if(mype==0) open (unit=unit_conv3     ,file="conv3.dat"  ,action="write",status="replace")
@@ -255,7 +257,7 @@ MODULE files
       if(mype==0) close(unit=unit_energy)
       if(mype==0) close(unit=unit_energyr)
       if(mype==0) close(unit=unit_we)
-
+      if(mype==0) close(unit=unit_ce)
 !      if(mype==0) close(unit=unit_hbot)
 !      if(mype==0) close(unit=unit_hmid)
 !      if(mype==0) close(unit=unit_htop)

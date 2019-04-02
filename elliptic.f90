@@ -520,7 +520,7 @@ CONTAINS
          xi_b = H_scale/delta_b
          xi_c = H_scale/delta_c
 
-         cons = 2./sqrt(twopi/2.)
+!         cons = 2./sqrt(twopi/2.)
 
          ave_A = 0.
          ave_B = 0.
@@ -530,9 +530,13 @@ CONTAINS
 
             z = zas(iz)
 
-            ARz(iz) = cons*xi_a*exp(-xi_a*(z-twopi)**2)
-            BRz(iz) = cons*xi_b*exp(-xi_b*(z-twopi)**2)
-            CRz(iz) = cons*xi_c*exp(-xi_c*(z-twopi)**2)
+!            ARz(iz) = cons*xi_a*exp(-xi_a*(z-twopi)**2)
+!            BRz(iz) = cons*xi_b*exp(-xi_b*(z-twopi)**2)
+!            CRz(iz) = cons*xi_c*exp(-xi_c*(z-twopi)**2)
+
+            ARz(iz) = Uw_scale*exp(-(xi_a*(z-twopi))**2)
+            BRz(iz) = Uw_scale*exp(-(xi_b*(z-twopi))**2)
+            CRz(iz) = Uw_scale*exp(-(xi_c*(z-twopi))**2)
 
             ave_A=ave_A + ARz(iz)
             ave_B=ave_B + BRz(iz)
@@ -584,17 +588,21 @@ CONTAINS
 
 
 
-    SUBROUTINE A_solver_ybj_plus(ak,bt)
+    SUBROUTINE A_solver_ybj_plus(ak,bt,ck)
 
        ! This subroutines solves the elliptic equation a_ell(z) d^2 psi/dz^2 + b_ell(z) d psi/dz - kh2 psi = q for the streamfunction psi. 
 
-       double complex, dimension(iktx,ikty,n3h0), intent(out) :: ak   !A in usual z-parallelization                                                                             
+      double complex, dimension(iktx,ikty,n3h0), intent(out) :: ak   !A in usual z-parallelization                                                                             
       double complex, dimension(iktx,n3, iktyp)              :: at   !Transposed (ky-parallelization) A                                                         
       double complex, dimension(iktx,n3, iktyp), intent(in)  :: bt   !Transposed (ky-parallelization) right-hand side               
 
-       integer :: info                                      ! Returns error for sgtsv                                                                                                 
+      double complex, dimension(iktx,ikty,n3h0), intent(out) :: ck   !C=A_z in usual z-parallelization                                                                             
+      double complex, dimension(iktx,n3, iktyp)              :: ct   !Transposed (ky-parallelization) C
 
-       double precision :: d(n3),dl(n3-1),du(n3-1)          !diagonal value   
+
+      integer :: info                                      ! Returns error for sgtsv                                                                                                 
+      
+      double precision :: d(n3),dl(n3-1),du(n3-1)          !diagonal value   
       double precision :: br(n3), bi(n3)                 !real and imaginary parts of rhs                                                                            
 
 
@@ -669,12 +677,34 @@ CONTAINS
           END DO
       END DO
 
+      !Compute C=A_z while transposed!
+      !******************************!
+
+      DO ikx=1,iktx
+         DO ikyp=1,iktyp
+
+            do iz=1,n3-1
+
+               ct(ikx,iz,ikyp) = ( at(ikx,iz+1,ikyp) - at(ikx,iz,ikyp) )/dz
+
+            end do
+
+            !Top: C = A_z = 0                                                                                                                                            
+            ct(ikx,n3,ikyp) = (0.D0,0.D0)
+
+         end DO
+      end DO
+      
+      !Transpose the result back to z-parallelized space!
+      call mpitranspose(ct,iktx,n3,iktyp,ck,ikty,n3h0)
+
+
        !*********** Transposition to z-parallelized p ***************!                                                                                                                     
 
-       call mpitranspose(at,iktx,n3,iktyp,ak,ikty,n3h0)
-
-
-     END SUBROUTINE A_SOLVER_YBJ_PLUS
+      call mpitranspose(at,iktx,n3,iktyp,ak,ikty,n3h0)
+      
+      
+    END SUBROUTINE A_SOLVER_YBJ_PLUS
 
 
 END MODULE elliptic
