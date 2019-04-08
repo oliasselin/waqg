@@ -2188,7 +2188,7 @@ end subroutine hspec
 
 
 
-  subroutine slices_waves(ARk,AIk,BRk,BIk,BRr,BIr,CRk,CIk,qwk,qwr,id_field)
+  subroutine slices_waves(ARk,AIk,BRk,BIk,BRr,BIr,CRk,CIk,qwk,qwr,psik,id_field)
 
     double complex, dimension(iktx,ikty,n3h0) :: ARk,AIk
     double complex, dimension(iktx,ikty,n3h0) :: BRk,BIk
@@ -2198,6 +2198,9 @@ end subroutine hspec
 
     double complex,   dimension(iktx,ikty,n3h0) :: qwk
     double precision, dimension(n1d,n2d,n3h0)   :: qwr
+
+    double complex, dimension(iktx,ikty,n3h1) :: psik
+
 
     !Temp arrays for convenience
     double complex, dimension(iktx,ikty,n3h0) :: Rmemk, Imemk
@@ -2294,6 +2297,45 @@ end subroutine hspec
     elseif(id_field==5) then
        call fft_c2r(qwk,qwr,n3h0)
        field = (U_scale/L_scale)*qwr       
+    elseif(id_field==6) then
+       do izh0=1,n3h0
+          izh1=izh0+1
+          izh2=izh1+1
+
+          do ikx=1,iktx
+             kx=kxa(ikx)
+             do iky=1,ikty
+                ky=kya(iky)
+                kh2=kx*kx+ky*ky
+
+                Rmemk(ikx,iky,izh0)  =  -i*kx*kh2*psik(ikx,iky,izh1)
+                Imemk(ikx,iky,izh0)  =  -i*ky*kh2*psik(ikx,iky,izh1)
+
+             end do
+          end do
+       end do
+
+       call fft_c2r(Rmemk ,Rmem ,n3h0)
+       call fft_c2r(Imemk ,Imem ,n3h0)
+
+       do izh0=1,n3h0
+          izh1=izh0+1
+          izh2=izh1+1
+
+          do ix=1,n1d
+             do iy=1,n2d
+                if(ix<=n1) then
+                   
+
+                   field(ix,iy,izh0) = (czero(n3h0*mype+izh0)*czero(n3h0*mype+izh0)/r_2s(izh2))*(Rmem(ix,iy,izh0)*Rmem(ix,iy,izh0)+Imem(ix,iy,izh0)*Imem(ix,iy,izh0))*time*time
+
+                end if
+             end do
+          end do
+       end do
+
+
+       field = (Uw_scale*Uw_scale/(16.*Bu))*field       
     end if
 
 

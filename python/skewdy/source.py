@@ -10,13 +10,13 @@ from finds import find_timestep
 
 scratch_location = '/oasis/scratch/comet/oasselin/temp_project/'
 folder = 'niskine/skewdy/'
-run = 'storm0_fb/'
+run = 'storm3_fb_uw4/'
 location = scratch_location+folder+run
 
 
 
 focus_depth=500 #Focus on the top $focus_depth meters
-focus_time =30  #Focus on the first $focus_time days
+focus_time =10  #Focus on the first $focus_time days
 
 plot_wz=1
 plot_ez=1

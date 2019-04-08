@@ -707,4 +707,41 @@ CONTAINS
     END SUBROUTINE A_SOLVER_YBJ_PLUS
 
 
+
+    SUBROUTINE compute_czero(bt)
+
+      double complex, dimension(iktx,n3, iktyp), intent(in)  :: bt   !Transposed (ky-parallelization) right-hand side                                                                   
+
+      !Calculate C = Az from the initial condition (only kh=0 mode of B=LA matters). 
+      !This is only right in mype==0
+      czero = 0.D0
+
+      czero(1) = r_2ut(1)*DBLE(bt(1,1,1))*dz
+      do iz=2,n3-1
+         czero(iz) = r_2ut(iz)*DBLE(bt(1,iz,1))*dz + r_2ut(iz)*czero(iz-1)/r_2ut(iz-1)
+      end do
+      czero(n3) = 0.D0
+
+      !Broadcast czero from mype=0 to all other processors
+      call mpi_bcast(czero,n3,MPI_DOUBLE,0,MPI_COMM_WORLD,ierror)
+
+      !Plot czero, B and its approximation from czero!
+      if (mype==0) open (unit = 13453675, file = "czero.dat")
+
+      if(mype==0) then
+
+         iz = 1
+         z = za(iz)
+         write(13453675,"(E12.5,1x,E12.5,1x,E12.5,1x,E12.5)") z,czero(iz),DBLE(bt(1,iz,1)),(czero(iz)/r_2ut(iz))/dz
+    
+
+         do iz=2,n3
+            z = za(iz)
+            write(13453675,"(E12.5,1x,E12.5,1x,E12.5,1x,E12.5)") z,   czero(iz),DBLE(bt(1,iz,1)),   (czero(iz)/r_2ut(iz) - czero(iz-1)/r_2ut(iz-1))/dz
+         end do
+
+      end if
+
+    end SUBROUTINE compute_czero
+
 END MODULE elliptic

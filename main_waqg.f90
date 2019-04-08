@@ -158,8 +158,9 @@ PROGRAM main
   CIk = (0.D0,0.D0)
   !----------------------!
 
-  
-
+  !**Compute the initial C for estimation of WPE gain / GEO loss**!
+  call mpitranspose(BRk,iktx,ikty,n3h0,BRkt,n3,iktyp)           !Transpose BR to iky-parallelized space                                                                             
+  call compute_czero(BRkt)
 
  !Initial diagnostics!
  !*******************!
@@ -191,7 +192,7 @@ PROGRAM main
  end do
 
  do id_field=1,nfieldsw                                            
-    if(out_slicew ==1) call slices_waves(ARk,AIk,BRk,BIk,BRr,BIr,CRk,CIk,qwk,qwr,id_field)
+    if(out_slicew ==1) call slices_waves(ARk,AIk,BRk,BIk,BRr,BIr,CRk,CIk,qwk,qwr,psik,id_field)
  end do
 
  do iz=1,num_spec
@@ -586,7 +587,7 @@ end do
 
 
 do id_field=1,nfieldsw
-   if(out_slicew ==1 .and. mod(iter,freq_slicew)==0 .and. count_slicew(id_field)<max_slices) call slices_waves(ARk,AIk,BRk,BIk,BRr,BIr,CRk,CIk,qwk,qwr,id_field)
+   if(out_slicew ==1 .and. mod(iter,freq_slicew)==0 .and. count_slicew(id_field)<max_slices) call slices_waves(ARk,AIk,BRk,BIk,BRr,BIr,CRk,CIk,qwk,qwr,psik,id_field)
 end do
 
 do iz=1,num_spec
