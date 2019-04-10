@@ -699,7 +699,7 @@ end subroutine hspec
                 if(L(ikx,iky)==1) then
                    k_p(izh0) = k_p(izh0) + real( BRk(ikx,iky,izh0)*CONJG( BRk(ikx,iky,izh0) ) + BIk(ikx,iky,izh0)*CONJG( BIk(ikx,iky,izh0) ) )
                    p_p(izh0) = p_p(izh0) + (0.5/(r_2(izh2)*Bu))*kh2*real( CRk(ikx,iky,izh0)*CONJG( CRk(ikx,iky,izh0) ) + CIk(ikx,iky,izh0)*CONJG( CIk(ikx,iky,izh0) ) )
-                   s_p(izh0) = s_p(izh0) + r_2(izh2)*real( SRk(ikx,iky,izh0)*CONJG( SRk(ikx,iky,izh0) ) + SIk(ikx,iky,izh0)*CONJG( SIk(ikx,iky,izh0) ) )
+                   s_p(izh0) = s_p(izh0) + (1./r_2(izh2))*real( SRk(ikx,iky,izh0)*CONJG( SRk(ikx,iky,izh0) ) + SIk(ikx,iky,izh0)*CONJG( SIk(ikx,iky,izh0) ) )
                    c_p(izh0) = c_p(izh0) + (1./8.)*(1./(Bu*Bu))*kh2*kh2*real( ARk(ikx,iky,izh0)*CONJG( ARk(ikx,iky,izh0) ) + AIk(ikx,iky,izh0)*CONJG( AIk(ikx,iky,izh0) ) )
                 end if
 
