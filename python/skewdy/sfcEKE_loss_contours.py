@@ -10,15 +10,21 @@ from finds import find_timestep
 
 scratch_location = '/oasis/scratch/comet/oasselin/temp_project/'
 folder = 'niskine/skewdy/'
-run = 'storm3/'
-run_fb = 'storm3_fb_uw4/'
+u0 = '10'
+run = 'storm4/'
+run_fb = 'storm4_uw'+u0+'/'
 location = scratch_location+folder+run
 location_fb = scratch_location+folder+run_fb
 
+enforce_minmax = 1
+vmax = 1
+vmin = 0
+
+colormap='RdBu_r'
 
 normalize=1
 focus_depth=1000 #Focus on the top $focus_depth meters
-focus_time =10  #Focus on the first $focus_time days
+focus_time =30  #Focus on the first $focus_time days
 
 only_wke = 1
 
@@ -92,18 +98,24 @@ if os.path.isfile(path_ez):
     ZZ, TT = np.meshgrid(z, t)
 
     if(only_wke==1):
+        fig = plt.figure(figsize=(8,4))
         plt.subplot(1, 1, 1)
     else:
+        fig = plt.figure(figsize=(8,8))
         plt.subplot(2, 1, 1)
 
-    FKE = plt.contourf(TT,ZZ,fke,20)
-    plt.title('Horizontally-averaged flow properties evolution')
+    if(enforce_minmax==1):
+        FKE = plt.contourf(TT,ZZ,fke,20,cmap=colormap,vmin=vmin, vmax=vmax)
+    else:
+        FKE = plt.contourf(TT,ZZ,fke,20)
+    plt.title('Horizontally-averaged EKE loss, $u_0$ = '+u0+' cm/s')
     plt.ylabel('Depth (m)')
-    cbar = plt.colorbar(FKE)
+    cbar = plt.colorbar(FKE,ticks=np.linspace(vmin,vmax,10+1,endpoint=True))
+    plt.clim(vmin,vmax)
     if(normalize==1):
-        cbar.ax.set_ylabel('KE loss (%)')
+        cbar.ax.set_ylabel('EKE loss (%)')
     else:        
-        cbar.ax.set_ylabel('KE (m/s)$^2$, no_fb - fb')
+        cbar.ax.set_ylabel('EKE (m/s)$^2$, no_fb - fb')
 
 
     #If desired, plot WPE contours as well
@@ -122,7 +134,7 @@ if os.path.isfile(path_ez):
             cbar.ax.set_ylabel('PE (m/s)$^2$, no_fb - fb')
             
             
-    plt.savefig('plots/'+run+'/EE_loss_contours.eps',bbox_inches='tight')
+    plt.savefig('plots/'+run+'/sfcEKE_loss_contours.eps',bbox_inches='tight')
 #    plt.show()
         
 

@@ -59,7 +59,7 @@ for run_no,run_fb in enumerate(run_list):
     
     plt.plot(time,loss[:,run_no+1],label='$u_0$ = '+storm_strength[run_no]+' cm/s')
 
-plt.legend(loc='best')
+plt.legend(loc='center right')
 plt.xlabel('Time (days)')                                                                                                                                                           
 plt.ylabel('Total geostrophic energy loss (%)')
 plt.xlim(0,focus_time)

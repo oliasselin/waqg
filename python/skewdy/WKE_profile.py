@@ -10,13 +10,17 @@ from finds import find_timestep
 
 scratch_location = '/oasis/scratch/comet/oasselin/temp_project/'
 folder = 'niskine/skewdy/'
-run = 'storm0/'
+u0 = '10'
+run = 'storm4_uw'+u0+'/'
 location = scratch_location+folder+run
 
+show=0
+colormap='RdBu_r'
+vmin = 0.
+vmax = 1.
 
-
-focus_depth=1000    #Focus on the top $focus_depth meters
-focus_time =200     #Focus on the first $focus_time days
+focus_depth=500    #Focus on the top $focus_depth meters
+focus_time =30     #Focus on the first $focus_time days
 mlayer_depth = 100  #Mixed-layer depth
 deep_depth = 1000   #Another depth of interest
 deep_depth2 = 2000   #Another depth of interest
@@ -68,15 +72,19 @@ t = ts_wz_days*np.arange(0,wke.shape[0])
 ZZ, TT = np.meshgrid(z, t)
 
 
-fig = plt.figure(figsize=(10,4))
+
+fig = plt.figure(figsize=(8,4))
 ax = fig.add_subplot(1, 1, 1)
-WKE = plt.contourf(TT,ZZ,wke,20)
-plt.title('Horizontally-averaged WKE')
+WKE = plt.contourf(TT,ZZ,wke/wke[0,-1],20,cmap=colormap)
+plt.title('Horizontally-averaged WKE profile, $u_0$ = '+u0+' cm/s')
+plt.xlabel('Time (days)')
 plt.ylabel('Depth (m)')
-cbar = plt.colorbar(WKE)
-cbar.ax.set_ylabel('WKE (m/s)^2')
-#plt.show()
-plt.savefig('plots/'+run+'/WKE_profile'+str(focus_time)+'.eps',bbox_inches='tight')
+cbar = plt.colorbar(ticks=np.linspace(vmin,vmax,5+1,endpoint=True))
+cbar.ax.set_ylabel('Normalized WKE')
+if show==1:
+    plt.show()
+else:
+    plt.savefig('plots/'+run+'/WKE_profile'+str(focus_time)+'.eps',bbox_inches='tight')
 
 
 
@@ -128,34 +136,38 @@ for it in range(len(wke_full[:,0])):
     wke_full_total[it] = np.average(wke_full[it,:])   #Since the variable in we.dat is an AVERAGE energy, must multply by the volume (or height) ratio to get correct val
 wke_full_total=wke_full_total/wt[0,1]
 
-
+#Get energies in in percentage
+wke_full_total=wke_full_total*100
+wke_deep_total2=wke_deep_total2*100
+wke_deep_total=wke_deep_total*100
+wke_ml_total=wke_ml_total*100
 
 fig = plt.figure(figsize=(8,4))
 ax = fig.add_subplot(1, 1, 1)
 ax.grid(color='k', linestyle='-', linewidth=0.1)
-plt.plot(t,wke_full_total,'-k',linewidth=2.0)
-plt.plot(t,wke_deep_total2,'-k',linewidth=2.0)
-plt.plot(t,wke_deep_total,'-k',linewidth=2.0)
-plt.plot(t,wke_ml_total,'-k',linewidth=2.0)
-ax.fill_between(t,wke_ml_total  ,             0 , where=wke_ml_total   >=0              ,alpha=0.5,facecolor='black', interpolate=True)
-ax.fill_between(t,wke_ml_total  ,wke_deep_total , where=wke_deep_total >=wke_ml_total   ,alpha=0.5,facecolor='blue', interpolate=True)
-ax.fill_between(t,wke_deep_total,wke_deep_total2, where=wke_deep_total2>=wke_deep_total ,alpha=0.5,facecolor='green', interpolate=True)
-ax.fill_between(t,wke_full_total,wke_deep_total2, where=wke_full_total >=wke_deep_total2,alpha=0.5,facecolor='red', interpolate=True)
+#plt.plot(t,wke_full_total,'-k',linewidth=2.0)
+#plt.plot(t,wke_deep_total2,'-k',linewidth=2.0)
+#plt.plot(t,wke_deep_total,'-k',linewidth=2.0)
+#plt.plot(t,wke_ml_total,'-k',linewidth=2.0)
+ax.fill_between(t,wke_ml_total  ,             0 , where=wke_ml_total   >=0              ,alpha=0.25,facecolor='#cc9af4', interpolate=True)
+ax.fill_between(t,wke_ml_total  ,wke_deep_total , where=wke_deep_total >=wke_ml_total   ,alpha=0.25,facecolor='#f49ac2', interpolate=True)
+ax.fill_between(t,wke_deep_total,wke_deep_total2, where=wke_deep_total2>=wke_deep_total ,alpha=0.25,facecolor='#c2f49a', interpolate=True)
+ax.fill_between(t,wke_full_total,wke_deep_total2, where=wke_full_total >=wke_deep_total2,alpha=0.25,facecolor='#9af4cc', interpolate=True)
+plt.text(2.5, 19,'Mixed layer (<100 m)', fontsize=10, bbox=dict(facecolor='white', edgecolor='black', alpha=0.5))
+plt.text(15, 50,'100-1000 m', fontsize=10, horizontalalignment='center',bbox=dict(facecolor='white', edgecolor='black', alpha=0.5))
+plt.text(20, 79,'1-2 km', fontsize=10, horizontalalignment='center',bbox=dict(facecolor='white', edgecolor='black',alpha=0.5))
+plt.text(25, 82,'2-3 km', fontsize=10, horizontalalignment='center',bbox=dict(facecolor='white', edgecolor='black', alpha=0.5))
+plt.text(28, 92,'Dissipated', fontsize=10, horizontalalignment='center',bbox=dict(facecolor='white', edgecolor='black', alpha=0.5))
 
 
-
-plt.title('Volume-averaged WKE')
-plt.legend(loc='best')
+plt.title('WKE depth distribution, $u_0$ = '+u0+' cm/s')
 plt.xlabel('Time (days)')                                                                                                                                                           
 plt.ylabel('WKE (%)')
 plt.xlim(0,focus_time)
-#plt.show()
-#plt.savefig('plots/'+run+'/WKE_t.png',bbox_inches='tight')
-plt.savefig('plots/'+run+'/WKE_area'+str(focus_time)+'.eps',bbox_inches='tight')
+
+if show==1:
+    plt.show()
+else:
+    plt.savefig('plots/'+run+'/WKE_area'+str(focus_time)+'.eps',bbox_inches='tight')
 
 
-
-#plt.plot(wt[:,0],wke_percent[:],label='Total')
-#plt.plot(t,wke_deep_total2,label='Top '+str(deep_depth2)+' m')
-#plt.plot(t,wke_deep_total,label='Top '+str(deep_depth)+' m')
-#plt.plot(t,wke_ml_total,label='Top '+str(mlayer_depth)+' m')
