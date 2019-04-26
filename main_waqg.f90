@@ -122,6 +122,9 @@ PROGRAM main
 
   equivalence(psir_bt,psik_bt)
 
+  !Wind restoring: suboptimally using a matrix of the same shape as LA for simplicity                                                                                                                                                                                         
+  double complex,   dimension(iktx,ikty,n3h0) :: windk
+
   !********************** Initializing... *******************************!
 
   call initialize_mpi
@@ -152,6 +155,7 @@ PROGRAM main
   call fft_r2c(BRr,BRk,n3h0)
   call fft_r2c(BIr,BIk,n3h0)
   call sumB(BRk,BIk)
+  windk = BRk/tau_wind         !Wind is simply the initial LA_0 / tau.                    
   ARk = (0.D0,0.D0)
   AIk = (0.D0,0.D0)
   CRk = (0.D0,0.D0)
@@ -284,7 +288,7 @@ end if
 
           if (L(ikx,iky).eq.1) then
              qk(ikx,iky,izh1) = (  qok(ikx,iky,izh1) - delt* nqk(ikx,iky,izh0) )*exp(-int_factor)
-            BRk(ikx,iky,izh0) = ( BRok(ikx,iky,izh0) - delt*nBRk(ikx,iky,izh0)  - delt*(0.5/(Bu*Ro))*kh2*AIk(ikx,iky,izh0) + delt*0.5*rBIk(ikx,iky,izh0) )*exp(-int_factor_w)
+            BRk(ikx,iky,izh0) = ( BRok(ikx,iky,izh0) - delt*nBRk(ikx,iky,izh0)  - delt*(0.5/(Bu*Ro))*kh2*AIk(ikx,iky,izh0) + delt*0.5*rBIk(ikx,iky,izh0) + delt*windk(ikx,iky,izh0) )*exp(-int_factor_w)
             BIk(ikx,iky,izh0) = ( BIok(ikx,iky,izh0) - delt*nBIk(ikx,iky,izh0)  + delt*(0.5/(Bu*Ro))*kh2*ARk(ikx,iky,izh0) - delt*0.5*rBRk(ikx,iky,izh0) )*exp(-int_factor_w)
 
             if(eady == 1 .and. eady_bnd == 1) then  !Add bottom and top boundary terms
@@ -472,8 +476,8 @@ end if
 
               if (L(ikx,iky).eq.1) then
                  qtempk(ikx,iky,izh1) =  qok(ikx,iky,izh1)*exp(-2*int_factor) - 2*delt*nqk(ikx,iky,izh0)*exp(-int_factor) 
-                BRtempk(ikx,iky,izh0) = BRok(ikx,iky,izh0)*exp(-2*int_factor_w) - 2*delt*(nBRk(ikx,iky,izh0) + (0.5/(Bu*Ro))*kh2*AIk(ikx,iky,izh0) - 0.5*rBIk(ikx,iky,izh0) )*exp(-int_factor_w)
-                BItempk(ikx,iky,izh0) = BIok(ikx,iky,izh0)*exp(-2*int_factor_w) - 2*delt*(nBIk(ikx,iky,izh0) - (0.5/(Bu*Ro))*kh2*ARk(ikx,iky,izh0) + 0.5*rBRk(ikx,iky,izh0) )*exp(-int_factor_w)
+                BRtempk(ikx,iky,izh0) = BRok(ikx,iky,izh0)*exp(-2*int_factor_w) - 2*delt*(nBRk(ikx,iky,izh0) + (0.5/(Bu*Ro))*kh2*AIk(ikx,iky,izh0) - 0.5*rBIk(ikx,iky,izh0) - windk(ikx,iky,izh0) )*exp(-int_factor_w)
+                BItempk(ikx,iky,izh0) = BIok(ikx,iky,izh0)*exp(-2*int_factor_w) - 2*delt*(nBIk(ikx,iky,izh0) - (0.5/(Bu*Ro))*kh2*ARk(ikx,iky,izh0) + 0.5*rBRk(ikx,iky,izh0)                       )*exp(-int_factor_w)
                 
                 if(eady == 1 .and. eady_bnd == 1) then  !Add bottom and top boundary terms      
                    !Bottom boundary: add vQy and the Ekman term                                                                                                             
