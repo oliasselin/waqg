@@ -9,7 +9,7 @@ run = 'storm5/'
 
 run_list = ['storm5_uw10/']##['storm5_uw10/','storm5_uw20/','storm5_uw40/']
 
-ts_max = 26
+ts_max = 100
 ts_min = 1
 focus_time = 10
 
@@ -28,20 +28,20 @@ we = np.loadtxt(scratch_location+folder+run_list[0]+'/output/we.dat')
 time = we[:,0]
 delt = (time[1]-time[0])*24*60*60
 
-out = np.zeros((ts_max-ts_min+1,2,len(run_list)))
+out = np.zeros((ts_max-ts_min+1,7,len(run_list)))
 
 
 
-fig = plt.figure(figsize=(6,6))
+fig = plt.figure(figsize=(6,3))
 ax = fig.add_subplot(1, 1, 1)
 ax.grid(color='k', linestyle='-', linewidth=0.1)
 for run_no,run_iter in enumerate(run_list):
     out[:,:,run_no] = np.loadtxt('data/'+run_iter+'/WKE_zeta_corr_'+sliceloc+'.dat')
     plt.plot(out[1:,0,run_no],out[1:,1,run_no],label=run_iter)
 
-plt.legend(loc='best')
+#plt.legend(loc='best')
 plt.xlabel('Time (days)')
 plt.ylabel('WKE-$\zeta$ correlation at $z=0$')
 plt.xlim(0,focus_time)
-#plt.show()                                                                                                                                                                              
-plt.savefig('plots/'+run+'/WKE_zeta_corr.eps',bbox_inches='tight')
+plt.show()                                                                                                                                                                              
+#plt.savefig('plots/'+run+'/WKE_zeta_corr.eps',bbox_inches='tight')

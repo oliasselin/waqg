@@ -14,7 +14,7 @@ u0 = '10'
 run = 'storm4_uw'+u0+'/'
 location = scratch_location+folder+run
 
-show=0
+show=1
 colormap='RdBu_r'
 vmin = 0.
 vmax = 1.

@@ -11,6 +11,9 @@ MODULE files
                                                                          
   !unit no of files for output                                                                                                                            
   integer, parameter :: unit_slices = 1
+  integer, parameter :: unit_slices_y1 = 10001
+  integer, parameter :: unit_slices_y2 = 10002
+  integer, parameter :: unit_slices_y3 = 10003
   integer, parameter :: unit_dump = 2
   integer, parameter :: unit_specA = 3
   integer, parameter :: unit_speckA = 4

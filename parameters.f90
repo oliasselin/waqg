@@ -218,7 +218,7 @@ MODULE parameters
     integer :: iter=0
     integer :: itermax=1000000000
     real :: maxtime=1000                      
-    double precision, parameter :: delt= 0.002*dx!Ro/20.   !0.5*Bu*Ro/(2.*ktrunc_x*ktrunc_x)   !0.01*dx   !0.5*Bu*Ro/(2.*ktrunc_x*ktrunc_x) !0.25/ktrunc_x !0.5*Bu*Ro/(2.*ktrunc_x*ktrunc_x) 
+    double precision, parameter :: delt= 0.01*dx!Ro/20.   !0.5*Bu*Ro/(2.*ktrunc_x*ktrunc_x)   !0.01*dx   !0.5*Bu*Ro/(2.*ktrunc_x*ktrunc_x) !0.25/ktrunc_x !0.5*Bu*Ro/(2.*ktrunc_x*ktrunc_x) 
     double precision, parameter :: gamma=1e-3                                  !Robert filter parameter
 
 
@@ -305,15 +305,16 @@ MODULE parameters
     integer, parameter :: nfieldsw = 6         !Don't forget to change tag_slice_xz(nfields) accordingly in "mpi.f90"
     integer :: count_slice(nfields) = 0       !number of slices
     integer :: count_slicew(nfieldsw) = 0       !number of slices
-    integer :: zval=n3/2                      !z-level at which we wish to plo a slice                                                                                                                               
-    integer :: yval=n2/2
-    integer :: xval=n1/2
+
+    integer, parameter :: nvslices =3     
+    integer :: yval(nvslices)=[n2,n2-n2/16,n2-n2/8]  !n2/2  
+
     integer :: hlvl(nfields)=[2,2,1,1,2,1,1]                                   
     integer :: hlvlw(nfieldsw)=[0,0,0,0,0,0]                                   
 
-    integer, parameter :: bot_height = 1
-    integer, parameter :: mid_height = n3/2
-    integer, parameter :: top_height = n3-1
+    integer, parameter :: bot_height = n3-34!1
+    integer, parameter :: mid_height = n3-17!n3/2
+    integer, parameter :: top_height = n3-9 !n3-1
 
     integer, parameter :: out_slab = 0, freq_slab = 1
     integer, parameter :: slab_mype   = npe/2-1 
