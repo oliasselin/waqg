@@ -13,7 +13,7 @@ cm_factor = 100  #Set to 100 for converting m to cm
 depth = 3000
 N0=0.001550529072004
 N02=np.square(N0)
-U_scale = 0.1*cm_factor
+U_scale = 0.01*cm_factor
 
 if not os.path.exists('plots/'+run):
     os.makedirs('plots/'+run)
@@ -30,9 +30,9 @@ full_depth = -full_depth[::-1]
 n2_fit = N02*fit[:,2]
 
 plt.plot(n2_raw,mid_depth,'b-',linewidth=.01,label='Raw')
-plt.plot(n2_smooth,mid_depth,'k-',linewidth=1.,label='50-day moving average')
+plt.plot(n2_smooth,mid_depth,'k-',linewidth=1.,label='50 m moving average')
 plt.plot(n2_fit,full_depth,'r-',linewidth=2.,label='Skewed gaussian fit')
-plt.title('Base-state stratification')
+plt.title('Base-state stratification',fontsize=12)
 plt.xlabel('$N^2$ (s$^{-2}$)')
 plt.ylabel('Depth (m)')
 plt.grid(color='k', linestyle='-', linewidth=0.1)
@@ -50,14 +50,49 @@ u_mean = U_scale*u_mean[:,1]
 dz_over_2 = fit[0,0]*H
 full_depth_s = full_depth-dz_over_2    #Staggered grid (dimensional) 
 
+
+
 plt.plot(u_mean,full_depth_s,'r-',linewidth=2.)
-plt.title('Base-state velocity')
+plt.title('Base-state velocity',fontsize=12)
 plt.xlabel('$U$ (cm/s)')
 plt.ylabel('Depth (m)')
 plt.ylim(-depth,0)
 
 plt.grid(color='k', linestyle='-', linewidth=0.1)
 
-plt.subplots_adjust(wspace=0.4)
-plt.savefig('plots/'+run+'/base_state.eps',bbox_inches='tight')
+#plt.subplots_adjust(wspace=0.4)
+
+#plt.savefig('plots/'+run+'/base_state.eps',bbox_inches='tight')
 #plt.show()
+
+
+#plt.subplot(1, 3, 3)
+
+###########################
+#Calculate the shear dU/dz#
+###########################
+
+#Create the unstaggered grid on which dU/dz is evaluated
+full_depth_u = full_depth_s + dz_over_2
+full_depth_u = np.delete(full_depth_u,-1)
+dz = dz_over_2*2
+S=np.zeros(full_depth_u.size)
+
+
+for zi in range(full_depth_u.size):
+    S[zi]=(1./cm_factor)*(u_mean[zi+1]-u_mean[zi])/dz
+
+###########################
+
+#plt.plot(S,full_depth_u,'r-',linewidth=2.)
+#plt.title('Base-state shear')
+#plt.xlabel('$\partial U/\partial z$ (s$^{-1}$)')
+#plt.ylabel('Depth (m)')
+#plt.ylim(-depth,0)
+
+#plt.grid(color='k', linestyle='-', linewidth=0.1)
+
+plt.subplots_adjust(wspace=0.4)
+
+plt.savefig('plots/'+run+'/base_state.eps',bbox_inches='tight')
+#plt.show()    

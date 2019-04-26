@@ -1,4 +1,6 @@
-#!/usr/bin/env python                                                                                                                                                               
+#Difference with CE.py: here we have a look at the Eady case. The loss of geostrophic energy is evaluated by subtracting the energy time series of the non-feedback run.
+
+#!/usr/bin/env python                                                                                        
 import os
 import numpy as np
 import matplotlib.pyplot as plt
@@ -7,8 +9,13 @@ import matplotlib.pyplot as plt
 scratch_location = '/oasis/scratch/comet/oasselin/temp_project/'
 folder = 'niskine/skewdy/'
 u0='10'
-run = 'storm7_uw10/'
+run_fb = 'storm5_uw10/' #'storm5_uw10_ed/'
+run_nf = 'storm5/' #'storm5_ed/'
+run = 'storm5'
+
 location = scratch_location+folder+run
+location_fb = scratch_location+folder+run_fb
+location_nf = scratch_location+folder+run_nf
 
 focus_time = 40  #Focus on the first $focus_time days
 
@@ -22,33 +29,35 @@ if not os.path.exists('plots/'+run):
 
 
 #Load the eddy and coupled energy time series
-path_ee = location+'output/energy.dat'
-path_ce = location+'output/ce.dat'
-ee = np.loadtxt(path_ee)
+path_ce = location_fb+'output/ce.dat'
+path_ee_fb = location_fb+'output/energy.dat'
+path_ee_nf = location_nf+'output/energy.dat'
+
 ce = np.loadtxt(path_ce)
-
-
-
+ee_fb = np.loadtxt(path_ee_fb)
+ee_nf = np.loadtxt(path_ee_nf)
 
 #Take only the part of the timeseries including focus_time
-for index in range(len(ee[:,0])):
-    if ee[index,0] > focus_time:
-        ee = ee[:index+1,:]
+for index in range(len(ee_fb[:,0])):
+    if ee_fb[index,0] > focus_time:
+        ee_fb = ee_fb[:index+1,:]
+        ee_nf = ee_nf[:index+1,:]
         ce = ce[:index+1,:]
         break
 
-time=ee[:,0]
-total = ee[:,1]+ee[:,2]
-ee_perc = total/total[0]
+time=ee_fb[:,0]
+total_fb = ee_fb[:,1]+ee_fb[:,2]
+total_nf = ee_nf[:,1]+ee_nf[:,2]
+#ee_perc = total/total[0]
 
-loss = total[0]-total
+loss = total_nf-total_fb
 
 wpe = ce[:,1]
 wce = ce[:,2]
 coupled_energy = wpe + wce
 
-norm = 100/total[0]  #Normalize with initial geostrophic (or coupled) energy
-
+norm = 100/total_nf[0]  #Normalize with initial geostrophic (or coupled) energy
+#norm=1.
 
 
 fig = plt.figure(figsize=(8,4))

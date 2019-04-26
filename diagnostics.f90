@@ -699,7 +699,7 @@ end subroutine hspec
                 if(L(ikx,iky)==1) then
                    k_p(izh0) = k_p(izh0) + real( BRk(ikx,iky,izh0)*CONJG( BRk(ikx,iky,izh0) ) + BIk(ikx,iky,izh0)*CONJG( BIk(ikx,iky,izh0) ) )
                    p_p(izh0) = p_p(izh0) + (0.5/(r_2(izh2)*Bu))*kh2*real( CRk(ikx,iky,izh0)*CONJG( CRk(ikx,iky,izh0) ) + CIk(ikx,iky,izh0)*CONJG( CIk(ikx,iky,izh0) ) )
-                   s_p(izh0) = s_p(izh0) + r_2(izh2)*real( SRk(ikx,iky,izh0)*CONJG( SRk(ikx,iky,izh0) ) + SIk(ikx,iky,izh0)*CONJG( SIk(ikx,iky,izh0) ) )
+                   s_p(izh0) = s_p(izh0) + (1./r_2(izh2))*real( SRk(ikx,iky,izh0)*CONJG( SRk(ikx,iky,izh0) ) + SIk(ikx,iky,izh0)*CONJG( SIk(ikx,iky,izh0) ) )
                    c_p(izh0) = c_p(izh0) + (1./8.)*(1./(Bu*Bu))*kh2*kh2*real( ARk(ikx,iky,izh0)*CONJG( ARk(ikx,iky,izh0) ) + AIk(ikx,iky,izh0)*CONJG( AIk(ikx,iky,izh0) ) )
                 end if
 
@@ -1912,8 +1912,8 @@ end subroutine hspec
     
     double precision,    dimension(n1d,n2d,n3h0+2*hlvl(id_field)) :: field
 
-    real, dimension(n1,n3h0) :: XZ_slice_p        !Scratch array for xz slices (divided amongst processors)                                                                                                                               
-    real, dimension(n1,n3)   :: XZ_slice          !Scratch array for xz slices                                                                                                                                                            
+    real, dimension(n1,n3h0,nvslices) :: XZ_slice_p        !Scratch array for xz slices (divided amongst processors)                                                                                                                               
+    real, dimension(n1,n3,nvslices)   :: XZ_slice          !Scratch array for xz slices                                                                                                                                                            
 
     integer :: unit
     integer :: id_field
@@ -2104,66 +2104,68 @@ end subroutine hspec
     end if
 
 
-
-
-    !Print vertical slice
-
+    !Print vertical slices
        if(mype==0) then
-!          write (fname, "(A6,I1,I1,A4)") "slicev",id_field,count_slice(id_field),".dat"
-          write (fname, "(A6,I1,I3,A4)") "slicev",id_field,count_slice(id_field),".dat"
-          open (unit=unit_slices,file=fname,action="write",status="replace")
+          write (fname, "(A7,I1,I3,A4)") "slicev1",id_field,count_slice(id_field),".dat"
+          open (unit=unit_slices_y1,file=fname,action="write",status="replace")
+          write (fname, "(A7,I1,I3,A4)") "slicev2",id_field,count_slice(id_field),".dat"
+          open (unit=unit_slices_y2,file=fname,action="write",status="replace")
+          write (fname, "(A7,I1,I3,A4)") "slicev3",id_field,count_slice(id_field),".dat"
+          open (unit=unit_slices_y3,file=fname,action="write",status="replace")
 
-          !Copy ur slice on XY_slice (NOTICE IT'S NOT ON XY_slice_p)                                                                                                                                                                      
+          !Copy ur slice on XY_slice (NOTICE IT'S NOT ON XY_slice_p)                                                                                                                                               
           do ix=1,n1
-             do izh0=1,n3h0
-                iz  =izh0+hlvl(id_field)
-                XZ_slice(ix,izh0) = field(ix,yval,iz)
-             end do
-          end do
-
-          !Receive from other processors                                                                                                                                                                                                  
-          do nrec=1,npe-1
-             call mpi_recv(XZ_slice_p,n1*n3h0,MPI_REAL,MPI_ANY_SOURCE,tag_slice_xz(id_field),MPI_COMM_WORLD,status,ierror)
-             processor=status(MPI_SOURCE)
-             !Copy onto scratch array                                                                                                                                                                                                     
-             do ix=1,n1
-                do iz=1,n3h0
-                   XZ_slice(ix,iz+n3h0*processor) = XZ_slice_p(ix,iz)
+             do iy=1,nvslices
+                do izh0=1,n3h0
+                   iz  =izh0+hlvl(id_field)
+                   XZ_slice(ix,izh0,iy) = field(ix,yval(iy),iz)
                 end do
              end do
           end do
 
-          !Now print the complete slice onto file                                                                                                                                                                                         
-!          do ix=1,n1
-!            do iz=1,n3
-!               write(unit=count_slice(id_field),fmt=*) real(xa(ix)),real(za(iz)),XZ_slice(ix,iz)
-!             end do
-!          end do
+          !Receive from other processors                                                                                                                                                                          
+          do nrec=1,npe-1
+             call mpi_recv(XZ_slice_p,n1*n3h0*nvslices,MPI_REAL,MPI_ANY_SOURCE,tag_slice_xz(id_field),MPI_COMM_WORLD,status,ierror)
+             processor=status(MPI_SOURCE)
+             !Copy onto scratch array                                                                                                                                                                           
+             do ix=1,n1
+                do iy=1,nvslices
+                   do iz=1,n3h0
+                      XZ_slice(ix,iz+n3h0*processor,iy) = XZ_slice_p(ix,iz,iy)
+                   end do
+                end do
+             end do
+          end do
+          !Now print the complete slice onto file                                                                                                                                                                                      
           do iz=1,n3
-             write(unit=unit_slices,fmt=333) (XZ_slice(ix,iz),ix=1,n1)
-             write(unit=unit_slices,fmt=*) '           '
+             do ix=1,n1
+                write(unit=unit_slices_y1,fmt=333) XZ_slice(ix,iz,1)
+                write(unit=unit_slices_y2,fmt=333) XZ_slice(ix,iz,2)
+                write(unit=unit_slices_y3,fmt=333) XZ_slice(ix,iz,3)
+             end do
+             write(unit=unit_slices_y1,fmt=*) '           '
+             write(unit=unit_slices_y2,fmt=*) '           '
+             write(unit=unit_slices_y3,fmt=*) '           '
           enddo
-          close (unit=unit_slices)
-
-          
+          close (unit=unit_slices_y1)
+          close (unit=unit_slices_y2)
+          close (unit=unit_slices_y3)          
        end if
 
        !All other processors (mype>0) send their XZ_field_p to mype 0                                                                                                                                                                     
        if(mype/=0) then
           do ix=1,n1
-             do izh0=1,n3h0
-                iz  =izh0 + hlvl(id_field)
-                XZ_slice_p(ix,izh0) = field(ix,yval,iz)
+             do iy=1,nvslices
+                do izh0=1,n3h0
+                   iz  =izh0 + hlvl(id_field)
+                   XZ_slice_p(ix,izh0,iy) = field(ix,yval(iy),iz)
+                end do
              end do
           end do
-          
           !Now send these chunks to mype 0                                                                                                                                                                                                
-          call mpi_send(XZ_slice_p,n1*n3h0,MPI_REAL,0,tag_slice_xz(id_field),MPI_COMM_WORLD,ierror)
+          call mpi_send(XZ_slice_p,n1*n3h0*nvslices,MPI_REAL,0,tag_slice_xz(id_field),MPI_COMM_WORLD,ierror)
           
        end if
-
-
-
 
 
           if(id_field==1)    uk=bmem
@@ -2188,7 +2190,7 @@ end subroutine hspec
 
 
 
-  subroutine slices_waves(ARk,AIk,BRk,BIk,BRr,BIr,CRk,CIk,qwk,qwr,id_field)
+  subroutine slices_waves(ARk,AIk,BRk,BIk,BRr,BIr,CRk,CIk,qwk,qwr,psik,id_field)
 
     double complex, dimension(iktx,ikty,n3h0) :: ARk,AIk
     double complex, dimension(iktx,ikty,n3h0) :: BRk,BIk
@@ -2199,6 +2201,9 @@ end subroutine hspec
     double complex,   dimension(iktx,ikty,n3h0) :: qwk
     double precision, dimension(n1d,n2d,n3h0)   :: qwr
 
+    double complex, dimension(iktx,ikty,n3h1) :: psik
+
+
     !Temp arrays for convenience
     double complex, dimension(iktx,ikty,n3h0) :: Rmemk, Imemk
     double complex, dimension(iktx,ikty,n3h0) :: Rmemk2, Imemk2
@@ -2206,8 +2211,8 @@ end subroutine hspec
 
     double precision,    dimension(n1d,n2d,n3h0+2*hlvlw(id_field)) :: field
 
-    real, dimension(n1,n3h0) :: XZ_slice_p        !Scratch array for xz slices (divided amongst processors)                                                                                                                               
-    real, dimension(n1,n3)   :: XZ_slice          !Scratch array for xz slices                                                                                                                                                            
+    real, dimension(n1,n3h0,nvslices) :: XZ_slice_p        !Scratch array for xz slices (divided amongst processors)                                                                                                                               
+    real, dimension(n1,n3,nvslices)   :: XZ_slice          !Scratch array for xz slices                                                                                                                                                            
 
     integer :: unit
     integer :: id_field
@@ -2294,6 +2299,45 @@ end subroutine hspec
     elseif(id_field==5) then
        call fft_c2r(qwk,qwr,n3h0)
        field = (U_scale/L_scale)*qwr       
+    elseif(id_field==6) then
+       do izh0=1,n3h0
+          izh1=izh0+1
+          izh2=izh1+1
+
+          do ikx=1,iktx
+             kx=kxa(ikx)
+             do iky=1,ikty
+                ky=kya(iky)
+                kh2=kx*kx+ky*ky
+
+                Rmemk(ikx,iky,izh0)  =  -i*kx*kh2*psik(ikx,iky,izh1)
+                Imemk(ikx,iky,izh0)  =  -i*ky*kh2*psik(ikx,iky,izh1)
+
+             end do
+          end do
+       end do
+
+       call fft_c2r(Rmemk ,Rmem ,n3h0)
+       call fft_c2r(Imemk ,Imem ,n3h0)
+
+       do izh0=1,n3h0
+          izh1=izh0+1
+          izh2=izh1+1
+
+          do ix=1,n1d
+             do iy=1,n2d
+                if(ix<=n1) then
+                   
+
+                   field(ix,iy,izh0) = (czero(n3h0*mype+izh0)*czero(n3h0*mype+izh0)/r_2s(izh2))*(Rmem(ix,iy,izh0)*Rmem(ix,iy,izh0)+Imem(ix,iy,izh0)*Imem(ix,iy,izh0))*time*time
+
+                end if
+             end do
+          end do
+       end do
+
+
+       field = (Uw_scale*Uw_scale/(16.*Bu))*field       
     end if
 
 
@@ -2351,59 +2395,67 @@ end subroutine hspec
 
 
 
-    !Print vertical slice
-
+    !Print vertical slices
        if(mype==0) then
-!          write (fname, "(A6,I1,I1,A4)") "slicev",id_field,count_slice(id_field),".dat"
-          write (fname, "(A7,I1,I3,A4)") "slicevw",id_field,count_slicew(id_field),".dat"
-          open (unit=unit_slices,file=fname,action="write",status="replace")
+          write (fname, "(A8,I1,I3,A4)") "slicev1w",id_field,count_slicew(id_field),".dat"
+          open (unit=unit_slices_y1,file=fname,action="write",status="replace")
+          write (fname, "(A8,I1,I3,A4)") "slicev2w",id_field,count_slicew(id_field),".dat"
+          open (unit=unit_slices_y2,file=fname,action="write",status="replace")
+          write (fname, "(A8,I1,I3,A4)") "slicev3w",id_field,count_slicew(id_field),".dat"
+          open (unit=unit_slices_y3,file=fname,action="write",status="replace")
 
-          !Copy ur slice on XY_slice (NOTICE IT'S NOT ON XY_slice_p)                                                                                                                                                                      
+          !Copy ur slice on XY_slice (NOTICE IT'S NOT ON XY_slice_p)                                                                                                                                               
           do ix=1,n1
-             do izh0=1,n3h0
-                iz  =izh0+hlvlw(id_field)
-                XZ_slice(ix,izh0) = field(ix,yval,iz)
-             end do
-          end do
-
-          !Receive from other processors                                                                                                                                                                                                  
-          do nrec=1,npe-1
-             call mpi_recv(XZ_slice_p,n1*n3h0,MPI_REAL,MPI_ANY_SOURCE,tag_slice_xzw(id_field),MPI_COMM_WORLD,status,ierror)
-             processor=status(MPI_SOURCE)
-             !Copy onto scratch array                                                                                                                                                                                                     
-             do ix=1,n1
-                do iz=1,n3h0
-                   XZ_slice(ix,iz+n3h0*processor) = XZ_slice_p(ix,iz)
+             do iy=1,nvslices
+                do izh0=1,n3h0
+                   iz  =izh0+hlvlw(id_field)
+                   XZ_slice(ix,izh0,iy) = field(ix,yval(iy),iz)
                 end do
              end do
           end do
 
-          !Now print the complete slice onto file                                                                                                                                                                                         
-!          do ix=1,n1
-!            do iz=1,n3
-!               write(unit=count_slice(id_field),fmt=*) real(xa(ix)),real(za(iz)),XZ_slice(ix,iz)
-!             end do
-!          end do
-          do iz=1,n3
-             write(unit=unit_slices,fmt=333) (XZ_slice(ix,iz),ix=1,n1)
-             write(unit=unit_slices,fmt=*) '           '
-          enddo
-          close (unit=unit_slices)
+          !Receive from other processors                                                                                                                                                                          
+          do nrec=1,npe-1
+             call mpi_recv(XZ_slice_p,n1*n3h0*nvslices,MPI_REAL,MPI_ANY_SOURCE,tag_slice_xzw(id_field),MPI_COMM_WORLD,status,ierror)
+             processor=status(MPI_SOURCE)
+             !Copy onto scratch array                                                                                                                                                                           
+             do ix=1,n1
+                do iy=1,nvslices
+                   do iz=1,n3h0
+                      XZ_slice(ix,iz+n3h0*processor,iy) = XZ_slice_p(ix,iz,iy)
+                   end do
+                end do
+             end do
+          end do
 
-          
+          !Now print the complete slice onto file                                                                                                                                                                                      
+          do iz=1,n3
+             do ix=1,n1
+                write(unit=unit_slices_y1,fmt=333) XZ_slice(ix,iz,1)
+                write(unit=unit_slices_y2,fmt=333) XZ_slice(ix,iz,2)
+                write(unit=unit_slices_y3,fmt=333) XZ_slice(ix,iz,3)
+             end do
+             write(unit=unit_slices_y1,fmt=*) '           '
+             write(unit=unit_slices_y2,fmt=*) '           '
+             write(unit=unit_slices_y3,fmt=*) '           '
+          enddo
+          close (unit=unit_slices_y1)
+          close (unit=unit_slices_y2)
+          close (unit=unit_slices_y3)
        end if
 
        !All other processors (mype>0) send their XZ_field_p to mype 0                                                                                                                                                                     
        if(mype/=0) then
           do ix=1,n1
-             do izh0=1,n3h0
-                iz  =izh0 + hlvlw(id_field)
-                XZ_slice_p(ix,izh0) = field(ix,yval,iz)
+             do iy=1,nvslices
+                do izh0=1,n3h0
+                   iz  =izh0 + hlvlw(id_field)
+                   XZ_slice_p(ix,izh0,iy) = field(ix,yval(iy),iz)
+                end do
              end do
           end do
-          
           !Now send these chunks to mype 0                                                                                                                                                                                                
-          call mpi_send(XZ_slice_p,n1*n3h0,MPI_REAL,0,tag_slice_xzw(id_field),MPI_COMM_WORLD,ierror)
+          call mpi_send(XZ_slice_p,n1*n3h0*nvslices,MPI_REAL,0,tag_slice_xzw(id_field),MPI_COMM_WORLD,ierror)
           
        end if
 

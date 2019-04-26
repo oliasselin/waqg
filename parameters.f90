@@ -177,6 +177,10 @@ MODULE parameters
     double precision, save :: eigen_vectors(n3,n3)               !Ouput = Eigenvectors(z^s_i,mode #)                                                                                     
     double precision, save :: eigen_values(n3)                   !Input = values on the diagonal. Output: eigenvalues in ascending order
 
+    double precision, save :: czero(n3)                      !Temporary variable to estimate WPE creation: initial Az = C. Compute during the first call of A_solver_ybj_plus
+
+
+
     !I choose:
     !x N=0.03 s^-1 (to get N_troposphere ~ 0.01 right)
     !f=0.0001 s^-1 (real value of earth)
@@ -195,7 +199,7 @@ MODULE parameters
     double precision, parameter :: L_scale=dom_x/L1                  !Actual L in m ( x_real = L x' where x' in [0:2pi] is the nondim x.)
     double precision, parameter :: cor=1.2419D-04                    !Actual f = 0.0001 s^-1 (real value of planet Earth)
     double precision, parameter :: U_scale=0.01D0!0.025                       !Actual U in m/s (u_real = U u' where u' is the nondim velocity ur implemented in the code)
-    double precision, parameter :: Uw_scale=0.4D0                       !Characteristic magnitude of wave velocity (wave counterpart to U_scale for flow)
+    double precision, parameter :: Uw_scale=0.1D0                       !Characteristic magnitude of wave velocity (wave counterpart to U_scale for flow)
     double precision, parameter :: Ar2 = (H_scale/L_scale)**2                                   !(1./64.)**2!(1./10.)**2 !0.01     !Aspect ratio squared = (H/L)^2     
     double precision, parameter :: Ro  = U_scale/(cor*L_scale)                                  !Rossby number  U/fL
     double precision, parameter :: Fr  = U_scale/(N0*H_scale)                                   !Froude number  U/N(z0)H
@@ -298,18 +302,19 @@ MODULE parameters
     !Slices
     integer, parameter :: max_slices = 999     
     integer, parameter :: nfields  = 7         !Don't forget to change tag_slice_xz(nfields) accordingly in "mpi.f90"
-    integer, parameter :: nfieldsw = 5         !Don't forget to change tag_slice_xz(nfields) accordingly in "mpi.f90"
+    integer, parameter :: nfieldsw = 6         !Don't forget to change tag_slice_xz(nfields) accordingly in "mpi.f90"
     integer :: count_slice(nfields) = 0       !number of slices
     integer :: count_slicew(nfieldsw) = 0       !number of slices
-    integer :: zval=n3/2                      !z-level at which we wish to plo a slice                                                                                                                               
-    integer :: yval=n2/2
-    integer :: xval=n1/2
-    integer :: hlvl(nfields)=[2,2,1,1,2,1,1]                                   
-    integer :: hlvlw(nfieldsw)=[0,0,0,0,0]                                   
 
-    integer, parameter :: bot_height = 1
-    integer, parameter :: mid_height = n3/2
-    integer, parameter :: top_height = n3-1
+    integer, parameter :: nvslices =3     
+    integer :: yval(nvslices)=[n2,n2-n2/16,n2-n2/8]  !n2/2  
+
+    integer :: hlvl(nfields)=[2,2,1,1,2,1,1]                                   
+    integer :: hlvlw(nfieldsw)=[0,0,0,0,0,0]                                   
+
+    integer, parameter :: bot_height = n3-34!1
+    integer, parameter :: mid_height = n3-17!n3/2
+    integer, parameter :: top_height = n3-9 !n3-1
 
     integer, parameter :: out_slab = 0, freq_slab = 1
     integer, parameter :: slab_mype   = npe/2-1 

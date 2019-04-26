@@ -10,16 +10,16 @@ from finds import find_timestep
 
 scratch_location = '/oasis/scratch/comet/oasselin/temp_project/'
 folder = 'niskine/skewdy/'
-run = 'storm0_fb/'
+run = 'storm5_uw10/'
 location = scratch_location+folder+run
 
-
+colormap='RdBu_r'
 
 focus_depth=500 #Focus on the top $focus_depth meters
-focus_time =30  #Focus on the first $focus_time days
+focus_time =40  #Focus on the first $focus_time days
 
 plot_wz=1
-plot_ez=1
+plot_ez=0
 
 
 #Read parameters from the source#
@@ -67,32 +67,33 @@ if os.path.isfile(path_wz) and plot_wz==1:
     t = ts_wz_days*np.arange(0,wke.shape[0])
     ZZ, TT = np.meshgrid(z, t)
 
+    WKE0=wke[0,-1]
 
     plt.subplot(3, 1, 1)
-    WKE = plt.contourf(TT,ZZ,wke,20)
-    plt.title('Horizontally-averaged wave properties evolution')
+    WKE = plt.contourf(TT,ZZ,wke/WKE0,20,cmap=colormap)
+#    plt.title('Horizontally-averaged wave properties evolution')
 #    plt.xlabel('Time (days)')
     plt.ylabel('Depth (m)')
-    cbar = plt.colorbar(WKE)
-    cbar.ax.set_ylabel('WKE (m/s)^2')
+    cbar = plt.colorbar(ticks=np.linspace(0,1,5+1,endpoint=True))
+    cbar.ax.set_ylabel('WKE/WKE$_0$')
 
     plt.subplot(3, 1, 2)
-    WPE = plt.contourf(TT,ZZ,wpe,20)
+    WPE = plt.contourf(TT,ZZ,wpe/WKE0,20,cmap=colormap)
 #    plt.title('Horizontally-averaged wave potential energy evolution')
 #    plt.xlabel('Time (days)')
     plt.ylabel('Depth (m)')
     cbar = plt.colorbar(WPE)
-    cbar.ax.set_ylabel('WPE (m/s)^2')
+    cbar.ax.set_ylabel('WPE/WKE$_0$')
 
     plt.subplot(3, 1, 3)
-    IRN = plt.contourf(TT,ZZ,irn,20)
+    IRN = plt.contourf(TT,ZZ,irn,20,cmap=colormap)
 #    plt.title('Horizontally-averaged inverse wave  evolution')
     plt.xlabel('Time (days)')
     plt.ylabel('Depth (m)')
     cbar = plt.colorbar(IRN)
-    cbar.ax.set_ylabel('Ri^{-1}')    
+    cbar.ax.set_ylabel('Ri$^{-1}$')    
 
-    plt.savefig('plots/'+run+'/wcontours.png',bbox_inches='tight')
+    plt.savefig('plots/'+run+'/wcontours.eps',bbox_inches='tight')
 #    plt.show()
 
 
@@ -139,7 +140,7 @@ if os.path.isfile(path_ez):
         cbar.ax.set_ylabel('PE (m/s)^2')
         
         plt.savefig('plots/'+run+'/fcontours.png',bbox_inches='tight')
-        #    plt.show()
+        #plt.show()
         
 
 
