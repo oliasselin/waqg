@@ -48,7 +48,7 @@ MODULE parameters
     integer, parameter :: ybj_plus = 1                  !1: B is L+A and A is recovered from B like psi is recovered from q (exception of the 1/4 factor). 0: Regular YBJ equation   
     
     integer, parameter :: no_waves = 0                  !1: Wave part ignored.
-    integer, parameter :: no_feedback = 0               !1: Wave do not feedback on the flow; ): they do
+    integer, parameter :: no_feedback = 1               !1: Wave do not feedback on the flow; ): they do
     integer, parameter :: eady = 1                      !1: Eady version: add a bunch of terms
     integer, parameter :: eady_bnd = 1                  !1: Eady version: include the boundary terms (set NOT to zero only for testing purposes)
 
@@ -252,8 +252,8 @@ MODULE parameters
     !Output!
     !------!
 
-    integer, parameter :: out_etot   = 1, freq_etot   = INT(0.1/delt)!50!346!n3/64!n3!64!n3!50*n3/64      !Total energy                                                    
-    integer, parameter :: out_we     = 1, freq_we     = INT(0.1/delt)!50!346!n3/64!n3!64!n3!50*n3/64      !Total energy                                                    
+    integer, parameter :: out_etot   = 1, freq_etot   = INT(0.01/delt)!50!346!n3/64!n3!64!n3!50*n3/64      !Total energy                                                    
+    integer, parameter :: out_we     = 1, freq_we     = INT(0.01/delt)!50!346!n3/64!n3!64!n3!50*n3/64      !Total energy                                                    
     integer, parameter :: out_conv   = 1, freq_conv   = freq_we      !Conversion terms in the potential energy equation.
     integer, parameter :: out_hspec  = 1, freq_hspec  = 1*freq_etot!n3/64!n3!freq_etot*10     !Horizontal energy spectrum at various heights 
     integer, parameter :: out_hspecw = 1, freq_hspecw = 1*freq_etot!n3/64!n3!freq_etot*10     !Horizontal energy spectrum at various heights 
@@ -315,7 +315,7 @@ MODULE parameters
 
     integer, parameter :: bot_height = n3-34!1
     integer, parameter :: mid_height = n3-17!n3/2
-    integer, parameter :: top_height = n3-9 !n3-1
+    integer, parameter :: top_height = n3!-9 !n3-1
 
     integer, parameter :: out_slab = 0, freq_slab = 1
     integer, parameter :: slab_mype   = npe/2-1 
@@ -324,8 +324,8 @@ MODULE parameters
                                               !halo levels (u=2,zz=1...)                                                                                                                                                     
     integer :: id_field                       !dummy index to differenciate fields plotted  
 
-    integer, parameter :: out_slice   = 1, freq_slice =  1*freq_etot
-    integer, parameter :: out_slicew  = 1, freq_slicew=  1*freq_etot
+    integer, parameter :: out_slice   = 1, freq_slice =  10*freq_etot
+    integer, parameter :: out_slicew  = 1, freq_slicew=  10*freq_etot
     integer, parameter :: out_eta     = 0, freq_eta   =  freq_hspec
     integer, parameter :: out_tspec   = 0
 
