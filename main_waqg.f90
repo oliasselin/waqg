@@ -155,7 +155,13 @@ PROGRAM main
   call fft_r2c(BRr,BRk,n3h0)
   call fft_r2c(BIr,BIk,n3h0)
   call sumB(BRk,BIk)
-  windk = BRk/tau_wind         !Wind is simply the initial LA_0 / tau.                    
+
+  if(restoring_wind==1) then
+     windk = BRk/tau_wind         !Wind is simply the initial LA_0 / tau.                    
+  else
+     windk = (0.D0,0.D0)
+  end if
+
   ARk = (0.D0,0.D0)
   AIk = (0.D0,0.D0)
   CRk = (0.D0,0.D0)

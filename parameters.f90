@@ -48,7 +48,7 @@ MODULE parameters
     integer, parameter :: ybj_plus = 1                  !1: B is L+A and A is recovered from B like psi is recovered from q (exception of the 1/4 factor). 0: Regular YBJ equation   
     
     integer, parameter :: no_waves = 0                  !1: Wave part ignored.
-    integer, parameter :: no_feedback = 1               !1: Wave do not feedback on the flow; ): they do
+    integer, parameter :: no_feedback = 0               !1: Wave do not feedback on the flow; ): they do
     integer, parameter :: eady = 1                      !1: Eady version: add a bunch of terms
     integer, parameter :: eady_bnd = 1                  !1: Eady version: include the boundary terms (set NOT to zero only for testing purposes)
 
@@ -64,7 +64,8 @@ MODULE parameters
     !Should eventually plot both energies
 !    integer, parameter :: plot_energy=1      !Use 1: energy_linear (equivalent to boussinesq including variable density, 2: energy_lipps)
 
-    double precision, parameter :: tau = 10*(3600*24)     !Dimensional wind-restoring time scale in seconds (days * 3600s/h 24h/d)
+    integer, parameter :: restoring_wind = 0              !1: Restore wind. 0: do not.
+    double precision, parameter :: tau = 30*(3600*24)     !Dimensional wind-restoring time scale in seconds (days * 3600s/h 24h/d)
 
     !Initial structure!
     !-----------------!
@@ -207,7 +208,7 @@ MODULE parameters
     double precision, parameter :: W2F = (Uw_scale/U_scale)**2                                  ! wave to flow velocity magnitude squared
     double precision, parameter :: Bu  = Fr*Fr/(Ro*Ro)                                          ! (Fr/Ro)^2 = Burger number 
 
-    double precision, parameter :: delta_E = 60.D0                                                !Depth of the Ekman layer: 63 m
+    double precision, parameter :: delta_E = 6.D0                                                !Depth of the Ekman layer: 63 m
     double precision, parameter :: Ek  = delta_E/(Ro*H_scale)                                   !Ekman term = delta_E/(Ro H)
 
     double precision, parameter :: tau_wind = U_scale*tau/L_scale                          !Nondimensional wind-restoring timescale
@@ -219,7 +220,7 @@ MODULE parameters
     integer :: iter=0
     integer :: itermax=1000000000
     real :: maxtime=1000                      
-    double precision, parameter :: delt= 0.003*dx!Ro/20.   !0.5*Bu*Ro/(2.*ktrunc_x*ktrunc_x)   !0.01*dx   !0.5*Bu*Ro/(2.*ktrunc_x*ktrunc_x) !0.25/ktrunc_x !0.5*Bu*Ro/(2.*ktrunc_x*ktrunc_x) 
+    double precision, parameter :: delt= 0.002*dx!Ro/20.   !0.5*Bu*Ro/(2.*ktrunc_x*ktrunc_x)   !0.01*dx   !0.5*Bu*Ro/(2.*ktrunc_x*ktrunc_x) !0.25/ktrunc_x !0.5*Bu*Ro/(2.*ktrunc_x*ktrunc_x) 
     double precision, parameter :: gamma=1e-3                                  !Robert filter parameter
 
 
@@ -252,8 +253,8 @@ MODULE parameters
     !Output!
     !------!
 
-    integer, parameter :: out_etot   = 1, freq_etot   = INT(0.01/delt)!50!346!n3/64!n3!64!n3!50*n3/64      !Total energy                                                    
-    integer, parameter :: out_we     = 1, freq_we     = INT(0.01/delt)!50!346!n3/64!n3!64!n3!50*n3/64      !Total energy                                                    
+    integer, parameter :: out_etot   = 1, freq_etot   = INT(0.1/delt)!50!346!n3/64!n3!64!n3!50*n3/64      !Total energy                                                    
+    integer, parameter :: out_we     = 1, freq_we     = INT(0.1/delt)!50!346!n3/64!n3!64!n3!50*n3/64      !Total energy                                                    
     integer, parameter :: out_conv   = 1, freq_conv   = freq_we      !Conversion terms in the potential energy equation.
     integer, parameter :: out_hspec  = 1, freq_hspec  = 1*freq_etot!n3/64!n3!freq_etot*10     !Horizontal energy spectrum at various heights 
     integer, parameter :: out_hspecw = 1, freq_hspecw = 1*freq_etot!n3/64!n3!freq_etot*10     !Horizontal energy spectrum at various heights 

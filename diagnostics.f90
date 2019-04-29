@@ -709,7 +709,7 @@ end subroutine hspec
 
           !With dealiasing, sum_k 1/2 |u(kx,ky,z)|^2 = sum_k L |u|^2 - 0.5 |u(0,0,z)|^2     
           k_p(izh0) = k_p(izh0) - 0.5*real( BRk(1,1,izh0)*CONJG( BRk(1,1,izh0) ) + BIk(1,1,izh0)*CONJG( BIk(1,1,izh0) ) )
-          s_p(izh0) = s_p(izh0) - 0.5*r_2(izh2)*real( SRk(1,1,izh0)*CONJG( SRk(1,1,izh0) ) + SIk(1,1,izh0)*CONJG( SIk(1,1,izh0) ) )                   
+          s_p(izh0) = s_p(izh0) - (0.5/r_2(izh2))*real( SRk(1,1,izh0)*CONJG( SRk(1,1,izh0) ) + SIk(1,1,izh0)*CONJG( SIk(1,1,izh0) ) )   !r_2 used to be in numerator (corrected april 30th 2019)
 
           !Sum local to the processor
           ktot_p = ktot_p + k_p(izh0)

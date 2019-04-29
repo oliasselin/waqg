@@ -10,17 +10,17 @@ from finds import find_timestep
 
 scratch_location = '/oasis/scratch/comet/oasselin/temp_project/'
 folder = 'niskine/skewdy/'
-run = 'storm5_uw10_ed/'
+run = 'wind_uw10_t30/'
 location = scratch_location+folder+run
 
 colormap='RdBu_r'
 
-focus_depth=500 #Focus on the top $focus_depth meters
-focus_time =40  #Focus on the first $focus_time days
+focus_depth=1000 #Focus on the top $focus_depth meters
+focus_time =60  #Focus on the first $focus_time days
 
 show=1
 
-correct_Ri_profile=1     #Realized on April 10th 2019 that I was calculating the inverse Ri incorrectly (I was multiplying by r_2 instead of dividing) Correction: divide by r_2u^2 
+correct_Ri_profile=0     #Realized on April 10th 2019 that I was calculating the inverse Ri incorrectly (I was multiplying by r_2 instead of dividing) Correction: divide by r_2u^2 
 
 #Read parameters from the source#
 n1,n2,n3 = find_resolution(location)
