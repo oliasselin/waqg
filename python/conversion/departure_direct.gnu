@@ -43,7 +43,7 @@ set ytics nomirror
 
 
 
-#set xrange[0:10]
+set xrange[0:1]
 #set yrange[0:1]
 
 set ylabel rotate by 90# offset 1,2

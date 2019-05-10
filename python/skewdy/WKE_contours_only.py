@@ -10,17 +10,16 @@ from finds import find_timestep
 
 scratch_location = '/oasis/scratch/comet/oasselin/temp_project/'
 folder = 'niskine/skewdy/'
-run = 'wind_uw10_t30/'
+run = 'wind_uw10_t20/'
 location = scratch_location+folder+run
 
 colormap='RdBu_r'
 
 focus_depth=500 #Focus on the top $focus_depth meters
-focus_time =100  #Focus on the first $focus_time days
+focus_time =150  #Focus on the first $focus_time days
 
-show=1
+show=0
 
-correct_Ri_profile=0     #Realized on April 10th 2019 that I was calculating the inverse Ri incorrectly (I was multiplying by r_2 instead of dividing) Correction: divide by r_2u^2 
 
 #Read parameters from the source#
 n1,n2,n3 = find_resolution(location)
@@ -50,24 +49,13 @@ if os.path.isfile(path_wz):
 
     #Extract fields
     wke = wz[:,1]   #Wave kinetic energy
-    wpe = wz[:,2]   #Wave potential energy
-    irn = wz[:,3]   #Inverse (wave) Richardson number
+
 
     #Reshape so that the fields have dimensions wke[time,depth]
     wke = np.reshape(wke,(wke.shape[0]/n3,-1),order='C')
-    wpe = np.reshape(wpe,(wpe.shape[0]/n3,-1),order='C')
-    irn = np.reshape(irn,(irn.shape[0]/n3,-1),order='C')
-
-    if(correct_Ri_profile==1):
-        r_2u = np.loadtxt(location+'output/rucoeff.dat')
-        r_2u=r_2u[:,2]
-        for ttt in range(len(irn[:,0])):
-            irn[ttt,:]=irn[ttt,:]/(np.square(r_2u))
 
     #Keep only the focus region (in both depth and time)
     wke = wke[:max_time_wz,lowest_depth:n3]
-    wpe = wpe[:max_time_wz,lowest_depth:n3]
-    irn = irn[:max_time_wz,lowest_depth:n3]
 
     z = wz[lowest_depth:n3,0]-Dz
     t = ts_wz_days*np.arange(0,wke.shape[0])
@@ -75,7 +63,9 @@ if os.path.isfile(path_wz):
 
     WKE0=wke[0,-1]
 
-    plt.subplot(3, 1, 1)
+    plt.subplots(figsize=(8,4))
+
+#    plt.subplot(1, 1, 1)
     WKE = plt.contourf(TT,ZZ,wke/WKE0,20,cmap=colormap)
 #    plt.title('Horizontally-averaged wave properties evolution')
 #    plt.xlabel('Time (days)')
@@ -83,24 +73,9 @@ if os.path.isfile(path_wz):
     cbar = plt.colorbar(ticks=np.linspace(0,1,5+1,endpoint=True))
     cbar.ax.set_ylabel('WKE/WKE$_0$')
 
-    plt.subplot(3, 1, 2)
-    WPE = plt.contourf(TT,ZZ,wpe/WKE0,20,cmap=colormap)
-#    plt.title('Horizontally-averaged wave potential energy evolution')
-#    plt.xlabel('Time (days)')
-    plt.ylabel('Depth (m)')
-    cbar = plt.colorbar(WPE)
-    cbar.ax.set_ylabel('WPE/WKE$_0$')
-
-    plt.subplot(3, 1, 3)
-    IRN = plt.contourf(TT,ZZ,irn,20,cmap=colormap)
-#    plt.title('Horizontally-averaged inverse wave  evolution')
-    plt.xlabel('Time (days)')
-    plt.ylabel('Depth (m)')
-    cbar = plt.colorbar(IRN)
-    cbar.ax.set_ylabel('Ri$^{-1}$')    
 
     if(show==1):
         plt.show()
     else:
-        plt.savefig('plots/'+run+'/wcontours.eps',bbox_inches='tight')
+        plt.savefig('plots/'+run+'/wcontours_only_t20.eps',bbox_inches='tight')
 
