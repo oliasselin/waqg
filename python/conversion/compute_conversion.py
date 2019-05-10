@@ -2,7 +2,7 @@
 import numpy as np
 import conv
 
-run = 'storm/test7'
+run = 'niskine/skewdy/storm7_uw10'
               
 conv.WPE_conv(run)
 conv.WPE_conv_direct(run)

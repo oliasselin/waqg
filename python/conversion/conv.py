@@ -1,6 +1,7 @@
 #!/usr/bin/env python                                                                                                                                                                   
 import numpy as np
 
+scratch_location ='/oasis/scratch/comet/oasselin/temp_project/'
 
 def WPE_conv(run):
     #This script compares d/dt WPE to the conversion terms:
@@ -9,9 +10,9 @@ def WPE_conv(run):
     #p[:,i]    is... i=0 time in turnover times, i=1  WPE,      i=2: A,        i=3: R,        i=4: F         i=5: D 
     #dpdt[:,i] is... i=0 time in turnover times, i=1  d/dt WPE, i=2: \Gamma_a, i=3: \Gamma_r, i=4: \Gamma_f  i=5: \Gamma_d
 
-    path_cv1 = '/scratch/05518/oasselin/'+run+'/output/conv1.dat'
-    path_cv2 = '/scratch/05518/oasselin/'+run+'/output/conv2.dat'
-    path_cv4 = '/scratch/05518/oasselin/'+run+'/output/conv4.dat'
+    path_cv1 = scratch_location+run+'/output/conv1.dat'
+    path_cv2 = scratch_location+run+'/output/conv2.dat'
+    path_cv4 = scratch_location+run+'/output/conv4.dat'
     
     cv1 = np.loadtxt(path_cv1)
     cv2 = np.loadtxt(path_cv2)
@@ -67,9 +68,9 @@ def WPE_conv_direct(run):
     #p[:,i]    is... i=0 time in turnover times, i=1  WPE,      i=2: A,        i=3: R,        i=4: F         i=5: D 
     #dpdt[:,i] is... i=0 time in turnover times, i=1  d/dt WPE, i=2: \Gamma_a, i=3: \Gamma_r, i=4: \Gamma_f  i=5: \Gamma_d
     
-    path_cv1 = '/scratch/05518/oasselin/'+run+'/output/conv1.dat'
-    path_cv2 = '/scratch/05518/oasselin/'+run+'/output/conv2.dat'
-    path_cv4 = '/scratch/05518/oasselin/'+run+'/output/conv4.dat'
+    path_cv1 = scratch_location+run+'/output/conv1.dat'
+    path_cv2 = scratch_location+run+'/output/conv2.dat'
+    path_cv4 = scratch_location+run+'/output/conv4.dat'
     
     
     cv1 = np.loadtxt(path_cv1)
@@ -108,7 +109,7 @@ def WKE_conv(run):
 
     #dkdt[:,i] is... i=0 time in turnover times, i=1  d/dt WkE, i=2: \Gamma_f  i=3: \Gamma_d
 
-    path_cv3 = '/scratch/05518/oasselin/'+run+'/output/conv3.dat'
+    path_cv3 = scratch_location+run+'/output/conv3.dat'
     cv3 = np.loadtxt(path_cv3)
     
     timestep = cv3[1,0] - cv3[0,0]
@@ -148,7 +149,7 @@ def WKE_conv_direct(run):
     #dkdt[:,i] is... i=0 time in turnover times, i=1  d/dt WkE, i=2: \Gamma_f  i=3: \Gamma_d
     
 
-    path_cv3 = '/scratch/05518/oasselin/'+run+'/output/conv3.dat'
+    path_cv3 = scratch_location+run+'/output/conv3.dat'
     cv3 = np.loadtxt(path_cv3)
 
     timestep = cv3[1,0] - cv3[0,0]

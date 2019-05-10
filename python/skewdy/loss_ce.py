@@ -61,6 +61,20 @@ if os.path.isfile(path_ee) and os.path.isfile(path_ee_w) and os.path.isfile(path
     loss_wf = 100*(et_w-et_wf)/et_f[0]    #Loss percentage with wind (no feedback)
 
 
+#Load coupled energy
+path_ce_f  = location+'output/ce.dat'
+path_ce_wf = location_wf+'output/ce.dat'    
+
+if os.path.isfile(path_ce_f) and os.path.isfile(path_ce_wf):
+
+    #Load the profiles time series                                                                                                                                                  
+    ce_f  = np.loadtxt(path_ce_f)
+    ce_wf = np.loadtxt(path_ce_wf)
+
+    ct_f  = 100*(ce_f[:max_time,1]  + ce_f[:max_time,2])/et_f[0]
+    ct_wf = 100*(ce_wf[:max_time,1] + ce_wf[:max_time,2])/et_f[0]
+
+
 ######################
 # Make the damn plot #
 ######################
@@ -68,12 +82,16 @@ if os.path.isfile(path_ee) and os.path.isfile(path_ee_w) and os.path.isfile(path
 fig, ax1 = plt.subplots(figsize=(6,4))
 
 ax1.set_xlabel('Time (days)')
-ax1.set_ylabel('Total geostrophic energy loss (%)')
+ax1.set_ylabel('Energy change (%)')
 ax1.grid(color='k', linestyle='-', linewidth=0.1)
 #ax1.set_ylim(0, 2)
 
-ax1.plot(time,loss_f,label='No wind',color='b')
-ax1.plot(time,loss_wf,label=r'$\tau$ = 30 days',color='g')
+ax1.plot(time,loss_f,label='No wind, EKE+EPE loss',color='b')
+ax1.plot(time,ct_f,'--b',label='WPE+WCE')
+
+
+ax1.plot(time,loss_wf,label=r'$\tau$ = 30 days, EKE+EPE loss',color='g')
+ax1.plot(time,ct_wf,'--g',label=r'WPE+WCE')
 
 
 plt.legend(loc='best',fontsize='small')
@@ -83,7 +101,7 @@ plt.xlim(0,focus_time)
 if (show==1):
     plt.show()                                                                                                                                                   
 else:
-    plt.savefig('plots/'+run+'/loss_ed_fb.eps',bbox_inches='tight')
+    plt.savefig('plots/'+run+'/loss_ce.eps',bbox_inches='tight')
 
 
 

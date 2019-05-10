@@ -22,7 +22,7 @@ location_wf = scratch_location+folder+run_wf    #Assumes the runs compared have 
  
 focus_time =150  #Focus on the first $focus_time days  
 
-show=1
+show=0
 
 #Read parameters from the source#
 n1,n2,n3 = find_resolution(location)
@@ -40,7 +40,7 @@ if not os.path.exists('plots/'+run):
 
 
 #Now let's plot KE and WPE from the flow
-path_ee  = location+'output/energy.dat'
+path_ee    = location+'output/energy.dat'
 path_ee_w  = location_w+'output/energy.dat'
 path_ee_wf = location_wf+'output/energy.dat'
 
@@ -57,25 +57,30 @@ if os.path.isfile(path_ee) and os.path.isfile(path_ee_w) and os.path.isfile(path
 
     time = ts_e_days*np.arange(0,et_f.shape[0])
 
-    loss_f  = 100*(et_w-et_f)/et_f[0]    #Loss percentage no wind (just feedback)
+    loss_f  = 100*(et_w-et_f )/et_f[0]    #Loss percentage no wind (just feedback)
     loss_wf = 100*(et_w-et_wf)/et_f[0]    #Loss percentage with wind (no feedback)
 
+    det_f  = 100*(et_f  - et_f[0])/et_f[0]
+    det_w  = 100*(et_w  - et_f[0])/et_f[0]
+    det_wf = 100*(et_wf - et_f[0])/et_f[0]
 
 ######################
 # Make the damn plot #
 ######################
 
-fig, ax1 = plt.subplots(figsize=(6,4))
+fig, ax2 = plt.subplots(figsize=(6,4))
 
-ax1.set_xlabel('Time (days)')
-ax1.set_ylabel('Total geostrophic energy loss (%)')
-ax1.grid(color='k', linestyle='-', linewidth=0.1)
+ax2.set_xlabel('Time (days)')
+ax2.set_ylabel('Total geostrophic energy change (%)')
+ax2.grid(color='k', linestyle='-', linewidth=0.1)
 #ax1.set_ylim(0, 2)
 
-ax1.plot(time,loss_f,label='No wind',color='b')
-ax1.plot(time,loss_wf,label=r'$\tau$ = 30 days',color='g')
+ax2.plot(time,det_f,label='Feedback, No wind',color='b')
+ax2.plot(time,det_wf,label=r'Feedback, $\tau$ = 30 days',color='g')
+ax2.plot(time,det_w,label=r'No feedback',color='r')
 
-
+xticks=np.arange(0,focus_time+1,30)
+ax2.set_xticks(xticks)
 plt.legend(loc='best',fontsize='small')
 
 
@@ -83,7 +88,7 @@ plt.xlim(0,focus_time)
 if (show==1):
     plt.show()                                                                                                                                                   
 else:
-    plt.savefig('plots/'+run+'/loss_ed_fb.eps',bbox_inches='tight')
+    plt.savefig('plots/'+run+'/ee_ed.eps',bbox_inches='tight')
 
 
 

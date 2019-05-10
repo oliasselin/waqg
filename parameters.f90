@@ -64,8 +64,8 @@ MODULE parameters
     !Should eventually plot both energies
 !    integer, parameter :: plot_energy=1      !Use 1: energy_linear (equivalent to boussinesq including variable density, 2: energy_lipps)
 
-    integer, parameter :: restoring_wind = 0              !1: Restore wind. 0: do not.
-    double precision, parameter :: tau = 30*(3600*24)     !Dimensional wind-restoring time scale in seconds (days * 3600s/h 24h/d)
+    integer, parameter :: restoring_wind = 1              !1: Restore wind. 0: do not.
+    double precision, parameter :: tau = 10*(3600*24)     !Dimensional wind-restoring time scale in seconds (days * 3600s/h 24h/d)
 
     !Initial structure!
     !-----------------!

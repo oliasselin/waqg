@@ -8,13 +8,13 @@ def make_a_gif(run,sli,field,fixed_cbrange='',cbmin=-0.005,cbmax=0.0005,nmax=100
     if field=='1':
         field_name = 'WKE'
     if field=='2':
-        field_name = 'Re-LA'
+        field_name = 'u'
     if field=='3':
-        field_name = 'Im-LA'
+        field_name = 'v'
     if field=='4':
         field_name = 'WPE'
     if field=='7':
-        field_name = 'rel_vort_over_f'
+        field_name = 'zeta'
 
 
     print('Making a '+sli+' GIF of '+field_name+' with axis set to mode '+fixed_cbrange) 
