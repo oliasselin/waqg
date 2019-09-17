@@ -3,7 +3,7 @@ MODULE parameters
    IMPLICIT NONE
 
     integer, parameter :: n1=512, n2=512, n3=512
-    integer, parameter :: npe=128
+    integer, parameter :: npe=64
 
     integer, parameter :: n1d=n1+2, n2d=n2, n3d=n3
     integer, parameter :: n3h0=n3/npe, n3h1=n3/npe+2, n3h2=n3/npe+4
@@ -64,7 +64,7 @@ MODULE parameters
     !Should eventually plot both energies
 !    integer, parameter :: plot_energy=1      !Use 1: energy_linear (equivalent to boussinesq including variable density, 2: energy_lipps)
 
-    integer, parameter :: restoring_wind = 1              !1: Restore wind. 0: do not.
+    integer, parameter :: restoring_wind = 0              !1: Restore wind. 0: do not.
     double precision, parameter :: tau = 10*(3600*24)     !Dimensional wind-restoring time scale in seconds (days * 3600s/h 24h/d)
 
     !Initial structure!
@@ -333,7 +333,7 @@ MODULE parameters
     !Restart
     integer :: count_restart = 0                                 !when dumping: restart file number 
     integer, parameter :: dump = 0, freq_dump = freq_slice*10    !dump = 1 means you dump, every "freq_dump" timestep
-    integer, parameter :: restart = 1                            !restart = 1 start from file
+    integer, parameter :: restart = 0                            !restart = 1 start from file
     integer, parameter :: restart_no = 15                         !Restart file number (from 0 to 99)
     character(len = 64), parameter :: floc='../../dE60_dt0.01_512_7/output/'   !Location of the restart file (when restarting only: dumping in local output/ folder)
 

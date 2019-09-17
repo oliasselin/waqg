@@ -1,11 +1,11 @@
 #!/bin/bash
 
-number_of_nodes=8
-number_of_tasks=128
-ntasks_per_node=16
+number_of_nodes=16
+number_of_tasks=64
+ntasks_per_node=4
 
-sourdir=/oasis/scratch/comet/oasselin/temp_project/niskine/skewdy/wind_uw10_t10/source/
-datadir=/oasis/scratch/comet/oasselin/temp_project/niskine/skewdy/wind_uw10_t10/output/
+sourdir=/oasis/scratch/comet/oasselin/temp_project/niskine/XSEDE/source/
+datadir=/oasis/scratch/comet/oasselin/temp_project/niskine/XSEDE/output/
 
 mkdir -p $sourdir
 mkdir -p $datadir
@@ -17,20 +17,20 @@ cat > EXEC_STEP << EXEC
 #!/bin/sh 
 
 #SBATCH --job-name="tvs"
-#SBATCH --output="/home/oasselin/monitor/tvs.o%j"
-#SBATCH --error="/home/oasselin/monitor/tvs.e%j"
-#SBATCH --partition=compute##debug
+#SBATCH --output="/home/oasselin/monitor/XSEDE/low_res.o%j"
+#SBATCH --error="/home/oasselin/monitor/XSEDE/low_res.e%j"
+#SBATCH --partition=compute#debug
 #SBATCH --nodes=$number_of_nodes
 #SBATCH --ntasks-per-node=$ntasks_per_node
 #SBATCH --export=ALL
-#SBATCH -t 48:00:00
+#SBATCH -t 01:00:00
 
 #This job runs with 2 nodes, 24 cores per node for a total of 48 cores.
 #ibrun in verbose mode will give binding detail
 
 cd $datadir                                                                                                                                                                            
 cp $sourdir/exec_qg $datadir   
-ibrun -v ./exec_qg
+ibrun -n $number_of_tasks -v ./exec_qg
 
                                                                                                                                                         
 EXEC

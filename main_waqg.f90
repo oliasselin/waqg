@@ -125,6 +125,19 @@ PROGRAM main
   !Wind restoring: suboptimally using a matrix of the same shape as LA for simplicity                                                                                                                                                                                         
   double complex,   dimension(iktx,ikty,n3h0) :: windk
 
+  !Timing code
+
+  double precision :: tcpu1,tcpu2
+  double precision :: total_cpu,ave_cpu
+
+  REAL(4) cputime,TimeArray(2)
+
+  character(len = 32) :: fname
+
+  integer :: nts_cpu
+  integer :: nts_cpu_max=10
+  integer :: unit_cpu = 435796914
+
   !********************** Initializing... *******************************!
 
   call initialize_mpi
@@ -210,6 +223,13 @@ PROGRAM main
  end do
 
  if(dump==1) call dump_restart(psik)
+
+
+ !Prepare file for cpu time dump (only for XSEDE proposal!
+ write (fname, "(A11,I3,A5,I3,A4)") "cputime_res",n1,"_core",npe,".dat"
+ open (unit=unit_cpu,file=fname,action="write",status="replace")
+ total_cpu=0.D0
+ nts_cpu=0
 
 
  !************************************************************************!
@@ -366,7 +386,9 @@ end if
 
 
   do iter=2,itermax
-     
+
+     if(mype==0) tcpu1 = ETIME(TimeArray) !cputime = ETIME(TimeArray)     
+!     if(mype==0) call timer ( tcpu1 )
      time=iter*delt
 
      if(no_waves == 1) then
@@ -608,7 +630,23 @@ end do
 if(dump==1 .and. mod(iter,freq_dump)==0) call dump_restart(psik)
 
 
- 
+!CPU TIME
+if(mype==0) then
+
+   tcpu2 = ETIME(TimeArray)
+   write(*,*) 'Time step',iter,' took', tcpu2-tcpu1, 'seconds of CPU time.'
+   total_cpu = total_cpu + (tcpu2-tcpu1)
+
+   nts_cpu = nts_cpu + 1
+
+   if(nts_cpu==nts_cpu_max) then
+      ave_cpu = total_cpu / nts_cpu
+      write(unit=unit_cpu,fmt=*) ave_cpu
+      close(unit=unit_cpu)
+      stop
+   end if
+
+end if
 
 if(time>maxtime) EXIT
 end do !End loop
