@@ -41,8 +41,15 @@ if os.path.isfile(path_zeta) and os.path.isfile(path_u) and os.path.isfile(path_
     v    = np.flipud(np.reshape(np.loadtxt(path_v),(hres,hres)))        #Reshapes the array into a 2-d one                                      
 
 
+
     g[:,:,0] = zeta
     g[:,:,1] = np.sqrt(np.square(u)+np.square(v))
+
+    rms_u = np.sqrt(np.average(np.square(g[:,:,1])))
+    print rms_u
+
+    #Print stats
+    print "Maximum velocity:",np.amax(np.abs(g[:,:,1]))
 
     #Produce the ncases x nts multiplot
     fig = plt.figure(figsize=(12,8))                        
@@ -76,6 +83,6 @@ if os.path.isfile(path_zeta) and os.path.isfile(path_u) and os.path.isfile(path_
             ax.text(-30, 512/2,r'$\leftarrow$ 222 km $\rightarrow$',rotation='vertical',horizontalalignment='center',verticalalignment='center', fontsize=12)
             ax.text(512/2, 512+30,r'$\leftarrow$ 222 km $\rightarrow$',rotation='horizontal',horizontalalignment='center',verticalalignment='center', fontsize=12)
 
-plt.savefig('plots/'+run+'init_slice.eps')
-#plt.show()
+#plt.savefig('plots/'+run+'init_slice.eps')
+plt.show()
 

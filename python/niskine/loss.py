@@ -20,7 +20,7 @@ linestyle_list = ['-','-.',':']
 
 focus_time =10  #Focus on the first $focus_time days  
 
-show=1
+show=0
 
 #Read parameters from the source#
 n1,n2,n3 = find_resolution(location)
@@ -119,14 +119,18 @@ for run_no,run_fb in enumerate(run_list):
 # Make the damn plot #
 ######################
 
-fig, ax1 = plt.subplots(figsize=(6,4))
+
+fig = plt.figure(figsize=(6,4))
+ax1 = fig.add_subplot(1, 1, 1)
+#fig, ax1 = plt.subplots(figsize=(6,4))
 
 color = 'k'
 ax1.set_xlabel('Time (days)')
-ax1.set_ylabel('Total geostrophic energy loss (%)', color=color)
+ax1.set_ylabel('Energy (%)', color=color)
 ax1.tick_params(axis='y', labelcolor=color)
 ax1.grid(color=color, linestyle='-', linewidth=0.1)
 ax1.set_ylim(0, 2)
+ax1.set_title('Eddy energy loss')
 
 for run_no,run_fb in enumerate(run_list):
 
@@ -136,19 +140,19 @@ plt.legend(loc='best',fontsize='small')
 
 
 #Second axis: sfc EKE
-ax2 = ax1.twinx()  # instantiate a second axes that shares the same x-axis                                                                                                             
+#ax2 = ax1.twinx()  # instantiate a second axes that shares the same x-axis                                                                                                             
 
-color = 'b'
-ax2.set_ylabel('Surface geostrophic KE loss (%)', color=color)  # we already handled the x-label with ax1    
-ax2.tick_params(axis='y', labelcolor=color)
-ax2.set_ylim(0, 10)
+#color = 'b'
+#ax2.set_ylabel('Surface geostrophic KE loss (%)', color=color)  # we already handled the x-label with ax1    
+#ax2.tick_params(axis='y', labelcolor=color)
+#ax2.set_ylim(0, 10)
 
-for run_no,run_fb in enumerate(run_list):
+#for run_no,run_fb in enumerate(run_list):
 
-    ax2.plot(time,loss_sfc[:,run_no+1],color=color,linestyle=linestyle_list[run_no],lw=1.5)
+#    ax2.plot(time,loss_sfc[:,run_no+1],color=color,linestyle=linestyle_list[run_no],lw=1.5)
 
 
-fig.tight_layout()  # otherwise the right y-label is slightly clipped                                                                                 
+#fig.tight_layout()  # otherwise the right y-label is slightly clipped                                                                                 
 plt.xlim(0,focus_time)
 if (show==1):
     plt.show()                                                                                                                                                   

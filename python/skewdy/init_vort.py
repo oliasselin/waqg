@@ -45,6 +45,12 @@ if os.path.isfile(path_hor) and os.path.isfile(path_ver):
     g[:,:,0] = hor_square
     g[:,:,1] = ver_square
 
+    #Print stats:
+    print "Maximum value of vorticity",np.amax(np.abs(hor))
+    print "RMS vorticity",np.sqrt(np.average(np.square(hor)))
+
+
+
     #Produce the ncases x nts multiplot
     fig = plt.figure(figsize=(6, 4))                        
     grid = AxesGrid(fig, 111,
@@ -67,6 +73,6 @@ if os.path.isfile(path_hor) and os.path.isfile(path_ver):
         cbar = grid.cbar_axes[0].colorbar(im,ticks=[vmin,0.,vmax])
 
 plt.title('$\zeta/f$ of the initial condition (xy and xz views)',fontsize=14)
-plt.savefig('plots/'+run+'init_vort.eps')
+#plt.savefig('plots/'+run+'init_vort.eps')
 #plt.show()
 
