@@ -10,12 +10,11 @@ from finds import find_timestep
 
 scratch_location = '/oasis/scratch/comet/oasselin/temp_project/'
 folder = 'niskine/skewdy/'
-u0 = '10'
 run = 'storm5_uw10/'#'storm5_uw'+u0+'/'
 location = scratch_location+folder+run
 
 long_integration='' #Whatever keyword. Leave blank '' for regular plot
-show=1
+show=0
 colormap='RdBu_r'
 vmin = 0.
 vmax = 1.
