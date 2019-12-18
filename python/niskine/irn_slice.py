@@ -31,8 +31,8 @@ show_contours=1
 vort_levels= [-0.05,0.05]
 vort_color = 'k'
 
-focus_time = 0
-focus_depth = 250
+focus_time = 10
+focus_depth = 500
 yloc='2'
 
 aspect=(200./focus_depth)*10.
@@ -146,7 +146,7 @@ if(os.path.isfile(path_wke) and os.path.isfile(path_zeta)):
         
         cbar = grid.cbar_axes[idx].colorbar(im,ticks=np.linspace(irn_min,irn_max,5))#[0.,wke_max/2.,wke_max])
 #        ax.set_title(r'$\frac{1}{2} |$L$^{\!+\!}$A$|^2$ (m/s)$^{2}$, $t =$ '+str(focus_time)+' days',fontsize=12,y=1.01) 
-        ax.set_title(r'Ri$^{-1}= \, \frac{1}{2}(u_z^2 + v_z^2)/N^2$, $t =$ '+str(focus_time)+' days',fontsize=12,y=1.01) 
+        ax.set_title(r'Ri$^{-1}$, $t =$ '+str(focus_time)+' days',fontsize=12,y=1.01) 
         ax.text(-n1/8, lowest_depth/2,r'Depth (m)',rotation='vertical',horizontalalignment='center',verticalalignment='center', fontsize=12)
 
         if(show_contours==1):
