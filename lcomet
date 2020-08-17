@@ -1,0 +1,71 @@
+#!/bin/bash
+
+number_of_nodes=8
+number_of_tasks=128
+ntasks_per_node=16
+
+sourdir=/oasis/scratch/comet/oasselin/temp_project/niskine/skewdy/wind_uw10_t10/source/
+datadir=/oasis/scratch/comet/oasselin/temp_project/niskine/skewdy/wind_uw10_t10/output/
+
+mkdir -p $sourdir
+mkdir -p $datadir
+
+cd $sourdir
+
+
+cat > EXEC_STEP << EXEC
+#!/bin/sh 
+
+#SBATCH --job-name="tvs"
+#SBATCH --output="/home/oasselin/monitor/tvs.o%j"
+#SBATCH --error="/home/oasselin/monitor/tvs.e%j"
+#SBATCH --partition=compute##debug
+#SBATCH --nodes=$number_of_nodes
+#SBATCH --ntasks-per-node=$ntasks_per_node
+#SBATCH --export=ALL
+#SBATCH -t 48:00:00
+
+#This job runs with 2 nodes, 24 cores per node for a total of 48 cores.
+#ibrun in verbose mode will give binding detail
+
+cd $datadir                                                                                                                                                                            
+cp $sourdir/exec_qg $datadir   
+ibrun -v ./exec_qg
+
+                                                                                                                                                        
+EXEC
+
+
+#
+#--- Compile ---#
+#
+cat > COMPILE_STEP << COMPILE
+#!/bin/bash                                                                                                                                               
+                                                                                                                                                       
+
+cd $sourdir
+cp $HOME/niskine/*.f90 .
+
+PARA=parameters.f90
+MAIN=main_waqg.f90
+FFT=fft.f90
+MPI=mpi.f90
+INIT=init.f90
+DERI=derivatives.f90
+FILE=files.f90
+DIAG=diagnostics.f90
+ELLI=elliptic.f90
+SPEC=special.f90
+
+
+#Compile with MPIf90                                                                                                                                       
+mpif90 -mkl parameters.f90 mpi.f90 fft.f90 files.f90 derivatives.f90 elliptic.f90 special.f90 diagnostics.f90 init.f90 main_waqg.f90 -o exec_qg
+
+
+COMPILE
+
+chmod 755 COMPILE_STEP
+./COMPILE_STEP
+##chmod 755 EXEC_STEP                                                                                                                                       
+sbatch EXEC_STEP
+##./EXEC_STEP                                                                                                                                               

@@ -177,6 +177,7 @@ END SUBROUTINE init_arrays
 subroutine init_base_state
 
   double precision :: N2_nd(n3h2),N2_nds(n3h2),N2_ndst,N2_ndut   !nondimensional N^2, (un)staggered and (un)transposed
+  double precision :: U_mean_t(n3)                               !Full velocity profile obtained from the numerical integration of N^2
 
   do izh2=1,n3h2
    
@@ -192,6 +193,9 @@ subroutine init_base_state
      else if(stratification==constant_N) then
         N2_nd(izh2)   = 1.D0
         N2_nds(izh2)  = 1.D0
+     else if(stratification==skewed_gaussian) then
+        N2_nd(izh2)   = N12_sg*exp(-((z -z0_sg)**2)/(sigma_sg**2))*(1.+erf( alpha_sg*(z -z0_sg)/(sigma_sg*sqrt(2.))))+N02_sg
+        N2_nds(izh2)  = N12_sg*exp(-((zs-z0_sg)**2)/(sigma_sg**2))*(1.+erf( alpha_sg*(zs-z0_sg)/(sigma_sg*sqrt(2.))))+N02_sg
      else
         write(*,*) "Undefined stratification profile. Aborting."
         stop
@@ -213,7 +217,7 @@ subroutine init_base_state
 
   end do
 
-   !Special case: I need r_1 at z=0.
+  !Special case: I need r_1 at z=0.
   r_1(izbot2-1) = 1.D0
   
   
@@ -222,6 +226,7 @@ subroutine init_base_state
   !Print base-state!
   if (mype==0) open (unit = 154673, file = "rucoeff.dat")
   if (mype==0) open (unit = 154674, file = "rscoeff.dat")
+  if (mype==0) open (unit = 154675, file = "u_mean.dat")
   
                           
   do iz=1,n3
@@ -237,8 +242,11 @@ subroutine init_base_state
         N2_ndut =  exp( N2_scale*(z -z0) )
         N2_ndst =  exp( N2_scale*(zs-z0) )
      else if(stratification==constant_N) then
-        N2_ndut   = 1.D0
+        N2_ndut  = 1.D0
         N2_ndst  = 1.D0
+     else if(stratification==skewed_gaussian) then
+        N2_ndut  = N12_sg*exp(-((z -z0_sg)**2)/(sigma_sg**2))*(1.+erf( alpha_sg*(z -z0_sg)/(sigma_sg*sqrt(2.))))+N02_sg
+        N2_ndst  = N12_sg*exp(-((zs-z0_sg)**2)/(sigma_sg**2))*(1.+erf( alpha_sg*(zs-z0_sg)/(sigma_sg*sqrt(2.))))+N02_sg
      else
         write(*,*) "Undefined stratification profile. Aborting."
         stop
@@ -266,6 +274,68 @@ subroutine init_base_state
   
   a_helm = 1./Ar2
   b_helm = 0.
+
+
+  if(eady==1) then !For the Eady problem: set the base-state velocity profile and the  meridional potential temp gradient                                                                             
+
+     if(stratification==exponential) then
+        
+        Theta_y = N2_scale*Bu
+
+        do izh0=1,n3h0
+           zs=zash0(izh0)   !Staggered   fields   
+           U_mean(izh0)  = exp( N2_scale*(zs-z0) )
+        end do
+
+     else if(stratification==constant_N) then
+        
+        Theta_y = Bu
+
+        do izh0=1,n3h0
+           zs=zash0(izh0)   !Staggered   fields                                                                                                                                                                            
+           U_mean(izh0)  = zs
+        end do
+
+     else if(stratification==skewed_gaussian) then
+
+        Theta_y = Xi*Bu
+
+        !Numerically integrate N2 to get U (Eady problem requires Uz \propto N^2) for all vertical levels
+        U_mean_t(1)= Xi*0.5*dz*r_2ut(1)
+        do iz=1,n3-1
+           U_mean_t(iz+1)=Xi*r_2ut(iz)*dz + U_mean_t(iz)
+        end do
+
+        !Save the processor-specific portion of the velocity profile
+        do izh0=1,n3h0
+           iz = mype*n3h0+izh0
+           U_mean(izh0) = U_mean_t(iz)
+        end do
+
+        !Print the mean U profile and the calculation from N2 (which should match)
+        if(mype==0) then
+           do iz=1,n3
+
+              write(154675,"(E12.5,E12.5,E12.5,E12.5,E12.5)") zas(iz),U_mean_t(iz)
+
+           end do
+        end if
+
+     else
+        write(*,*) "Unable to define theta_y. Abort."
+        stop
+     end if
+
+  else
+
+     U_mean  = 0.D0
+     Theta_y = 0.D0
+
+  end if
+
+
+
+
 
 end subroutine init_base_state
 
@@ -591,14 +661,110 @@ end subroutine init_base_state
         bk=bk*sqrt((k_init+p_init)/(norm1+norm2))
      end if
 
+
    END SUBROUTINE init_psi_generic
+
+
+   SUBROUTINE init_eady(psik,psir)
+
+    double complex, dimension(iktx,ikty,n3h1) :: psik     
+    double precision, dimension(n1d,n2d,n3h1) :: psir
+
+    double precision :: amplitude
+    real :: phi(4*ave_k+1,4*ave_k+1)   
+    real :: phase,norm1,norm2
+
+    double precision :: sum_psi=0.
+    double precision :: sum_psi_p=0.
+
+    double precision :: kz,kk 
+    double precision :: kh
+    
+    !Set random amplitude to be broadcasted 
+    if(mype==0) then
+
+       CALL RANDOM_SEED (PUT=seed)
+
+       do ikx=1,4*ave_k+1
+          do iky=1,4*ave_k+1 
+
+                call random_number(phase)
+                phi(ikx,iky)=twopi*phase       !Random number between 0 and twopi
+
+          enddo
+       enddo
+
+    end if 
+
+    !Broadcast phi to everybody                                                                                                                                       
+    call mpi_bcast(phi,(4*ave_k+1)*(4*ave_k+1),MPI_REAL,0,MPI_COMM_WORLD,ierror)
+
+    
+
+    !Now set psi!
+    !-----------|
+    
+    psir   =0.D0
+
+
+    do ikx = -2*ave_k,2*ave_k
+       do iky = -2*ave_k,2*ave_k
+
+          ky = kya(iky)
+          kx = kxa(ikx)
+
+          kh2= kx*kx+ky*ky          
+          
+          kh  = sqrt(1.D0*kh2)
+          
+          kz  = kh/sqrt(Bu)     !In non-dim form, kz ~ NH/fL kh, Bu = (fL/NH)^2
+          
+          
+          if(kz>0. .and. kh2 >0) then 
+             
+             kk= sqrt(1.D0*kh2)                                                                                                                                
+             amplitude = exp( - (kk - 1.D0*ave_k)*(kk - 1.D0*ave_k)/(2.D0*var_k)) / sqrt(twopi*var_k)         !Gaussian decaying away from k=initial_k  
+             
+             !R-space loop to set psi!                                                                                                                            
+             do izh1=1,n3h1                                                                                                                                                   
+                do ix=1,n1d                                                                                                                                                   
+                   do iy=1,n2d                                                                                                                                                
+                      if(ix<=n1) then                                                                                                                                         
+                         
+                         psir(ix,iy,izh1) =  psir(ix,iy,izh1) + amplitude*cos(1.D0*kx*xa(ix)  + 1.D0*ky*ya(iy)  + 1.D0*kz*zash1(izh1) + phi(ikx+2*ave_k+1,iky+2*ave_k+1)) 
+                         
+                         if(izh1 > 1 .and. izh1 < n3h1) sum_psi_p = sum_psi_p + psir(ix,iy,izh1)*psir(ix,iy,izh1)
+
+                      end if
+                   end do
+                end do
+             end do
+          end if
+          
+       end do
+    end do
+    
+    !Sum psi^2 over the entire domain
+    call mpi_reduce(sum_psi_p,sum_psi, 1,MPI_DOUBLE,MPI_SUM,0,MPI_COMM_WORLD,ierror)
+    call mpi_bcast(sum_psi,1,MPI_DOUBLE,0,MPI_COMM_WORLD,ierror)
+
+
+    !Normalize psi to have a RMS of psi_0
+    psir=psir*psi_0/sqrt(sum_psi/(n1*n2*n3))
+
+    !Now move psi to k-space!
+    !-----------------------!
+    call fft_r2c(psir,psik,n3h1)
+ 
+  END SUBROUTINE init_eady
+
 
 
  SUBROUTINE init_q(qk,psik)
 
-   !This subroutine simply computes the RHS of the elliptic equation for psi, knowing psi.                                                                                                                          
-   !q = - kh2 psi + 1/rho d/dz (rho a_ell psi_z) with d psi./dz = 0 at bounds.                                                                                                                                                    
-   !The output is q without its halo.                                                                                                                                                                                              
+   !This subroutine simply computes the RHS of the elliptic equation for psi, knowing psi.                                                                                            
+   !q = - kh2 psi + 1/rho d/dz (rho a_ell psi_z) with d psi./dz = 0 at bounds.                                                                            
+   !The output is q without its halo.                                                                                                                                                
 
     double complex, dimension(iktx,ikty,n3h1) :: qk,psik
 
@@ -613,7 +779,21 @@ end subroutine init_base_state
              kh2= kx*kx+ky*ky
 
              if (L(ikx,iky).eq.1) then
+
                 qk(ikx,iky,izh1) =  (rho_u(izh2)*a_ell_u(izh2)/rho_s(izh2))*psik(ikx,iky,izh1+1)  - ( (rho_u(izh2)*a_ell_u(izh2) + rho_u(izh2-1)*a_ell_u(izh2-1) )/rho_s(izh2) + kh2*dz*dz)*psik(ikx,iky,izh1)  +  (rho_u(izh2-1)*a_ell_u(izh2-1)/rho_s(izh2))*psik(ikx,iky,izh1-1)
+
+
+                !Boundary corrections                                                                                                                                 
+                !At the top, d psi/dz = 0, so psik(top+1) = psi(top) and psi(bot-1) = psi(bot)                                                                                     
+                if(mype==0 .and. izh1 == izbot1) then  !At the bottom                                                                                                                  
+
+                   qk(ikx,iky,izbot1) =  (rho_u(izbot2)*a_ell_u(izbot2)/rho_s(izbot2))*psik(ikx,iky,izbot1+1)  - ( rho_u(izbot2)*a_ell_u(izbot2)/rho_s(izbot2) + kh2*dz*dz)*psik(ikx,iky,izbot1)
+
+                end if
+
+                if(mype==(npe-1) .and. izh1 == iztop1) then !At the top                                                                                    
+                   qk(ikx,iky,iztop1) =   - ( rho_u(iztop2-1)*a_ell_u(iztop2-1)/rho_s(iztop2) + kh2*dz*dz)*psik(ikx,iky,iztop1)  +  (rho_u(iztop2-1)*a_ell_u(iztop2-1)/rho_s(iztop2))*psik(ikx,iky,iztop1-1)
+                end if
 
              endif
 
@@ -621,42 +801,9 @@ end subroutine init_base_state
        end do
     end do
 
-    !Boundary corrections                                                                                                                                                                                                    
-    !At the top, d psi/dz = 0, so psik(top+1) = psi(top) and psi(bot-1) = psi(bot)                                                                                                                                              
-
-    if(mype==0) then  !At the bottom                                                                                                                                                                                  
-
-       do iky=1,ikty
-          ky = kya(iky)
-          do ikx=1,iktx
-             kx = kxa(ikx)
-             kh2= kx*kx+ky*ky
-
-             if (L(ikx,iky).eq.1) then
-                qk(ikx,iky,izbot1) =  (rho_u(izbot2)*a_ell_u(izbot2)/rho_s(izbot2))*psik(ikx,iky,izbot1+1)  - ( rho_u(izbot2)*a_ell_u(izbot2)/rho_s(izbot2) + kh2*dz*dz)*psik(ikx,iky,izbot1)
-             endif
-
-          end do
-       end do
-    else if(mype==(npe-1)) then !At the top   
-       do iky=1,ikty
-          ky = kya(iky)
-          do ikx=1,iktx
-             kx = kxa(ikx)
-             kh2= kx*kx+ky*ky
-
-             if (L(ikx,iky).eq.1) then
-                qk(ikx,iky,iztop1) =   - ( rho_u(iztop2-1)*a_ell_u(iztop2-1)/rho_s(iztop2) + kh2*dz*dz)*psik(ikx,iky,iztop1)  +  (rho_u(iztop2-1)*a_ell_u(iztop2-1)/rho_s(iztop2))*psik(ikx,iky,iztop1-1)
-             endif
-
-          end do
-       end do
-    end if
-
     qk=qk/(dz*dz)
 
   end SUBROUTINE init_q
-
 
 
 
@@ -864,9 +1011,9 @@ do ix=1,n1d
          end if
 
       if(ix<=n1) then
-         if(z1>=0) f1s(ix,iy,iz1)=-(2./3.)*cos(2*z1)*sin(y)*cos(3*y)!sin(x)*cos(x)! cos(x)*cos(y)
-         if(z2>=0) f2s(ix,iy,iz2)=-(4./3.)*cos(3*y)*sin(3*y)!-sin(x)*sin(y)
-         if(z3>=0) f3s(ix,iy,iz3)=0.!sin(z3)*cos(z3)
+         if(z1>=0) f1s(ix,iy,iz1)=0.
+         if(z2>=0) f2s(ix,iy,iz2)=exp(-(xi_a*(z2-twopi))**2)!c_one*(cosh(n_one*z2)/cosh(n_one*twopi)) + c_two*(cosh(n_two*z2)/cosh(n_two*twopi))
+         if(z3>=0) f3s(ix,iy,iz3)=0.
       else
          if(z1>=0) f1s(ix,iy,iz1)=0.
          if(z2>=0) f2s(ix,iy,iz2)=0.

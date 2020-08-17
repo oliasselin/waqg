@@ -3,6 +3,7 @@ MODULE derivatives
   USE parameters
   USE fft
   USE mpi
+  USE files
 
   IMPLICIT NONE
 
@@ -805,6 +806,135 @@ MODULE derivatives
 
 
 
+    SUBROUTINE  convol_waves(nBRk,nBIk,nBRr,nBIr,uk,vk,BRk,BIk,ur,vr,BRr,BIr)
+      
+      !Stand-alone subroutine to compute the advection for waves only. Should be used with velocity fields computed from psi_bt.
+
+      ! this subroutine computes ((u.grad)LA) = d/dxj(uj LA) in the divergence form on the staggered grid.
+      ! Notice that this routine outputs the r-space velocity fields of the barotropized field
+                                                                    
+      double complex, dimension(iktx,ikty,n3h2) :: uk,vk   
+      double complex, dimension(iktx,ikty,n3h0) :: BRk, BIk
+      double complex, dimension(iktx,ikty,n3h0) :: nBRk, nBIk
+
+      double complex, dimension(iktx,ikty,n3h0) :: BRmem   
+      double complex, dimension(iktx,ikty,n3h0) :: BImem   
+
+      double precision, dimension(n1d,n2d,n3h2) :: ur,vr
+      double precision, dimension(n1d,n2d,n3h0) :: BRr, BIr
+      double precision, dimension(n1d,n2d,n3h0) :: nBRr, nBIr
+
+
+      !Terms to be differentiated
+      double complex,   dimension(iktx,ikty,n3h0) :: utermk,vtermk
+      double precision, dimension(n1d,n2d,n3h0)   :: utermr,vtermr
+
+      equivalence(utermr,utermk)
+      equivalence(vtermr,vtermk)
+
+      !I think we don't need to keep a copy of u in qg, right?
+      call fft_c2r(uk,ur,n3h2)
+      call fft_c2r(vk,vr,n3h2)
+     
+      BRmem = BRk
+      BImem = BIk
+
+      call fft_c2r(BRk,BRr,n3h0)
+      call fft_c2r(BIk,BIr,n3h0)
+      
+
+      ! ---- J(psi,BR) ---- !
+
+      utermr=0.
+      vtermr=0.
+
+      do izh0=1,n3h0
+         izh1=izh0+1
+         izh2=izh0+2
+         do ix=1,n1d
+             do iy=1,n2d
+                if(ix<=n1) then
+
+                   utermr(ix,iy,izh0) = ur(ix,iy,izh2)*BRr(ix,iy,izh0)
+                   vtermr(ix,iy,izh0) = vr(ix,iy,izh2)*BRr(ix,iy,izh0)
+
+                end if
+             end do
+          end do
+       end do
+
+      !Move to k-space
+
+      call fft_r2c(utermr,utermk,n3h0)
+      call fft_r2c(vtermr,vtermk,n3h0)
+
+      !nqk = ikx utermk + iky vtermk
+
+      do izh0=1,n3h0 
+         do iky=1,ikty
+            ky = kya(iky)
+            do ikx=1,iktx
+               kx = kxa(ikx)
+               if (L(ikx,iky).eq.1) then                                                               
+                  nBRk(ikx,iky,izh0) =  i*kx*utermk(ikx,iky,izh0)  +  i*ky*vtermk(ikx,iky,izh0)
+               else
+                  nBRk(ikx,iky,izh0) = (0.D0,0.D0)
+               endif
+            enddo
+         enddo
+      enddo
+
+      BRk = BRmem
+
+
+      ! ---- J(psi,BI) ---- !
+
+      utermr=0.
+      vtermr=0.
+
+      do izh0=1,n3h0
+         izh1=izh0+1
+         izh2=izh0+2
+         do ix=1,n1d
+             do iy=1,n2d
+                if(ix<=n1) then
+
+                   utermr(ix,iy,izh0) = ur(ix,iy,izh2)*BIr(ix,iy,izh0)
+                   vtermr(ix,iy,izh0) = vr(ix,iy,izh2)*BIr(ix,iy,izh0)
+
+                end if
+             end do
+          end do
+       end do
+
+      !Move to k-space
+
+      call fft_r2c(utermr,utermk,n3h0)
+      call fft_r2c(vtermr,vtermk,n3h0)
+
+      !nqk = ikx utermk + iky vtermk
+
+      do izh0=1,n3h0 
+         do iky=1,ikty
+            ky = kya(iky)
+            do ikx=1,iktx
+               kx = kxa(ikx)
+               if (L(ikx,iky).eq.1) then                                                               
+                  nBIk(ikx,iky,izh0) =  i*kx*utermk(ikx,iky,izh0)  +  i*ky*vtermk(ikx,iky,izh0)
+               else
+                  nBIk(ikx,iky,izh0) = (0.D0,0.D0)
+               endif
+            enddo
+         enddo
+      enddo
+
+      BIk = BImem
+
+    END SUBROUTINE convol_waves
+
+
+
+
 
 
     SUBROUTINE  refraction_waqg(rBRk,rBIk,rBRr,rBIr,BRk,BIk,psik,BRr,BIr,psir)
@@ -933,7 +1063,7 @@ MODULE derivatives
       BRxk = (0.D0,0.D0)
       BRyk = (0.D0,0.D0)
       BIxk = (0.D0,0.D0)
-      BRyk = (0.D0,0.D0)
+      BIyk = (0.D0,0.D0)
 
       do izh0=1,n3h0 
          do iky=1,ikty
@@ -1034,7 +1164,7 @@ MODULE derivatives
 
 
 
-    SUBROUTINE  compute_sigma(sigma,nBRk, nBIk, rBRk, rBIk)
+    SUBROUTINE  compute_sigma(sigma,nBRk, nBIk, rBRk, rBIk, FtRk, FtIk)
       ! this subroutine computes the vertical integral of A at every wavenumber.
 
       double complex, dimension(iktx,ikty,2)               :: sigma_to_reduce     !This is the sum local to each processor. Last dimension: 1=real 2=imag
@@ -1042,6 +1172,11 @@ MODULE derivatives
 
       !**** n = nonlinear advection term J(psi,B) **** r = refractive term ~ B*vort                                                                                            
       double complex,   dimension(iktx,ikty,n3h0), intent(in) :: nBRk, nBIk, rBRk, rBIk
+
+      !**** Forcing, or any other right-hand side term in the YBJ equation in the form: LA_t + J(psi,LA) + ... + Ft = 0. ****!    
+      !**** It MUST be set to zero if no forcing or mean-flow advection is present ****!
+      double complex,   dimension(iktx,ikty,n3h0), intent(in) :: FtRk, FtIk
+
 
       sigma_to_reduce = (0.D0,0.D0)
       sigma           = (0.D0,0.D0)
@@ -1054,8 +1189,8 @@ MODULE derivatives
                kx = kxa(ikx)
                kh2 = kx*kx + ky*ky
                if ((L(ikx,iky).eq.1) .and. kh2 > 0) then
-                  sigma_to_reduce(ikx,iky,1) = sigma_to_reduce(ikx,iky,1) + (rBRk(ikx,iky,izh0) + 2*nBIk(ikx,iky,izh0))/(1.D0*kh2) 
-                  sigma_to_reduce(ikx,iky,2) = sigma_to_reduce(ikx,iky,2) + (rBIk(ikx,iky,izh0) - 2*nBRk(ikx,iky,izh0))/(1.D0*kh2) 
+                  sigma_to_reduce(ikx,iky,1) = sigma_to_reduce(ikx,iky,1) + (rBRk(ikx,iky,izh0) + 2*(nBIk(ikx,iky,izh0)+FtIk(ikx,iky,izh0)) )/(1.D0*kh2) 
+                  sigma_to_reduce(ikx,iky,2) = sigma_to_reduce(ikx,iky,2) + (rBIk(ikx,iky,izh0) - 2*(nBRk(ikx,iky,izh0)+FtRk(ikx,iky,izh0)) )/(1.D0*kh2) 
                endif
             enddo
          enddo
@@ -1088,7 +1223,8 @@ MODULE derivatives
             do ikx=1,iktx
                kx = kxa(ikx)
                kh2 = kx*kx + ky*ky
-               if ((L(ikx,iky).eq.1) .and. kh2 > 0) then
+!               if ((L(ikx,iky).eq.1) .and. kh2 > 0) then
+               if ((L(ikx,iky).eq.1)) then
                   sum_to_reduce(ikx,iky,1) = sum_to_reduce(ikx,iky,1) + BRk(ikx,iky,izh0)
                   sum_to_reduce(ikx,iky,2) = sum_to_reduce(ikx,iky,2) + BIk(ikx,iky,izh0)
                endif
@@ -1107,7 +1243,8 @@ MODULE derivatives
                do ikx=1,iktx
                   kx = kxa(ikx)
                   kh2 = kx*kx + ky*ky
-                  if ((L(ikx,iky).eq.1) .and. kh2 > 0) then
+!                  if ((L(ikx,iky).eq.1) .and. kh2 > 0) then
+                  if ((L(ikx,iky).eq.1)) then
                      BRk(ikx,iky,izh0) = BRk(ikx,iky,izh0) - aveB(ikx,iky,1)
                      BIk(ikx,iky,izh0) = BIk(ikx,iky,izh0) - aveB(ikx,iky,2)
                   endif
@@ -1167,17 +1304,21 @@ MODULE derivatives
       CRkt  = (0.D0,0.D0)
       CIkt  = (0.D0,0.D0)
 
-
-
       DO ikx=1,iktx
+         kx=kxa(ikx)
          DO ikyp=1,iktyp
             iky=ikyp+iktyp*mype
+            ky=kya(iky)
+
+            kh2=kx*kx + ky*ky
+
             if(kh2/=0 .and. L(ikx,iky)==1 ) then
                sumBR(ikx,ikyp) = BRkt(ikx,1,ikyp)
                sumBI(ikx,ikyp) = BIkt(ikx,1,ikyp)
             end if
          end DO
       end DO
+
 
       !Compute \tilde{A}, which is \hat{A} up to an arbitrary constant (\hat{A} at z = dz/2 set to 0)
       DO ikx=1,iktx
@@ -1250,6 +1391,9 @@ MODULE derivatives
          end DO
       end DO
 
+      
+      !Print the spectrum and filter A if desired
+      if( (filter_A == 1 .and. mod(iter,freq_filter_A)==0 ) .or. (print_A == 1 .and. mod(iter,freq_print_A)==0) )  call spec_A_general(ARkt,AIkt)! call spec_A(ARkt,AIkt)
 
       !Transpose A back to the regular z-parallelized world
       call mpitranspose(ARkt,iktx,n3,iktyp,ARk,ikty,n3h0)
@@ -1337,6 +1481,51 @@ MODULE derivatives
 
 
 
+    subroutine wave_shear(BRkt,BIkt,SRk,SIk)
+
+      !This subroutine computes the vertical shear in waves, LA_z, from the transposed LA. Shear is computed on the staggered grid, z^i_u = i*dz, i = 1,n3
+      !It is assumed that LAz = 0 right at the top boundary (i = n3) --- this is not necessarily true...
+
+      double complex, dimension(iktx,n3, iktyp), intent(in) :: BRkt          !Transposed (ky-parallelization) BRk (this array can most likely be recycled)                                               
+      double complex, dimension(iktx,n3, iktyp), intent(in) :: BIkt          !Transposed (ky-parallelization) BIk (this array can most likely be recycled) 
+
+      !Temporary array to store shear
+      double complex, dimension(iktx,n3, iktyp) :: SRkt          !Transposed (ky-parallelization) BRk (this array can most likely be recycled)                                               
+      double complex, dimension(iktx,n3, iktyp) :: SIkt          !Transposed (ky-parallelization) BIk (this array can most likely be recycled) 
+
+      !Shear variables: LA_z
+      double complex,   dimension(iktx,ikty,n3h0), intent(out) :: SRk, SIk
+
+      
+      DO ikx=1,iktx
+         DO ikyp=1,iktyp
+            iky=ikyp+iktyp*mype
+
+            if(L(ikx,iky)==1 ) then
+
+               do iz=1,n3-1
+
+                  SRkt(ikx,iz,ikyp) = (BRkt(ikx,iz+1,ikyp)-BRkt(ikx,iz,ikyp))/dz
+                  SIkt(ikx,iz,ikyp) = (BIkt(ikx,iz+1,ikyp)-BIkt(ikx,iz,ikyp))/dz
+
+               end do
+
+               
+               SRkt(ikx,n3,ikyp) = (0.D0,0.D0)
+               SIkt(ikx,n3,ikyp) = (0.D0,0.D0)
+
+            end if
+
+         end DO
+      end DO
+
+
+      !Transpose shear into regular (ikx,iky,izh0) dimensions
+      call mpitranspose(SRkt,iktx,n3,iktyp,SRk,ikty,n3h0)
+      call mpitranspose(SIkt,iktx,n3,iktyp,SIk,ikty,n3h0)
+
+
+    end subroutine wave_shear
 
 
 
@@ -1869,313 +2058,6 @@ MODULE derivatives
     END SUBROUTINE gradient
 
 
-    SUBROUTINE  dissipation(duk,dvk,dwk,dtk,uok,vok,wok,tok)  !WRONG WITH HYPERVISC
-      ! this subroutine computes ((u.grad)u)i = d/dxj(uj ui) in the divergence form on a staggered grid.                                                                                                                                    
-      double complex, dimension(iktx,ikty,n3h2) :: uok,vok,wok,tok
-      double complex, dimension(iktx,ikty,n3h1) :: duk,dvk,dwk,dtk
-
-
-      do izh1=1,n3h1
-         izh2=izh1+1
-         do iky=1,ikty
-            ky = kya(iky)
-            do ikx=1,iktx
-               kx = kxa(ikx)
-               kh2=kx*kx+ky*ky
-               kh2=kh2**ilap !Hyperviscosity  THIS WON'T WORK FOR kh2>1e9
-               if (L(ikx,iky).eq.1) then
-                  duk(ikx,iky,izh1) =  nuz *(uok(ikx,iky,izh2+1) + uok(ikx,iky,izh2-1))/(dz*dz)  - (2.* nuz/(dz*dz) + nuh *kh2)*uok(ikx,iky,izh2) 
-                  dvk(ikx,iky,izh1) =  nuz *(vok(ikx,iky,izh2+1) + vok(ikx,iky,izh2-1))/(dz*dz)  - (2.* nuz/(dz*dz) + nuh *kh2)*vok(ikx,iky,izh2) 
-                  dwk(ikx,iky,izh1) =  nuz *(wok(ikx,iky,izh2+1) + wok(ikx,iky,izh2-1))/(dz*dz)  - (2.* nuz/(dz*dz) + nuh *kh2)*wok(ikx,iky,izh2) 
-                  dtk(ikx,iky,izh1) =  nutz*(tok(ikx,iky,izh2+1) + tok(ikx,iky,izh2-1))/(dz*dz)  - (2.*nutz/(dz*dz) + nuth*kh2)*tok(ikx,iky,izh2) 
-               else
-                  duk(ikx,iky,izh1) = (0.D0,0.D0)
-                  dvk(ikx,iky,izh1) = (0.D0,0.D0)
-                  dwk(ikx,iky,izh1) = (0.D0,0.D0)
-                  dtk(ikx,iky,izh1) = (0.D0,0.D0)
-               endif
-           enddo
-        enddo
-     enddo
-
-     if(mype==0) then
-
-         do iky=1,ikty
-            ky = kya(iky)
-            do ikx=1,iktx
-               kx = kxa(ikx)
-               kh2=kx*kx+ky*ky
-               kh2=kh2**ilap !Hyperviscosity
-               if (L(ikx,iky).eq.1) then
-                  duk(ikx,iky,izbot1) =  nuz *( uok(ikx,iky,izbot2+1) )/(dz*dz)  - (nuz/(dz*dz) + nuh*kh2)*uok(ikx,iky,izbot2)
-                  dvk(ikx,iky,izbot1) =  nuz *( vok(ikx,iky,izbot2+1) )/(dz*dz)  - (nuz/(dz*dz) + nuh*kh2)*vok(ikx,iky,izbot2)
-                  dwk(ikx,iky,izbot1) =  nuz *( wok(ikx,iky,izbot2+1) )/(dz*dz)  - (2.* nuz/(dz*dz) + nuh *kh2)*wok(ikx,iky,izbot2)
-                  dtk(ikx,iky,izbot1) =  nutz*( tok(ikx,iky,izbot2+1) )/(dz*dz)  - (2.*nutz/(dz*dz) + nuth*kh2)*tok(ikx,iky,izbot2)
-               else
-                  duk(ikx,iky,izbot1) = (0.D0,0.D0)
-                  dvk(ikx,iky,izbot1) = (0.D0,0.D0)
-                  dwk(ikx,iky,izbot1) = (0.D0,0.D0)
-                  dtk(ikx,iky,izbot1) = (0.D0,0.D0)
-               endif
-           enddo
-        enddo
-
-
-     else if(mype==(npe-1)) then
-
-         do iky=1,ikty
-            ky = kya(iky)
-            do ikx=1,iktx
-               kx = kxa(ikx)
-               kh2=kx*kx+ky*ky
-               kh2=kh2**ilap !Hyperviscosity
-               if (L(ikx,iky).eq.1) then
-
-                  dwk(ikx,iky,iztop1-1) =  nuz *( wok(ikx,iky,iztop2-2) )/(dz*dz)  - (2.* nuz/(dz*dz) + nuh *kh2)*wok(ikx,iky,iztop2-1)   !Not necessary, double safety
-                  dtk(ikx,iky,iztop1-1) =  nutz*( tok(ikx,iky,iztop2-2) )/(dz*dz)  - (2.*nutz/(dz*dz) + nuth*kh2)*tok(ikx,iky,iztop2-1)   !Not necessary, double safety
-
-                  duk(ikx,iky,iztop1) =  nuz*( uok(ikx,iky,iztop2-1) )/(dz*dz)  - (nuz/(dz*dz) + nuh*kh2)*uok(ikx,iky,iztop2)
-                  dvk(ikx,iky,iztop1) =  nuz*( vok(ikx,iky,iztop2-1) )/(dz*dz)  - (nuz/(dz*dz) + nuh*kh2)*vok(ikx,iky,iztop2)
-                  dwk(ikx,iky,iztop1) =  (0.D0,0.D0)
-                  dtk(ikx,iky,iztop1) =  (0.D0,0.D0)
-
-               else
-                  
-                  dwk(ikx,iky,iztop1-1) = (0.D0,0.D0)
-                  dtk(ikx,iky,iztop1-1) = (0.D0,0.D0)
-
-                  duk(ikx,iky,iztop1) = (0.D0,0.D0)
-                  dvk(ikx,iky,iztop1) = (0.D0,0.D0)
-                  dwk(ikx,iky,iztop1) = (0.D0,0.D0)
-                  dtk(ikx,iky,iztop1) = (0.D0,0.D0)
-
-               endif
-           enddo
-        enddo
-
-     end if
-
-
-    END SUBROUTINE dissipation
-
-
-
-
-
-    SUBROUTINE  dissipation_q(dqk,qok)  !WRONG WITH HYPERVISC
-
-      ! This subroutine computes the dissipation of q, assuming that just like u,v,psi, q is symmetric about the top and bot (dq/dz=0) so Q_N+1 = Q_N and Q_0 = Q_1.
-
-      double complex, dimension(iktx,ikty,n3h1) :: qok
-      double complex, dimension(iktx,ikty,n3h0) :: dqk
-
-
-      do izh0=1,n3h0
-         izh1=izh0+1
-         do iky=1,ikty
-            ky = kya(iky)
-            do ikx=1,iktx
-               kx = kxa(ikx)
-               kh2=kx*kx+ky*ky
-               kh2=kh2**ilap !Hyperviscosity
-               if (L(ikx,iky).eq.1) then
-                  dqk(ikx,iky,izh0) =  nuz *(qok(ikx,iky,izh1+1) + qok(ikx,iky,izh1-1))/(dz*dz)  - (2.* nuz/(dz*dz) + nuh *kh2)*qok(ikx,iky,izh1) 
-               else
-                  dqk(ikx,iky,izh0) = (0.D0,0.D0)
-               endif
-           enddo
-        enddo
-     enddo
-
-     if(mype==0) then
-
-         do iky=1,ikty
-            ky = kya(iky)
-            do ikx=1,iktx
-               kx = kxa(ikx)
-               kh2=kx*kx+ky*ky
-               kh2=kh2**ilap !Hyperviscosity
-               if (L(ikx,iky).eq.1) then
-                  dqk(ikx,iky,1) =  nuz *( qok(ikx,iky,izbot1+1) )/(dz*dz)  - (nuz/(dz*dz) + nuh*kh2)*qok(ikx,iky,izbot1)
-               else
-                  dqk(ikx,iky,1) = (0.D0,0.D0)
-               endif
-           enddo
-        enddo
-
-
-     else if(mype==(npe-1)) then
-
-         do iky=1,ikty
-            ky = kya(iky)
-            do ikx=1,iktx
-               kx = kxa(ikx)
-               kh2=kx*kx+ky*ky
-               kh2=kh2**ilap !Hyperviscosity
-               if (L(ikx,iky).eq.1) then
-                  dqk(ikx,iky,n3h0) =  nuz*( qok(ikx,iky,iztop1-1) )/(dz*dz)  - (nuz/(dz*dz) + nuh*kh2)*qok(ikx,iky,iztop1)
-               else
-                  dqk(ikx,iky,n3h0) = (0.D0,0.D0)
-               endif
-           enddo
-        enddo
-
-     end if
-
-
-   END SUBROUTINE dissipation_q
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    SUBROUTINE  dissipation_nv(duk,dvk,dwk,dbk,uok,vok,wok,bok)
-      ! this subroutine computes ((u.grad)u)i = d/dxj(uj ui) in the divergence form on a staggered grid.                                                                                                                                    
-      double complex, dimension(iktx,ikty,n3h2) :: uok,vok,wok,bok
-      double complex, dimension(iktx,ikty,n3h1) :: duk,dvk,dwk,dbk
-
-
-      do izh1=1,n3h1
-         izh2=izh1+1
-         do iky=1,ikty
-            do ikx=1,iktx
-               if (L(ikx,iky).eq.1) then
-                  duk(ikx,iky,izh1) =  nuz *(uok(ikx,iky,izh2+1) - 2.*uok(ikx,iky,izh2) + uok(ikx,iky,izh2-1))/(dz*dz)  
-                  dvk(ikx,iky,izh1) =  nuz *(vok(ikx,iky,izh2+1) - 2.*vok(ikx,iky,izh2) + vok(ikx,iky,izh2-1))/(dz*dz) 
-                  dwk(ikx,iky,izh1) =  nuz *(wok(ikx,iky,izh2+1) - 2.*wok(ikx,iky,izh2) + wok(ikx,iky,izh2-1))/(dz*dz) 
-                  dbk(ikx,iky,izh1) =  nutz*(bok(ikx,iky,izh2+1) - 2.*bok(ikx,iky,izh2) + bok(ikx,iky,izh2-1))/(dz*dz) 
-!                  dtk(ikx,iky,izh1) =  nutz*(tok(ikx,iky,izh2+1) - 2.*tok(ikx,iky,izh2) + tok(ikx,iky,izh2-1))/(dz*dz)  
-               else
-                  duk(ikx,iky,izh1) = (0.D0,0.D0)
-                  dvk(ikx,iky,izh1) = (0.D0,0.D0)
-                  dwk(ikx,iky,izh1) = (0.D0,0.D0)
-                  dbk(ikx,iky,izh1) = (0.D0,0.D0)
-!                  dtk(ikx,iky,izh1) = (0.D0,0.D0)
-               endif
-           enddo
-        enddo
-     enddo
-
-     if(mype==0) then
-
-         do iky=1,ikty
-            do ikx=1,iktx
-               if (L(ikx,iky).eq.1) then
-                  duk(ikx,iky,izbot1) =  nuz *( uok(ikx,iky,izbot2+1) - uok(ikx,iky,izbot2) )/(dz*dz)  
-                  dvk(ikx,iky,izbot1) =  nuz *( vok(ikx,iky,izbot2+1) - vok(ikx,iky,izbot2) )/(dz*dz)  
-                  dwk(ikx,iky,izbot1) =  nuz *( wok(ikx,iky,izbot2+1) - 2.*wok(ikx,iky,izbot2) )/(dz*dz)
-                  dbk(ikx,iky,izbot1) =  nutz*( bok(ikx,iky,izbot2+1) - bok(ikx,iky,izbot2) )/(dz*dz)    
-!                  dtk(ikx,iky,izbot1) =  nutz*( tok(ikx,iky,izbot2+1) - 2.*tok(ikx,iky,izbot2) )/(dz*dz)  
-               else
-                  duk(ikx,iky,izbot1) = (0.D0,0.D0)
-                  dvk(ikx,iky,izbot1) = (0.D0,0.D0)
-                  dwk(ikx,iky,izbot1) = (0.D0,0.D0)
-                  dbk(ikx,iky,izbot1) = (0.D0,0.D0)
-!                  dtk(ikx,iky,izbot1) = (0.D0,0.D0)
-               endif
-           enddo
-        enddo
-
-
-     else if(mype==(npe-1)) then
-
-         do iky=1,ikty
-            do ikx=1,iktx
-               if (L(ikx,iky).eq.1) then
-
-                  dwk(ikx,iky,iztop1-1) =  nuz *( wok(ikx,iky,iztop2-2) -2.*wok(ikx,iky,iztop2-1) )/(dz*dz)    !Not necessary, double safety
-!                  dtk(ikx,iky,iztop1-1) =  nutz*( tok(ikx,iky,iztop2-2) -2.*tok(ikx,iky,iztop2-1) )/(dz*dz)    !Not necessary, double safety
-
-                  duk(ikx,iky,iztop1) =  nuz*( uok(ikx,iky,iztop2-1) - uok(ikx,iky,iztop2) )/(dz*dz) 
-                  dvk(ikx,iky,iztop1) =  nuz*( vok(ikx,iky,iztop2-1) - vok(ikx,iky,iztop2) )/(dz*dz) 
-                  dwk(ikx,iky,iztop1) =  (0.D0,0.D0)
-                  dbk(ikx,iky,iztop1) = nutz*( bok(ikx,iky,iztop2-1) - bok(ikx,iky,iztop2) )/(dz*dz) 
-!                  dtk(ikx,iky,iztop1) =  (0.D0,0.D0)
-
-               else
-                  
-                  dwk(ikx,iky,iztop1-1) = (0.D0,0.D0)
-!                  dtk(ikx,iky,iztop1-1) = (0.D0,0.D0)
-
-                  duk(ikx,iky,iztop1) = (0.D0,0.D0)
-                  dvk(ikx,iky,iztop1) = (0.D0,0.D0)
-                  dwk(ikx,iky,iztop1) = (0.D0,0.D0)
-                  dbk(ikx,iky,iztop1) = (0.D0,0.D0)
-!                  dtk(ikx,iky,iztop1) = (0.D0,0.D0)
-               endif
-           enddo
-        enddo
-
-     end if
-
-
-   END SUBROUTINE dissipation_nv
-
-
-
-
-
-    SUBROUTINE  dissipation_q_nv(dqk,qok)
-
-      ! This subroutine computes the VERTICAL dissipation of q at ts n-1 (lagged), assuming that just like u,v,psi, q is symmetric about the top and bot (dq/dz=0) so Q_N+1 = Q_N and Q_0 = Q_1.
-
-      double complex, dimension(iktx,ikty,n3h1) :: qok
-      double complex, dimension(iktx,ikty,n3h0) :: dqk
-
-
-      do izh0=1,n3h0
-         izh1=izh0+1
-         do iky=1,ikty
-            do ikx=1,iktx
-               if (L(ikx,iky).eq.1) then
-                  dqk(ikx,iky,izh0) =  nuz *(qok(ikx,iky,izh1+1) -2.*qok(ikx,iky,izh1) + qok(ikx,iky,izh1-1))/(dz*dz)  
-               else
-                  dqk(ikx,iky,izh0) = (0.D0,0.D0)
-               endif
-           enddo
-        enddo
-     enddo
-
-     if(mype==0) then
-
-         do iky=1,ikty
-            do ikx=1,iktx
-               if (L(ikx,iky).eq.1) then
-                  dqk(ikx,iky,1) =  nuz *( qok(ikx,iky,izbot1+1) - qok(ikx,iky,izbot1) )/(dz*dz)  
-               else
-                  dqk(ikx,iky,1) = (0.D0,0.D0)
-               endif
-           enddo
-        enddo
-
-
-     else if(mype==(npe-1)) then
-
-         do iky=1,ikty
-            do ikx=1,iktx
-               if (L(ikx,iky).eq.1) then
-                  dqk(ikx,iky,n3h0) =  nuz*( qok(ikx,iky,iztop1-1) - qok(ikx,iky,iztop1) )/(dz*dz)  
-               else
-                  dqk(ikx,iky,n3h0) = (0.D0,0.D0)
-               endif
-           enddo
-        enddo
-
-     end if
-
-
-   END SUBROUTINE dissipation_q_nv
-
 
 
     subroutine vort(uk,vk,wk,zxk,zyk,zzk)
@@ -2350,4 +2232,415 @@ MODULE derivatives
 
 
     end SUBROUTINE compute_rot
+
+
+
+
+
+subroutine spec_A_general2(ARkt,AIkt)
+
+    !kx,kz,z modes
+    double complex, dimension(iktx,n3, iktyp) :: ARkt          !Transposed (ky-parallelization) ARk                                                                                                                                                           
+    double complex, dimension(iktx,n3, iktyp) :: AIkt          !Transposed (ky-parallelization) AIk                                                                                                                                                     
+
+    !kx,ky,m modes
+    double complex, dimension(iktx,n3, iktyp) :: ARmt   
+    double complex, dimension(iktx,n3, iktyp) :: AImt      
+
+    integer :: m
+
+    !Initialize vertical modes to zero
+    ARmt=(0.D0,0.D0)
+    AImt=(0.D0,0.D0)
+
+    DO ikyp=1,iktyp
+       iky=ikyp+iktyp*mype
+       ky=kya(iky)
+
+       DO ikx=1,iktx
+          kx=kxa(ikx)
+
+          kh2=kx*kx+ky*ky
+
+          if(L(ikx,iky)==1 ) then
+
+             !Calculate the vertical modes if allowed by YBJ criterion
+             do m=1,n3
+
+                !Only calculate the mode if it's not illegal
+                if (filter_A /= 1 .or. mod(iter,freq_filter_A)/=0 .or. kh2 <= YBJ_criterion*Bu*(eigen_values(m)**2) .or. m==1) then
+
+                   do iz=1,n3
+                      ARmt(ikx,m,ikyp) = ARmt(ikx,m,ikyp) + ARkt(ikx,iz,ikyp)*eigen_vectors(iz,m)
+                      AImt(ikx,m,ikyp) = AImt(ikx,m,ikyp) + AIkt(ikx,iz,ikyp)*eigen_vectors(iz,m)
+                   end do
+            
+                end if
+
+             end do
+
+          end if
+
+      end do
+    end DO
+
+
+    !Print spectrum of kinetic energy: 0.5 |LA|^2 as a function of kh and m
+
+
+
+    !Transform the filtered field back to (kx,z,kyp) space
+    ARkt=(0.D0,0.D0)
+    AIkt=(0.D0,0.D0)
+
+    DO ikyp=1,iktyp
+       iky=ikyp+iktyp*mype
+       ky=kya(iky)
+
+       DO ikx=1,iktx
+          kx=kxa(ikx)
+
+          kh2=kx*kx+ky*ky
+
+          if(L(ikx,iky)==1 ) then
+
+             do iz=1,n3
+
+                do m = 1,n3
+                   ARkt(ikx,iz,ikyp) = ARkt(ikx,iz,ikyp) + ARmt(ikx,m,ikyp)*eigen_vectors(iz,m)
+                   AIkt(ikx,iz,ikyp) = AIkt(ikx,iz,ikyp) + AImt(ikx,m,ikyp)*eigen_vectors(iz,m)
+                end do
+                
+             end do
+
+          end if
+       end DO
+    end DO
+
+  end subroutine spec_A_general2
+
+
+
+subroutine spec_A_general(ARkt,AIkt)
+
+    !kx,kz,z modes
+    double complex, dimension(iktx,n3, iktyp) :: ARkt          !Transposed (ky-parallelization) ARk                                               
+    double complex, dimension(iktx,n3, iktyp) :: AIkt          !Transposed (ky-parallelization) AIk                                                                   
+
+    !kx,ky,m modes
+    double complex, dimension(iktx,n3, iktyp) :: ARmt   
+    double complex, dimension(iktx,n3, iktyp) :: AImt      
+
+    integer :: mode
+    integer :: m
+
+    real, dimension(0:ktx,n3) :: swke_p,swke                          !spectrum for wave kinetic energy
+    double precision :: kh
+       
+    character(len = 32) :: fname                !future file name                                                                                                  
+    
+
+    !***************************************!
+    !* Calculate the spectral coefficients *!
+    !***************************************!
+
+    !Initialize vertical modes to zero
+    ARmt=(0.D0,0.D0)
+    AImt=(0.D0,0.D0)
+
+    DO ikyp=1,iktyp
+       iky=ikyp+iktyp*mype
+       ky=kya(iky)
+
+       DO ikx=1,iktx
+          kx=kxa(ikx)
+
+          kh2=kx*kx+ky*ky
+
+          if(L(ikx,iky)==1 ) then
+
+             do m=1,n3
+                do iz=1,n3
+                   ARmt(ikx,m,ikyp) = ARmt(ikx,m,ikyp) + ARkt(ikx,iz,ikyp)*eigen_vectors(iz,m)
+                   AImt(ikx,m,ikyp) = AImt(ikx,m,ikyp) + AIkt(ikx,iz,ikyp)*eigen_vectors(iz,m)
+                end do
+             end do
+
+          end if
+
+      end do
+    end DO
+
+
+    !Print spectrum of kinetic energy: 0.5 |LA|^2 as a function of kh and m
+    if(print_A == 1 .and. mod(iter,freq_print_A)==0) then
+
+       swke_p=0.
+       swke=0.
+
+       DO ikyp=1,iktyp
+          iky=ikyp+iktyp*mype
+          ky=kya(iky)
+          
+          DO ikx=1,iktx
+             kx=kxa(ikx)
+             
+             kh2=kx*kx+ky*ky             
+             kh   = sqrt(1.D0*kh2)
+             mode = ifix(real(kh*L1/twopi+0.5))
+
+             if (L(ikx,iky).eq.1) then
+           
+                do m=1,n3
+                   swke_p(mode,m)   = swke_p(mode,m) + (eigen_values(m)**4)*real( ARmt(ikx,m,ikyp)*CONJG( ARmt(ikx,m,ikyp)  ) + AImt(ikx,m,ikyp)*CONJG( AImt(ikx,m,ikyp) ) )
+                end do
+
+             end if
+          end DO
+       end DO
+
+       !At the moment, mode kh=0 is not included in A, so no need to remove half of it as usual...
+       
+
+       !Sum the spectra from all processors
+       call mpi_reduce(swke_p,swke,(ktx+1)*n3,MPI_REAL,MPI_SUM,0,MPI_COMM_WORLD,ierror)
+
+       !Get the dimensions correct, then print the spectrum!
+       if(mype==0) then
+
+          swke = swke*Uw_scale*Uw_scale/n3          !Because 1/2pi int eigen_vectors(iz,m)*eigen_vectors(iz,m) dz \approx 1/n3
+
+          write (fname, "(A4,I3,A4)") "swke",count_A,".dat"
+          open (unit=unit_specA,file=fname,action="write",status="replace")
+
+          do m=1,n3
+             write(unit=unit_specA,fmt=333) (swke(mode,m),mode=0,ktx)
+             write(unit=unit_specA,fmt=*) '           '
+          enddo
+          
+333       format(1x,E12.5,1x)
+          close (unit=unit_specA)
+       end if
+       
+       count_A=count_A+1
+
+    end if
+
+
+
+
+
+
+
+    !If desired, filter A!
+    if (filter_A == 1 .or. mod(iter,freq_filter_A)==0) then
+
+       !Transform the filtered field back to (kx,z,kyp) space
+       ARkt=(0.D0,0.D0)
+       AIkt=(0.D0,0.D0)
+
+       DO ikyp=1,iktyp
+          iky=ikyp+iktyp*mype
+          ky=kya(iky)
+          
+          DO ikx=1,iktx
+             kx=kxa(ikx)
+             
+             kh2=kx*kx+ky*ky
+             
+             if(L(ikx,iky)==1 ) then
+
+                do m = 1,n3
+
+                   !Integrate the mode only if it is legal!
+                   if (kh2 <= YBJ_criterion*Bu*(eigen_values(m)**2) .or. m==1) then
+                      do iz=1,n3
+                         ARkt(ikx,iz,ikyp) = ARkt(ikx,iz,ikyp) + ARmt(ikx,m,ikyp)*eigen_vectors(iz,m)
+                         AIkt(ikx,iz,ikyp) = AIkt(ikx,iz,ikyp) + AImt(ikx,m,ikyp)*eigen_vectors(iz,m)
+                      end do
+                   end if
+                   
+                end do
+                
+             end if
+          end DO
+       end DO
+
+    end if
+
+  end subroutine spec_A_general
+
+
+
+subroutine spec_A(ARkt,AIkt)
+
+    double complex, dimension(iktx,n3, iktyp) :: ARkt          !Transposed (ky-parallelization) ARk                                                            
+    double complex, dimension(iktx,n3, iktyp) :: AIkt          !Transposed (ky-parallelization) AIk  
+
+    double precision, dimension(n3) :: ReU,ImU,ReV,ImV         !Components of \hat{A}(kx,ky,z) and their kz transform
+
+    double precision :: kz2
+
+    character(len = 32) :: fname,fname2                !future file names                                                                                                             
+
+    DO ikyp=1,iktyp
+       iky=ikyp+iktyp*mype
+       ky=kya(iky)
+
+       !Prepare files to print \tilde{A}(kx,ky,kz) (one for each ky)!
+       if(print_A == 1 .and. mod(iter,freq_print_A)==0) then
+          write (fname, "(A1,I3,A3,I3,A4)") "A",count_A,"_ky",iky,".dat"
+          open (unit=unit_specA,file=fname,action="write",status="replace")
+          if(count_A==0) then !Print the list of kx for this ky
+             write (fname2, "(A10,I3,A4)") "klist_A_ky",iky,".dat"
+             open (unit=unit_speckA,file=fname2,action="write",status="replace")
+          end if
+       end if
+
+
+       DO ikx=1,iktx
+          kx=kxa(ikx)
+
+          kh2=kx*kx+ky*ky
+
+          if(L(ikx,iky)==1 ) then
+
+             do iz=1,n3
+
+                ReU(iz)=DBLE(ARkt(ikx,iz,ikyp))
+                ImU(iz)=DIMAG(ARkt(ikx,iz,ikyp))
+
+                ReV(iz)=DBLE(AIkt(ikx,iz,ikyp))
+                ImV(iz)=DIMAG(AIkt(ikx,iz,ikyp))
+
+             end do
+
+             call dfftw_execute_r2r(plan_ztokz,ReU(1),ReU(1))
+             call dfftw_execute_r2r(plan_ztokz,ImU(1),ImU(1))
+             call dfftw_execute_r2r(plan_ztokz,ReV(1),ReV(1))
+             call dfftw_execute_r2r(plan_ztokz,ImV(1),ImV(1))
+             
+             !Normalize!
+             ReU=ReU/(2.*n3)
+             ImU=ImU/(2.*n3)
+             ReV=ReV/(2.*n3)
+             ImV=ImV/(2.*n3)
+
+
+             !Print \tilde{A}(kx,ky,kz)!
+             if(print_A == 1 .and. mod(iter,freq_print_A)==0) then
+                do iz=1,n3
+                   write(unit=unit_specA,fmt=336) ReU(iz) - ImV(iz), ImU(iz) + ReV(iz)        !This is \tilde{A}(kx,ky,kz)'s real and imag parts
+                enddo
+336             format(1x,E12.5,1x,E12.5,1x)
+
+                if(count_A==0) then 
+                   write(unit=unit_speckA,fmt=337) kx, ky
+337                format(1x,I5,1x,I5,1x)                  
+                end if
+             end if
+
+
+             !Filter if desired.
+             if(filter_A == 1 .and. mod(iter,freq_filter_A)==0) then
+
+                do iz=1,n3
+                   kz2=((iz-1)/2.)**2
+
+                   if(kz2 > 0 .and. kh2 >= YBJ_criterion*Bu*kz2) then  
+
+                      ReU(iz)=0.
+                      ImU(iz)=0.
+                      ReV(iz)=0.
+                      ImV(iz)=0.
+
+                   end if
+
+                end do
+
+                !Transform back to (kx,ky,z) space and update A
+                call dfftw_execute_r2r(plan_kztoz,ReU(1),ReU(1))
+                call dfftw_execute_r2r(plan_kztoz,ImU(1),ImU(1))
+                call dfftw_execute_r2r(plan_kztoz,ReV(1),ReV(1))
+                call dfftw_execute_r2r(plan_kztoz,ImV(1),ImV(1))
+
+                do iz=1,n3
+
+                   ARkt(ikx,iz,ikyp)= ReU(iz) + i*ImU(iz)
+                   AIkt(ikx,iz,ikyp)= ReV(iz) + i*ImV(iz)
+
+                end do
+
+             end if
+
+
+          end if
+       end DO
+
+
+       !Close the file for \tilde{A}(kx,ky,kz)!
+       if(print_A == 1 .and. mod(iter,freq_print_A)==0) then
+          close (unit=unit_specA)
+          if(count_A==1) close (unit=unit_speckA)
+       end if
+
+
+    end DO
+
+    if(print_A == 1 .and. mod(iter,freq_print_A)==0) count_A = count_A + 1
+
+  end subroutine spec_A
+
+
+
+
+
+
+
+
+    SUBROUTINE  barotropize_psi(psik,psik_bt)
+
+      !This subroutine takes psik at some level, then broadcasts it to all processes to create a fake barotropic psi -> psik_bt
+      double complex, dimension(iktx,ikty,n3h1) :: psik           !Original, baroclinic streamfunction
+      double complex, dimension(iktx,ikty,n3h1) :: psik_bt        !Resulting, barotropized, streamfunction
+      double complex, dimension(iktx,ikty)      :: psik_the_one   !psik at the selected level
+      
+      integer :: proc   !mype no that contains the streamfunction to barotropize
+      integer :: izh1s  !index to locate the selected level for the bt streamfunction
+
+      psik_the_one = (0.D0,0.D0) 
+      psik_bt = (0.D0,0.D0) 
+
+      !Find the processor containing the selected level
+      proc = (bt_level-1)/n3h0             !which processor                                                                                                                  
+      izh1s = bt_level - proc*n3h0 + 1     !position in the processor (valid for n3h1 fields only)  
+       
+
+      !Define the psik to broadcast to everybody
+      if(mype==proc) then   
+         do iky=1,ikty
+            do ikx=1,iktx
+               if (L(ikx,iky).eq.1) then
+                  psik_the_one(ikx,iky) = psik(ikx,iky,izh1s)
+               endif
+            enddo
+         enddo
+      end if
+
+      !Broadcast the streamfunction to everybody                                                        
+      call mpi_bcast(psik_the_one,iktx*ikty,MPI_DOUBLE_COMPLEX,proc,MPI_COMM_WORLD,ierror)
+
+      !Define the barotropic streamfunction by using the newly available psik_the_one
+      do izh1=1,n3h1
+         do iky=1,ikty
+            do ikx=1,iktx
+               if (L(ikx,iky).eq.1) then
+                  psik_bt(ikx,iky,izh1) = psik_the_one(ikx,iky)
+               end if
+            end do
+         end do
+      end do
+
+    END SUBROUTINE barotropize_psi
+
     END MODULE derivatives

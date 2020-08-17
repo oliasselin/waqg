@@ -10,17 +10,30 @@ MODULE files
   !********************!                                                                          
                                                                          
   !unit no of files for output                                                                                                                            
+  integer, parameter :: unit_slices = 1
+  integer, parameter :: unit_slices_y1 = 10001
+  integer, parameter :: unit_slices_y2 = 10002
+  integer, parameter :: unit_slices_y3 = 10003
+  integer, parameter :: unit_dump = 2
+  integer, parameter :: unit_specA = 3
+  integer, parameter :: unit_speckA = 4
+
   integer, parameter :: unit_energy =50
 !  integer, parameter :: unit_etrop  =51
 !  integer, parameter :: unit_estra  =52
-  integer, parameter :: unit_energyr=53
+  integer, parameter :: unit_energyr=53444
   integer, parameter :: unit_we=544
-  integer, parameter :: unit_conv=545
+  integer, parameter :: unit_ce=5441234
+  integer, parameter :: unit_conv1=545
+  integer, parameter :: unit_conv2=546
+  integer, parameter :: unit_conv3=547
+  integer, parameter :: unit_conv4=548
 
 !  integer, parameter :: unit_hbot   =61
 !  integer, parameter :: unit_hmid   =62
 !  integer, parameter :: unit_htop   =63
   integer, parameter :: unit_ez     =64
+  integer, parameter :: unit_wz     =65
 
   integer, parameter :: unit_rco    =67
   integer, parameter :: unit_bs     =68
@@ -123,9 +136,14 @@ MODULE files
       !Energy
       if(mype==0) open (unit=unit_energy   ,file="energy.dat"   ,action="write",status="replace")
       if(mype==0) open (unit=unit_ez       ,file="ez.dat"       ,action="write",status="replace")
+      if(mype==0) open (unit=unit_wz       ,file="wz.dat"       ,action="write",status="replace")
       if(mype==0) open (unit=unit_energyr  ,file="erot.dat"   ,action="write",status="replace")
       if(mype==0) open (unit=unit_we       ,file="we.dat"   ,action="write",status="replace")
-      if(mype==0) open (unit=unit_conv     ,file="conv.dat"  ,action="write",status="replace")
+      if(mype==0) open (unit=unit_ce       ,file="ce.dat"   ,action="write",status="replace")
+      if(mype==0) open (unit=unit_conv1     ,file="conv1.dat"  ,action="write",status="replace")
+      if(mype==0) open (unit=unit_conv2     ,file="conv2.dat"  ,action="write",status="replace")
+      if(mype==0) open (unit=unit_conv3     ,file="conv3.dat"  ,action="write",status="replace")
+      if(mype==0) open (unit=unit_conv4     ,file="conv4.dat"  ,action="write",status="replace")
 
 !      if(mype==0) open (unit=unit_hbot     ,file="hbot.dat"     ,action="write",status="replace")
 !      if(mype==0) open (unit=unit_hmid     ,file="hmid.dat"     ,action="write",status="replace")
@@ -242,7 +260,7 @@ MODULE files
       if(mype==0) close(unit=unit_energy)
       if(mype==0) close(unit=unit_energyr)
       if(mype==0) close(unit=unit_we)
-
+      if(mype==0) close(unit=unit_ce)
 !      if(mype==0) close(unit=unit_hbot)
 !      if(mype==0) close(unit=unit_hmid)
 !      if(mype==0) close(unit=unit_htop)
@@ -250,6 +268,7 @@ MODULE files
 !      if(mype==0) close(unit=unit_ro_mid)
 !      if(mype==0) close(unit=unit_ro_top)
       if(mype==0) close(unit=unit_ez)
+      if(mype==0) close(unit=unit_wz)
 !      if(mype==0) close(unit=unit_hbotg)
 !      if(mype==0) close(unit=unit_hmidg)
 !      if(mype==0) close(unit=unit_htopg)

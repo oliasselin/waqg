@@ -1,0 +1,56 @@
+#!/bin/bash
+
+number_of_nodes=1
+number_of_tasks=1
+
+sourdir=/home1/05518/oasselin/eady/python
+
+cd $sourdir
+                                                                                                                                                                   
+cat > EXEC_STEP << EXEC
+#!/bin/sh 
+#----------------------------------------------------
+# Sample Slurm job script
+#   for TACC Stampede2 KNL nodes
+#
+#   *** MPI Job on Normal Queue ***
+# 
+# Last revised: 20 Oct 2017
+#
+# Notes:
+#
+#   -- Launch this script by executing
+#      "sbatch knl.mpi.slurm" on Stampede2 login node.
+#
+#   -- Use ibrun to launch MPI codes on TACC systems.
+#      Do not use mpirun or mpiexec.
+#
+#   -- Max recommended MPI tasks per KNL node: 64-68
+#      (start small, increase gradually).
+#
+#   -- If you're running out of memory, try running
+#      fewer tasks per node to give each task more memory.
+#
+#----------------------------------------------------
+
+#SBATCH -J test_eady                       # Job name
+#SBATCH -o $HOME/monitor/test_eady.o%j     # Name of stdout output file
+#SBATCH -e $HOME/monitor/test_eady.e%j     # Name of stderr error file
+#SBATCH -p normal                     # Queue (partition) name
+##SBATCH -p development                     # Queue (partition) name
+#SBATCH -N $number_of_nodes           # Total # of nodes 
+#SBATCH -n $number_of_tasks           # Total # of mpi tasks
+#SBATCH -t 05:00:00                   # Run time (hh:mm:ss)
+#SBATCH --mail-user=oasselin@ucsd.edu
+##SBATCH --mail-type=all              # Send email at begin and end of job
+#SBATCH -A TG-OCE180004               # Allocation name (req'd if you have more than 1)
+
+################ EXECUTE #######################                                                                                               
+python launch_spec_gif.py
+                                                                                                                                                        
+EXEC
+
+
+##chmod 755 EXEC_STEP                                                                                                                                       
+sbatch EXEC_STEP
+##./EXEC_STEP                                                                                                                                               
