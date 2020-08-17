@@ -1,7 +1,3 @@
-# QG-model
+# QG-YBJ+ model, Eady configuration
 
-This is the QG model as was used for the PoF, San Diego and JAS papers (and of course the PhD thesis).
-
-# Current development
-
-Setting up the Eady problem.
+This is the model used for Asselin & Young (2020, JPO)
