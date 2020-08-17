@@ -15,7 +15,7 @@ folder = 'niskine/skewdy/'
 run = 'storm7_uw10/'
 depth = '200'         #It is your responsability to make sure that depth and sliceloc match for the run at hand
 sliceloc ='hbot'      #It is your responsability to make sure that depth and sliceloc match for the run at hand
-day_list = [10]
+day_list = [0]
 plural_list = ['s']
 yval= [512/16,512/16]
 
